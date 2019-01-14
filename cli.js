@@ -18,30 +18,53 @@ var config = require('./src/config');
 var version = "Version: " + packageJson.version;
 // program options and arguments
 program
-    .description(packageJson.description)
-    .usage("[options] <JQL>")
-    .version(version)
-    .arguments('<JQL>')
-    .option("-j, --jira-url <value>", "JIRA URL")
-    .option("-u, --username <value>", "Username")
-    .option("-p, --password <value>", "Password")
-    .option("-o, --output <value>", "Output Directory")
-    .option("-x, --proxy <value>", "HTTTP/HTTPS Proxy")
-    .on('--help', function () {
-    })
-    .parse(process.argv);
+  .description(packageJson.description)
+  .command("get-feature <JQL>")
+  .version(version)
+  .option("-j, --jira-url <value>", "JIRA URL")
+  .option("-u, --username <value>", "Username")
+  .option("-p, --password <value>", "Password")
+  .option("-o, --output <value>", "Output Directory")
+  .option("-x, --proxy <value>", "HTTTP/HTTPS Proxy")
+  .on('--help', function () {
+  }).action((JQL, command) => {
+    var options = {
+      outputDir: command.output,
+      jiraUrl: command.jiraUrl,
+      username: command.username,
+      password: command.password,
+      proxy: command.proxy,
+      jql: JQL
+    };
+    
+    config.update(options);
+    // check to print help
+    // if (!program.args.length && config.isConfigFileEmpty()) program.help();
+    app.getFeatures();
+  });
 
-// check to print help
-if (!program.args.length && config.isConfigFileEmpty()) program.help();
+program
+  .command("upload-report <path>")
+  .version(version)
+  .option("-s, --server-url <value>", "Katalon Analytics URL", "https://analytics.katalon.com")
+  .option("-u, --username <value>", "Email")
+  .option("-p, --password <value>", "Password")
+  .option("-x, --proxy <value>", "HTTTP/HTTPS Proxy")
+  .option("--project <value>", "Project Id")
+  .on('--help', function () {
+  }).action((path, command) => {
+    var options = {
+      server: command.serverUrl,
+      email: command.username,
+      password: command.password,
+      proxy: command.proxy,
+      projectId: command.project
+    };
+    
+    config.update(options);
+    // check to print help
+    // if (!program.args.length && config.isConfigFileEmpty()) program.help();
+    app.uploadReport(path);
+  });
 
-var options = {
-  outputDir: program.output,
-  jiraUrl: program.jiraUrl,
-  username: program.username,
-  password: program.password,
-  proxy: program.proxy,
-  jql: program.args[0]
-};
-
-config.update(options);
-app.main();
+program.parse(process.argv);

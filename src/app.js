@@ -30,7 +30,7 @@ function writeGherkin(issue, fieldIds) {
 }
 
 module.exports = {
-  main: function() {
+  getFeatures: function() {
     var jiraUrl = config.jiraUrl;
     http.makeRequest(
         jiraUrl,
@@ -79,5 +79,10 @@ module.exports = {
         });
       });
     })
+  },
+
+  uploadReport(path) {
+    console.log('upload ', path),
+    console.log('config ', config);
   }
 }
