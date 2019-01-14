@@ -1,0 +1,23 @@
+{
+  "name": "katalon-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "cli.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "commander": "^2.9.0",
+    "fs-extra": "^0.30.0",
+    "ini": "^1.3.4",
+    "lodash": "^4.13.1",
+    "log4js": "^0.6.37",
+    "request": "^2.72.0",
+    "rsvp": "^3.2.1"
+  },
+  "author": "katalon",
+  "license": "ISC",
+  "devDependencies": {
+    "pkg": "^4.2.4"
+  }
+}
