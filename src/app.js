@@ -80,9 +80,4 @@ module.exports = {
       });
     })
   },
-
-  uploadReport(path) {
-    console.log('upload ', path),
-    console.log('config ', config);
-  }
 }

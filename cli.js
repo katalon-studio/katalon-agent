@@ -14,6 +14,7 @@ var fs = require('fs');
 var http = require('./src/http');
 var app = require('./src/app');
 var config = require('./src/config');
+var reportUploader = require('./src/report-uploader');
 
 var version = "Version: " + packageJson.version;
 // program options and arguments
@@ -54,7 +55,7 @@ program
   .on('--help', function () {
   }).action((path, command) => {
     var options = {
-      server: command.serverUrl,
+      serverUrl: command.serverUrl,
       email: command.username,
       password: command.password,
       proxy: command.proxy,
@@ -64,7 +65,7 @@ program
     config.update(options);
     // check to print help
     // if (!program.args.length && config.isConfigFileEmpty()) program.help();
-    app.uploadReport(path);
+    reportUploader.upload(path);
   });
 
 program.parse(process.argv);

@@ -37,6 +37,39 @@ module.exports = {
       })
     });
     return promise;
+  },
+
+  uploadToS3: function (signedUrl, fileStream) {
+    var headers = {
+      'content-type': 'multipart/form-data',
+      'accept': 'application/json'
+    };
+    var formData = {
+      my_file: fileStream
+    }
+    var promise = new Promise(function (resolve, reject) {
+      
+      const options = {
+        url: signedUrl,
+        json:true,
+        headers: headers,
+        strictSSL: false,
+        formData
+      };
+      if (config.proxy) {
+        options.proxy = config.proxy;
+      }
+      request['put'](options, function (error, response, body) {
+        if (error) {
+          logger.error(error);
+          reject(error);
+        } else {
+          logger.info("put " + response.request.href + " " + response.statusCode);
+          resolve({status: response.statusCode, body: body});
+        }
+      })
+    });
+    return promise;
   }
 
 };
