@@ -14,7 +14,8 @@
     "lodash": "^4.13.1",
     "log4js": "^0.6.37",
     "request": "^2.72.0",
-    "rsvp": "^3.2.1"
+    "rsvp": "^3.2.1",
+    "uuid": "^3.3.2"
   },
   "author": "katalon",
   "license": "ISC",

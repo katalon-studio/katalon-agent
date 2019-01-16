@@ -4,6 +4,7 @@ var utils = require('./utils');
 var request = require('request');
 var logger = require('./logger');
 var _ = require('lodash');
+var fs =require('fs');
 var config = require('./config');
 
 var Promise = RSVP.Promise;
@@ -39,27 +40,26 @@ module.exports = {
     return promise;
   },
 
-  uploadToS3: function (signedUrl, fileStream) {
+  uploadToS3: function (signedUrl, filePath) {
+    var stats = fs.statSync(filePath);
     var headers = {
-      'content-type': 'multipart/form-data',
-      'accept': 'application/json'
+      'content-type': 'application/octet-stream',
+      'accept': 'application/json',
+      'Content-Length': stats['size']
     };
-    var formData = {
-      my_file: fileStream
-    }
     var promise = new Promise(function (resolve, reject) {
       
       const options = {
         url: signedUrl,
+        method: 'PUT',
         json:true,
         headers: headers,
         strictSSL: false,
-        formData
       };
       if (config.proxy) {
         options.proxy = config.proxy;
       }
-      request['put'](options, function (error, response, body) {
+      fs.createReadStream(filePath).pipe(request(options, function (error, response, body) {
         if (error) {
           logger.error(error);
           reject(error);
@@ -67,7 +67,7 @@ module.exports = {
           logger.info("put " + response.request.href + " " + response.statusCode);
           resolve({status: response.statusCode, body: body});
         }
-      })
+      }));
     });
     return promise;
   }

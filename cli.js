@@ -51,7 +51,7 @@ program
   .option("-u, --username <value>", "Email")
   .option("-p, --password <value>", "Password")
   .option("-x, --proxy <value>", "HTTTP/HTTPS Proxy")
-  .option("--project <value>", "Project Id")
+  .option("-k, --katalon-project <value>", "Katalon Project Id")
   .on('--help', function () {
   }).action((path, command) => {
     var options = {
@@ -59,7 +59,7 @@ program
       email: command.username,
       password: command.password,
       proxy: command.proxy,
-      projectId: command.project
+      projectId: command.katalonProject
     };
     
     config.update(options);

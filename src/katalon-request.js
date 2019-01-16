@@ -5,6 +5,10 @@ const fs = require('fs')
 const TOKEN_URI = "/oauth/token";
 const UPLOAD_URL_URI = "/api/v1/files/upload-url";
 
+const KATALON_TEST_REPORTS_URI = "/api/v1/katalon-test-reports";
+const KATALON_RECORDER_TEST_REPORTS_URI = "/api/v1/katalon-recorder/test-reports";
+const KATALON_JUNIT_TEST_REPORTS_URI = "/api/v1/junit/test-reports";
+
 const oauth2 = {
   grant_type: "password",
   client_secret: "kit_uploader",
@@ -42,7 +46,31 @@ module.exports = {
     return http.makeRequest(config.serverUrl, UPLOAD_URL_URI, options, 'get');
   },
 
-  uploadFile: function(uploadUrl, fileStream) {
-    return http.uploadToS3(uploadUrl, fileStream);
+  uploadFile: function(uploadUrl, filePath) {
+    return http.uploadToS3(uploadUrl, filePath);
+  },
+
+  uploadFileInfo: function(token, projectId, batch, folderName, fileName, uploadedPath, isEnd, reportType) {
+    let url = KATALON_TEST_REPORTS_URI;
+    if ("junit" == reportType) {
+      url = KATALON_JUNIT_TEST_REPORTS_URI;
+    } else if ("recorder" == reportType) {
+      url = KATALON_RECORDER_TEST_REPORTS_URI;
+    }
+    const options = {
+      auth: {
+        bearer: token
+      },
+      json: true,
+      qs: {
+        projectId,
+        batch,
+        folderPath: folderName,
+        fileName,
+        uploadedPath,
+        isEnd
+      },
+    }
+    return http.makeRequest(config.serverUrl, url, options, 'post');
   }
 }
