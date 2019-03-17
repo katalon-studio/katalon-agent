@@ -64,7 +64,8 @@ module.exports = {
     logger.info(`Execute "${cmd} ${args.join(' ')}" in ${tmpDirPath}.`);
     const promise = new Promise((resolve) => {
       const cmdProcess = childProcess.spawn(cmd, args, {
-        cwd: tmpDirPath
+        cwd: tmpDirPath,
+        shell: true
       });
       cmdProcess.stdout.on('data', (data) => {
         logger.info(data.toString());

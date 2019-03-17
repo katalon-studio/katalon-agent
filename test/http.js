@@ -7,7 +7,7 @@ const filePath = file.name;
 console.log(filePath);
 const url = 'https://github.com/katalon-studio/katalon-recorder/archive/v3.6.14.zip';
 http.stream(url, filePath)
-  .then(function() {
+  .then(() => {
     const stats = fs.statSync(filePath);
     console.log(stats['size']);
   });

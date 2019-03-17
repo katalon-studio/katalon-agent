@@ -9,7 +9,7 @@ function writeGherkin(issue, fieldIds) {
   var key = issue.key;
   var fields = issue.fields;
   var name = fields.summary;
-  _.each(fieldIds, function(fieldId, index) {
+  _.each(fieldIds, (fieldId, index) => {
     var content = fields[fieldId];
     if (content) {
       var number = '';
@@ -35,9 +35,9 @@ module.exports = {
           }
         },
         "get"
-    ).then(function(response) {
+    ).then((response) => {
       var fields = response.body;
-      var gherkinFields = _.flatMap(fields, function(field) {
+      var gherkinFields = _.flatMap(fields, (field) => {
         if (field.custom &&
           field.schema &&
           field.schema.type === 'string' &&
@@ -64,10 +64,10 @@ module.exports = {
             }
           },
           "post"
-      ).then(function(response) {
+      ).then((response) => {
         var result = response.body;
         var issues = result.issues;
-        _.each(issues, function(issue) {
+        _.each(issues, (issue) => {
           writeGherkin(issue, gherkinFields);
         });
       });

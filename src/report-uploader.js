@@ -18,7 +18,7 @@ const harExtension=/.*\.(har)$/
 let zip = (folderPath, harFiles) => {
   var fs = require('fs');
   var archiver = require('archiver');
-  
+
   // create a file to stream archive data to.
   const zipPath = folderPath + '/request.zip';
 
@@ -28,7 +28,7 @@ let zip = (folderPath, harFiles) => {
   })
 
   archive.pipe(output);
-  
+
   harFiles.forEach(file => {
     const fileName = path.basename(file);
     const rel = path.relative(folderPath, file);
@@ -46,7 +46,7 @@ module.exports = {
     const {email, password, projectId} = config;
     const harFiles = find.fileSync(harExtension, folderPath);
     const logFiles = find.fileSync(logExtension, folderPath);
-    
+
     let harZips = {}
     harFiles.forEach(filePath => {
       let parent = path.resolve(filePath, '../../..');
@@ -57,7 +57,7 @@ module.exports = {
       harZips[parent].push(filePath);
     })
 
-    Object.keys(harZips).map(function(folderPath, index) {
+    Object.keys(harZips).map((folderPath, index) => {
       var files = harZips[folderPath];
       const zipPath = zip(folderPath, files);
       logFiles.push(zipPath);

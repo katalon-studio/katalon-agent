@@ -26,7 +26,7 @@ program
   .option("-p, --password <value>", "Password")
   .option("-o, --output <value>", "Output Directory")
   .option("-x, --proxy <value>", "HTTTP/HTTPS Proxy")
-  .on('--help', function () {})
+  .on('--help', () => {})
   .action((JQL, command) => {
     var options = {
       outputDir: command.output,
@@ -49,7 +49,7 @@ program
   .option("-p, --password <value>", "Password")
   .option("-k, --katalon-project <value>", "Katalon Project Id")
   .option("-x, --proxy <value>", "HTTTP/HTTPS Proxy")
-  .on('--help', function () {})
+  .on('--help', () => {})
   .action((path, command) => {
     var options = {
       serverUrl: command.serverUrl,
@@ -70,7 +70,7 @@ program
     var options = {
       programArgs: ["service-run"]
     };
-    service.add(serviceName, options, function(error) {
+    service.add(serviceName, options, (error) => {
       if (error)
         logger.log(error.toString());
     });
@@ -80,7 +80,7 @@ program
   .command("service-remove")
   .version(version)
   .action(() => {
-    service.remove(serviceName, function(error) {
+    service.remove(serviceName, (error) => {
       if (error)
         logger.log(error.toString());
     });
@@ -90,11 +90,11 @@ program
   .command("service-run")
   .version(version)
   .action(() => {
-    service.run(function () {
+    service.run(() => {
       agent.stop();
       service.stop(0);
     });
-    
+
     agent.start();
   });
 

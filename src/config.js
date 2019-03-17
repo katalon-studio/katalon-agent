@@ -9,7 +9,7 @@ var global = {};
 var init = false;
 
 module.exports = {
-  update: function (configs) {
+  update: function(configs) {
     logger.debug("init config");
     if (!init) {
       if (!this.isConfigFileEmpty()) {
@@ -26,7 +26,7 @@ module.exports = {
     }
     logger.debug("current config", global);
   },
-  isConfigFileEmpty: function () {
+  isConfigFileEmpty: function() {
     var empty = true;
     if (fs.existsSync(configFile)) {
       var configs = ini.parse(fs.readFileSync(configFile, "utf-8"));

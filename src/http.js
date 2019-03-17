@@ -26,14 +26,14 @@ module.exports = {
 
   stream: function(url, filePath) {
     logger.info(`Downloading from ${url} to ${filePath}.`);
-    const promise = new Promise(function (resolve, reject) {
+    const promise = new Promise((resolve, reject) => {
       const method = 'GET';
       const options = buildOptions(url, {}, {
         method
       });
       request(options)
         .pipe(fs.createWriteStream(filePath))
-        .on('finish', function() {
+        .on('finish', () => {
           logger.info('Finished downloading.');
           resolve();
         });
@@ -52,8 +52,8 @@ module.exports = {
       json: true,
       method,
     });
-    var promise = new Promise(function (resolve, reject) {
-      request(options, function (error, response, body) {
+    var promise = new Promise((resolve, reject) => {
+      request(options, (error, response, body) => {
         if (error) {
           logger.error(error);
           reject(error);
@@ -78,8 +78,8 @@ module.exports = {
       method,
       json: true
     });
-    var promise = new Promise(function (resolve, reject) {
-      fs.createReadStream(filePath).pipe(request(options, function (error, response, body) {
+    var promise = new Promise((resolve, reject) => {
+      fs.createReadStream(filePath).pipe(request(options, (error, response, body) => {
         if (error) {
           logger.error(error);
           reject(error);

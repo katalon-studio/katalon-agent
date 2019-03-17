@@ -12,7 +12,7 @@ module.exports = {
     const file = tmp.fileSync();
     const filePath = file.name;
     return http.stream(url, filePath)
-      .then(function() {
+      .then(() => {
         logger.info(`Decompressing the file into ${targetDir}.`);
         return decompress(filePath, targetDir);
       });
