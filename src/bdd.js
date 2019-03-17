@@ -1,12 +1,5 @@
-'use strict';
-var RSVP = require('rsvp');
-var url = require('url');
-var utils = require('./utils');
 var http = require('./http');
-var request = require('request');
 var fse = require('fs-extra');
-var logger = require('./logger');
-var fs = require('fs');
 var config = require('./config');
 var _ = require('lodash');
 var path = require('path');
@@ -32,7 +25,7 @@ function writeGherkin(issue, fieldIds) {
 module.exports = {
   getFeatures: function() {
     var jiraUrl = config.jiraUrl;
-    http.makeRequest(
+    http.request(
         jiraUrl,
         "/rest/api/2/field",
         {
@@ -60,7 +53,7 @@ module.exports = {
         "maxResults": 10000,
         "startAt": 0
       };
-      http.makeRequest(
+      http.request(
           jiraUrl,
           "/rest/api/2/search",
           {
