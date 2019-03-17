@@ -1,13 +1,21 @@
 // add an empty argument to the front in case the package is compiled to native code
 process.isPackaged && process.argv.unshift('');
+process.chdir(__dirname);
 
 var program = require('commander');
 var packageJson = require('./package.json');
 var bdd = require('./src/bdd');
 var config = require('./src/config');
 var reportUploader = require('./src/report-uploader');
+const service = require("os-service");
+const agent = require("./src/agent");
+const logger = require('./src/logger');
 
+const serviceName = "Katalon Agent";
 var version = "Version: " + packageJson.version;
+
+console.log(__dirname)
+
 // program options and arguments
 program
   .description(packageJson.description)
@@ -53,6 +61,41 @@ program
 
     config.update(options);
     reportUploader.upload(path);
+  });
+
+program
+  .command("service-add")
+  .version(version)
+  .action(() => {
+    var options = {
+      programArgs: ["service-run"]
+    };
+    service.add(serviceName, options, function(error) {
+      if (error)
+        logger.log(error.toString());
+    });
+  });
+
+program
+  .command("service-remove")
+  .version(version)
+  .action(() => {
+    service.remove(serviceName, function(error) {
+      if (error)
+        logger.log(error.toString());
+    });
+  });
+
+program
+  .command("service-run")
+  .version(version)
+  .action(() => {
+    service.run(function () {
+      agent.stop();
+      service.stop(0);
+    });
+    
+    agent.start();
   });
 
 program.parse(process.argv);

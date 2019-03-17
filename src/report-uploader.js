@@ -15,12 +15,54 @@ const harExtension=/.*\.(har)$/
 //   client_secret: "kit_uploader",
 //   client_id: "kit_uploader"
 // }
+let zip = (folderPath, harFiles) => {
+  var fs = require('fs');
+  var archiver = require('archiver');
+  
+  // create a file to stream archive data to.
+  const zipPath = folderPath + '/request.zip';
+
+  var output = fs.createWriteStream(zipPath);
+  var archive = archiver('zip', {
+    zlib: { level: 9 } // Sets the compression level.
+  })
+
+  archive.pipe(output);
+  
+  harFiles.forEach(file => {
+    const fileName = path.basename(file);
+    const rel = path.relative(folderPath, file);
+    archive.file(file, { name: rel });
+  })
+
+  archive.finalize();
+  return zipPath;
+}
+
+
 
 module.exports = {
   upload: (folderPath) => {
     const {email, password, projectId} = config;
     const harFiles = find.fileSync(harExtension, folderPath);
     const logFiles = find.fileSync(logExtension, folderPath);
+    
+    let harZips = {}
+    harFiles.forEach(filePath => {
+      let parent = path.resolve(filePath, '../../..');
+      let files = harZips[parent];
+      if (!files) {
+        harZips[parent] = [];
+      }
+      harZips[parent].push(filePath);
+    })
+
+    Object.keys(harZips).map(function(folderPath, index) {
+      var files = harZips[folderPath];
+      const zipPath = zip(folderPath, files);
+      logFiles.push(zipPath);
+    });
+
     const batch = new Date().getTime() + "-" + uuidv4();
 
     let uploadPromises = [];
@@ -36,8 +78,10 @@ module.exports = {
           const uploadPath = body.path;
           const fileName = path.basename(filePath);
           const folderPath = path.dirname(filePath);
+          let parent = path.resolve(filePath, '../../..');
+          let rel = path.relative(parent, folderPath);
           return katalonRequest.uploadFile(uploadUrl, filePath)
-            .then(() => katalonRequest.uploadFileInfo(token, projectId, batch, folderPath, fileName, uploadPath, false))
+            .then(() => katalonRequest.uploadFileInfo(token, projectId, batch, rel, fileName, uploadPath, false))
         });
         uploadPromises.push(promise);
       };
@@ -52,8 +96,10 @@ module.exports = {
               const uploadPath = body.path;
               const fileName = path.basename(filePath);
               const folderPath = path.dirname(filePath);
+              let parent = path.resolve(filePath, '../../..');
+              let rel = path.relative(parent, folderPath);
               return katalonRequest.uploadFile(uploadUrl, filePath)
-                .then(() => katalonRequest.uploadFileInfo(token, projectId, batch, folderPath, fileName, uploadPath, true))
+                .then(() => katalonRequest.uploadFileInfo(token, projectId, batch, rel, fileName, uploadPath, true))
             });
           });
       });
