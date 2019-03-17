@@ -11,8 +11,12 @@ function buildOptions(url, headers, options) {
     headers: headers || {},
     strictSSL: false
   };
-  if (config.proxy) {
-    defaultOptions.proxy = config.proxy;
+  const { proxy } = config;
+  if (proxy) {
+    defaultOptions = {
+      ...defaultOptions,
+      proxy
+    }
   }
   options = _.merge(defaultOptions, options || {});
   return options;
@@ -20,18 +24,19 @@ function buildOptions(url, headers, options) {
 
 module.exports = {
 
-  stream: function(url) {
-    var promise = new Promise(function (resolve, reject) {
-      const options = buildOptions(url);
-      request[method](options, function (error, response, body) {
-        if (error) {
-          logger.error(error);
-          reject(error);
-        } else {
-          logger.info(method + " " + response.request.href + " " + response.statusCode);
-          resolve({status: response.statusCode, body: body});
-        }
-      })
+  stream: function(url, filePath) {
+    logger.info(`Downloading from ${url} to ${filePath}.`);
+    const promise = new Promise(function (resolve, reject) {
+      const method = 'GET';
+      const options = buildOptions(url, {}, {
+        method
+      });
+      request(options)
+        .pipe(fs.createWriteStream(filePath))
+        .on('finish', function() {
+          logger.info('Finished downloading.');
+          resolve();
+        });
     });
     return promise;
   },
@@ -41,24 +46,19 @@ module.exports = {
       'content-type': 'application/json',
       'accept': 'application/json'
     };
+    const url = urljoin(baseUrl, relativeUrl);
+    options = buildOptions(url, headers, {
+      ...options,
+      json: true,
+      method,
+    });
     var promise = new Promise(function (resolve, reject) {
-      options = _.merge(
-          {
-            url: urljoin(baseUrl, relativeUrl),
-            json: true,
-            headers: headers,
-            strictSSL: false
-          },
-          options);
-      if (config.proxy) {
-        options.proxy = config.proxy;
-      }
-      request[method](options, function (error, response, body) {
+      request(options, function (error, response, body) {
         if (error) {
           logger.error(error);
           reject(error);
         } else {
-          logger.info(method + " " + response.request.href + " " + response.statusCode);
+          logger.info(`${method} ${response.request.href} ${response.statusCode}.`);
           resolve({status: response.statusCode, body: body});
         }
       })
@@ -73,24 +73,18 @@ module.exports = {
       'accept': 'application/json',
       'Content-Length': stats['size']
     };
+    const method = 'PUT';
+    const options = buildOptions(signedUrl, headers, {
+      method,
+      json: true
+    });
     var promise = new Promise(function (resolve, reject) {
-
-      const options = {
-        url: signedUrl,
-        method: 'PUT',
-        json: true,
-        headers: headers,
-        strictSSL: false,
-      };
-      if (config.proxy) {
-        options.proxy = config.proxy;
-      }
       fs.createReadStream(filePath).pipe(request(options, function (error, response, body) {
         if (error) {
           logger.error(error);
           reject(error);
         } else {
-          logger.info("put " + response.request.href + " " + response.statusCode);
+          logger.info(`${method} ${response.request.href} ${response.statusCode}.`);
           resolve({status: response.statusCode, body: body});
         }
       }));

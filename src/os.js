@@ -5,18 +5,22 @@ const logger = require('./logger');
 
 module.exports = {
 
+  getUserhome: function() {
+    return os.homedir();
+  },
+
   getVersion: function() {
     let version = '';
     const type = os.type();
     switch (type) {
       case 'Linux':
-        version += 'linux';
+        version += 'Linux';
         break;
       case 'Darwin':
-        version += 'macos (app)';
+        version += 'macOS (app)';
         break;
       case 'Windows_NT':
-        version += 'windows';
+        version += 'Windows';
         const arch = os.arch();
         switch (arch) {
           case 'x32':
@@ -57,7 +61,7 @@ module.exports = {
     }
     const tmpDir = tmp.dirSync();
     const tmpDirPath = tmpDir.name;
-    logger.info(`Execute "${cmd} ${args.join(' ')}" in ${tmpDirPath}`);
+    logger.info(`Execute "${cmd} ${args.join(' ')}" in ${tmpDirPath}.`);
     const promise = new Promise((resolve) => {
       const cmdProcess = childProcess.spawn(cmd, args, {
         cwd: tmpDirPath
@@ -69,7 +73,7 @@ module.exports = {
         logger.error(data.toString());
       });
       cmdProcess.on('close', (code) => {
-        logger.info(`Exit code: ${code}`);
+        logger.info(`Exit code: ${code}.`);
         resolve(code);
       });
     });
