@@ -1,5 +1,6 @@
 // add an empty argument to the front in case the package is compiled to native code
 process.isPackaged && process.argv.unshift('');
+process.chdir(__dirname);
 
 var program = require('commander');
 var packageJson = require('./package.json');
