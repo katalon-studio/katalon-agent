@@ -1,16 +1,42 @@
-'use strict';
-var RSVP = require('rsvp');
-var utils = require('./utils');
 var request = require('request');
 var logger = require('./logger');
 var _ = require('lodash');
-var fs =require('fs');
+var fs = require('fs');
 var config = require('./config');
+const urljoin = require('url-join');
 
-var Promise = RSVP.Promise;
+function buildOptions(url, headers, options) {
+  const defaultOptions = {
+    url: url,
+    headers: headers || {},
+    strictSSL: false
+  };
+  if (config.proxy) {
+    defaultOptions.proxy = config.proxy;
+  }
+  options = _.merge(defaultOptions, options || {});
+  return options;
+}
 
 module.exports = {
-  makeRequest: function (baseUrl, relativeUrl, options, method) {
+
+  stream: function(url) {
+    var promise = new Promise(function (resolve, reject) {
+      const options = buildOptions(url);
+      request[method](options, function (error, response, body) {
+        if (error) {
+          logger.error(error);
+          reject(error);
+        } else {
+          logger.info(method + " " + response.request.href + " " + response.statusCode);
+          resolve({status: response.statusCode, body: body});
+        }
+      })
+    });
+    return promise;
+  },
+
+  request: function(baseUrl, relativeUrl, options, method) {
     var headers = {
       'content-type': 'application/json',
       'accept': 'application/json'
@@ -18,8 +44,8 @@ module.exports = {
     var promise = new Promise(function (resolve, reject) {
       options = _.merge(
           {
-            url: utils.joinUrl(baseUrl, relativeUrl),
-            json:true,
+            url: urljoin(baseUrl, relativeUrl),
+            json: true,
             headers: headers,
             strictSSL: false
           },
@@ -40,7 +66,7 @@ module.exports = {
     return promise;
   },
 
-  uploadToS3: function (signedUrl, filePath) {
+  uploadToS3: function(signedUrl, filePath) {
     var stats = fs.statSync(filePath);
     var headers = {
       'content-type': 'application/octet-stream',
@@ -48,11 +74,11 @@ module.exports = {
       'Content-Length': stats['size']
     };
     var promise = new Promise(function (resolve, reject) {
-      
+
       const options = {
         url: signedUrl,
         method: 'PUT',
-        json:true,
+        json: true,
         headers: headers,
         strictSSL: false,
       };

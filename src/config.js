@@ -1,9 +1,6 @@
-'use strict';
-
 var ini = require("ini");
 var fs = require("fs");
 var _ = require("lodash");
-var utils = require("./utils");
 var logger = require("./logger");
 var path = require('path');
 

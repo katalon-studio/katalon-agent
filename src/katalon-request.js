@@ -30,7 +30,7 @@ module.exports = {
       form: data,
       json: true
     };
-    return http.makeRequest(config.serverUrl, TOKEN_URI, options, 'post');
+    return http.request(config.serverUrl, TOKEN_URI, options, 'post');
   },
 
   getUploadInfo: function(token, projectId) {
@@ -43,7 +43,7 @@ module.exports = {
         projectId
       },
     }
-    return http.makeRequest(config.serverUrl, UPLOAD_URL_URI, options, 'get');
+    return http.request(config.serverUrl, UPLOAD_URL_URI, options, 'get');
   },
 
   uploadFile: function(uploadUrl, filePath) {
@@ -71,6 +71,6 @@ module.exports = {
         isEnd
       },
     }
-    return http.makeRequest(config.serverUrl, url, options, 'post');
+    return http.request(config.serverUrl, url, options, 'post');
   }
 }
