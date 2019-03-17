@@ -68,10 +68,10 @@ module.exports = {
         shell: true
       });
       cmdProcess.stdout.on('data', (data) => {
-        logger.info(data.toString());
+        process.stdout.write(data.toString());
       });
       cmdProcess.stderr.on('data', (data) => {
-        logger.error(data.toString());
+        process.stderr.write(data.toString());
       });
       cmdProcess.on('close', (code) => {
         logger.info(`Exit code: ${code}.`);
