@@ -18,7 +18,7 @@ const harExtension=/.*\.(har)$/
 //   client_id: "kit_uploader"
 // }
 let zip = (folderPath, harFiles) => {
-  let tempPath = path.join(folderPath, 'katalon-analitics-tmp'); 
+  let tempPath = path.join(folderPath, 'katalon-analytics-tmp'); 
   fse.ensureDirSync(tempPath);
   // create a file to stream archive data to.
   const zipPath = path.join(tempPath, `hars-${new Date().getTime()}.zip`);
@@ -83,7 +83,12 @@ module.exports = {
           const uploadPath = body.path;
           const fileName = path.basename(filePath);
           const folderPath = path.dirname(filePath);
-          let parent = path.resolve(filePath, '../../..');
+          let parent;
+          if (path.extname(fileName) == '.zip') {
+            parent = path.resolve(filePath, '../../../..');
+          } else {
+            parent = path.resolve(filePath, '../../..');
+          };
           let rel = path.relative(parent, folderPath);
           return katalonRequest.uploadFile(uploadUrl, filePath)
             .then(() => katalonRequest.uploadFileInfo(token, projectId, batch, rel, fileName, uploadPath, false))
