@@ -7,7 +7,7 @@ var katalonRequest = require('./katalon-request');
 var fse = require('fs-extra');
 var archiver = require('archiver');
 
-const logExtension=/.*[^\.har]$/
+const logExtension=/.*[^\.har|.zip]$/
 const harExtension=/.*\.(har)$/
 
 // const uploadInfoOutPath=ka_upload_info.json
@@ -101,7 +101,12 @@ module.exports = {
               const uploadPath = body.path;
               const fileName = path.basename(filePath);
               const folderPath = path.dirname(filePath);
-              let parent = path.resolve(filePath, '../../..');
+              let parent;
+              if (path.extname(fileName) == '.zip') {
+                parent = path.resolve(filePath, '../../../..');
+              } else {
+                parent = path.resolve(filePath, '../../..');
+              };
               let rel = path.relative(parent, folderPath);
               return katalonRequest.uploadFile(uploadUrl, filePath)
                 .then(() => katalonRequest.uploadFileInfo(token, projectId, batch, rel, fileName, uploadPath, true))
