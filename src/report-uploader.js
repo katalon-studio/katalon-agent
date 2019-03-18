@@ -4,6 +4,8 @@ var _ = require('lodash');
 var find = require('find');
 var config = require('./config');
 var katalonRequest = require('./katalon-request');
+var fse = require('fs-extra');
+var archiver = require('archiver');
 
 const logExtension=/.*[^\.har]$/
 const harExtension=/.*\.(har)$/
@@ -16,13 +18,12 @@ const harExtension=/.*\.(har)$/
 //   client_id: "kit_uploader"
 // }
 let zip = (folderPath, harFiles) => {
-  var fs = require('fs');
-  var archiver = require('archiver');
-
+  let tempPath = path.join(folderPath, 'katalon-analitics-tmp'); 
+  fse.ensureDirSync(tempPath);
   // create a file to stream archive data to.
-  const zipPath = folderPath + '/request.zip';
+  const zipPath = path.join(tempPath, `hars-${new Date().getTime()}.zip`);
 
-  var output = fs.createWriteStream(zipPath);
+  var output = fse.createWriteStream(zipPath);
   var archive = archiver('zip', {
     zlib: { level: 9 } // Sets the compression level.
   })
@@ -32,11 +33,15 @@ let zip = (folderPath, harFiles) => {
   harFiles.forEach(file => {
     const fileName = path.basename(file);
     const rel = path.relative(folderPath, file);
-    archive.file(file, { name: rel });
+    archive.file(file, { name: fileName });
   })
 
   archive.finalize();
   return zipPath;
+}
+
+let writeUploadInfo = (batch, files) => {
+  
 }
 
 
