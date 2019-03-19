@@ -63,7 +63,7 @@ function getKsLocation(ksVersionNumber, ksLocation) {
             throw `Unexpected file name ${fileName}`;
           }
           const ksLocationDirName = fileName.replace(fileExtension, '');
-          const userhome = os.getUserhome();
+          const userhome = os.getUserHome();
           const ksLocationParentDir = path.join(userhome, '.katalon', ksVersionNumber);
           const katalonDoneFilePath = path.join(ksLocationParentDir, '.katalon.done');
           const ksLocation = path.join(ksLocationParentDir, ksLocationDirName);

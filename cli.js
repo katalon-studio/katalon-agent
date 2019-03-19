@@ -13,6 +13,7 @@ const logger = require('./src/logger');
 
 const serviceName = "Katalon Agent";
 var version = "Version: " + packageJson.version;
+const _ = require("lodash");
 
 console.log(__dirname)
 
@@ -64,11 +65,11 @@ program
   });
 
 program
-  .command("service-add")
+  .command("agent-service-add")
   .version(version)
   .action(() => {
     var options = {
-      programArgs: ["service-run"]
+      programArgs: ["agent-service-run"]
     };
     service.add(serviceName, options, (error) => {
       if (error)
@@ -77,7 +78,7 @@ program
   });
 
 program
-  .command("service-remove")
+  .command("agent-service-remove")
   .version(version)
   .action(() => {
     service.remove(serviceName, (error) => {
@@ -87,7 +88,7 @@ program
   });
 
 program
-  .command("service-run")
+  .command("agent-service-run")
   .version(version)
   .action(() => {
     service.run(() => {
@@ -96,6 +97,21 @@ program
     });
 
     agent.start();
+  });
+
+program
+  .command("start-agent")
+  .version(version)
+  .option("-s, --server-url <value>", "Katalon Analytics URL")
+  .option("-u, --username <value>", "Email")
+  .option("-p, --password <value>", "Password")
+  .action((command) => {
+    var options = {
+      serverUrl: command.serverUrl,
+      email: command.username,
+      password: command.password,
+    };
+    agent.start(options);
   });
 
 program.parse(process.argv);

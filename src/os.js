@@ -5,8 +5,12 @@ const logger = require('./logger');
 
 module.exports = {
 
-  getUserhome: function() {
+  getUserHome: function() {
     return os.homedir();
+  },
+
+  getHostName: function() {
+    return os.hostname();
   },
 
   getVersion: function() {

@@ -9,6 +9,8 @@ const KATALON_TEST_REPORTS_URI = "/api/v1/katalon-test-reports";
 const KATALON_RECORDER_TEST_REPORTS_URI = "/api/v1/katalon-recorder/test-reports";
 const KATALON_JUNIT_TEST_REPORTS_URI = "/api/v1/junit/test-reports";
 
+const KATALON_AGENT_URI = "/api/v1/agent/";
+
 const oauth2 = {
   grant_type: "password",
   client_secret: "kit_uploader",
@@ -72,5 +74,13 @@ module.exports = {
       },
     }
     return http.request(config.serverUrl, url, options, 'post');
-  }
+  },
+
+  requestAgentInfo: function(token, options) {
+    options.auth = {
+      bearer: token,
+    };
+    console.log(options);
+    return http.request(config.serverUrl, KATALON_AGENT_URI, options, 'POST');
+  },
 }
