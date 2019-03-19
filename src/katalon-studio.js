@@ -91,10 +91,9 @@ function getKsLocation(ksVersionNumber, ksLocation) {
             return file.downloadAndExtract(ksVersion.url, ksLocationParentDir)
               .then(() => {
                 fs.writeFileSync(katalonDoneFilePath, '');
-                return {
+                resolve({
                   ksLocationParentDir
-                };
-              });
+                });
           }
         });
     }
