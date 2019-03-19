@@ -53,7 +53,7 @@ module.exports = {
         command = `DISPLAY=${x11Display} ${command}`;
       }
       if (xvfbConfiguration) {
-        command = `xvfb-run ${xvfbConfiguration} command`;
+        command = `xvfb-run ${xvfbConfiguration} ${command}`;
       }
       cmd = 'sh';
       args.push('-c');
