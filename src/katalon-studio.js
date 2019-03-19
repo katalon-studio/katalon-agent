@@ -94,6 +94,7 @@ function getKsLocation(ksVersionNumber, ksLocation) {
                 resolve({
                   ksLocationParentDir
                 });
+              });
           }
         });
     }
