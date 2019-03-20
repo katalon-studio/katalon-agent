@@ -4,6 +4,7 @@ const file = require('./file');
 const path = require('path');
 const fs = require('fs');
 const logger = require('./logger');
+var _ = require('lodash');
 
 const releasesList = 'https://raw.githubusercontent.com/katalon-studio/katalon-studio/master/releases.json';
 
@@ -12,18 +13,13 @@ module.exports = {
   execute: function(ksVersionNumber, ksLocation, ksProjectPath, ksArgs, x11Display, xvfbConfiguration) {
 
     return getKsLocation(ksVersionNumber, ksLocation)
-      .then(({ ksLocation }) => {
+      .then(({ ksLocationParentDir }) => {
+        logger.info(`Katalon Folder: ${ksLocationParentDir}`);
         const osVersion = os.getVersion();
-        let ksExecutable;
-        if (osVersion.indexOf('macOS') >= 0) {
-          ksExecutable = path.join(ksLocation, 'Contents', 'MacOS', 'katalon');
-        } else {
-          ksExecutable = path.join(ksLocation, 'katalon');
-        }
-        if (!fs.existsSync(ksExecutable)) {
-          ksExecutable += '.exe';
-        }
+        let ksExecutable = find(ksLocationParentDir, /katalon$|katalon\.exe$/);
+        logger.info(`Katalon Executable File: ${ksExecutable}`);
         fs.chmodSync(ksExecutable, '755');
+
         if (ksExecutable.indexOf(' ') >= 0) {
           ksExecutable = `"${ksExecutable}"`;
         }
@@ -35,6 +31,27 @@ module.exports = {
         logger.info(`Execute Katalon Studio: ${ksCommand}`);
         return os.runCommand(ksCommand, x11Display, xvfbConfiguration);
       });
+  }
+};
+
+function find(startPath, filter, callback){
+  if (!fs.existsSync(startPath)){
+    return;
+  }
+
+  var files=fs.readdirSync(startPath);
+  for(var i=0; i < files.length; i++){
+    var filename = path.join(startPath, files[i]);
+    var stat = fs.lstatSync(filename);
+    if (stat.isDirectory()) {
+      const file = find(filename,filter,callback);
+      if (!_.isEmpty(file)) {
+        return file;
+      }
+    }
+    else if (filter.test(filename)) {
+      return filename;
+    }
   }
 }
 
@@ -69,16 +86,16 @@ function getKsLocation(ksVersionNumber, ksLocation) {
           const ksLocation = path.join(ksLocationParentDir, ksLocationDirName);
           if (fs.existsSync(katalonDoneFilePath)) {
             resolve({
-              ksLocation
+              ksLocationParentDir
             });
           }
           else {
             return file.downloadAndExtract(ksVersion.url, ksLocationParentDir)
               .then(() => {
                 fs.writeFileSync(katalonDoneFilePath, '');
-                return {
-                  ksLocation
-                };
+                resolve({
+                  ksLocationParentDir
+                });
               });
           }
         });
