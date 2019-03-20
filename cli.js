@@ -3,13 +3,14 @@ process.isPackaged && process.argv.unshift('');
 process.chdir(__dirname);
 
 var program = require('commander');
+const service = require("os-service");
+
 var packageJson = require('./package.json');
+const agent = require("./src/agent").default;
 var bdd = require('./src/bdd');
 var config = require('./src/config');
-var reportUploader = require('./src/report-uploader');
-const service = require("os-service");
-const agent = require("./src/agent");
 const logger = require('./src/logger');
+var reportUploader = require('./src/report-uploader');
 
 const serviceName = "Katalon Agent";
 var version = "Version: " + packageJson.version;
@@ -97,6 +98,24 @@ program
     });
 
     agent.start();
+  });
+
+program
+  .command("agent-config")
+  .option("-s, --server-url <value>", "Katalon Analytics URL")
+  .option("-u, --username <value>", "Email")
+  .option("-p, --password <value>", "Password")
+  .option("-t, --teamid <value>", "Team ID")
+  .option("-a, --agent-name <value>", "Agent name")
+  .action((command) => {
+    var options = {
+      serverUrl: command.serverUrl,
+      email: command.username,
+      password: command.password,
+      teamId: command.teamid,
+      agentName: command.agentName,
+    };
+    agent.updateConfigs(options);
   });
 
 program

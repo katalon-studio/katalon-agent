@@ -1,7 +1,7 @@
+const _ = require("lodash");
 const fs = require("fs");
 const fse = require("fs-extra");
 const ini = require("ini");
-const _ = require("lodash");
 const path = require('path');
 
 const logger = require("./logger");
@@ -21,6 +21,7 @@ function isConfigFileEmpty() {
   return empty;
 }
 
+// NOTE: ONLY EXPORT FUNCTIONS, DO NOT EXPORT FIELDS
 module.exports = {
   update: function(commandLineConfigs, filepath=configFile) {
     /* Update the module with configs read from both config file and command line */
@@ -47,9 +48,11 @@ module.exports = {
   },
 
   write: function(filepath, configs) {
+    // Filter undefined and function fields
+    configs = _.pickBy(configs, (value) => { return !_.isUndefined(value) && !_.isFunction(value); });
     outputINI = ini.stringify(configs);
     fse.outputFileSync(filepath, outputINI);
   },
-  
-  configFile: configFile,
+
+  getConfigFile: () => configFile,
 }

@@ -3,7 +3,6 @@ const path = require('path');
 const uuidv4 = require('uuid/v4');
 
 const config = require('./config');
-const http = require('./http');
 const katalonRequest = require('./katalon-request');
 const logger = require('./logger');
 const os = require('./os');
@@ -62,7 +61,15 @@ const agent = {
 
   stop() {
     logger.info('Agent stopped @ ' + new Date());
-  }
+  },
+
+  updateConfigs(options) {
+    config.update(options, configFile);
+    if (!config.uuid) {
+      config.uuid = uuidv4();
+    }
+    config.write(configFile, config);
+  },
 }
 
 module.exports = agent;
