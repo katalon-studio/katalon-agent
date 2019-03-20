@@ -65,6 +65,7 @@ program
     reportUploader.upload(path);
   });
 
+// NOTE: MUST RUN AS ADMINISTRATOR TO ADD SERVICE
 program
   .command("agent-service-add")
   .version(version)
@@ -101,7 +102,7 @@ program
   });
 
 program
-  .command("agent-config")
+  .command("config")
   .option("-s, --server-url <value>", "Katalon Analytics URL")
   .option("-u, --username <value>", "Email")
   .option("-p, --password <value>", "Password")
