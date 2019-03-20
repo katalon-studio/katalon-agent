@@ -105,11 +105,13 @@ program
   .option("-s, --server-url <value>", "Katalon Analytics URL")
   .option("-u, --username <value>", "Email")
   .option("-p, --password <value>", "Password")
+  .option("-t, --teamid <value>", "Team ID")
   .action((command) => {
     var options = {
       serverUrl: command.serverUrl,
       email: command.username,
       password: command.password,
+      teamId: command.teamid,
     };
     agent.start(options);
   });

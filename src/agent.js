@@ -11,8 +11,6 @@ const os = require('./os');
 const configFile = path.resolve(os.getUserHome(), '.katalon', "agentconfig");
 const requestInterval = 5000;
 let defaultAgentName = 'katalon-agent';
-// let baseUrl = 'https://enu4mldie3ph.x.pipedream.net'
-let relativeUrl = '/api/v1/agent/';
 let options = { body: {}}
 
 const agent = {
@@ -25,7 +23,7 @@ const agent = {
     config.update(commandLineConfigs, configFile);
     const email = config.email;
     const password = config.password;
-    const baseUrl = config.serverUrl;
+    const teamId = config.teamId;
 
     katalonRequest.requestToken(email, password)
     .then(response => {
@@ -35,8 +33,7 @@ const agent = {
       setInterval(() => {
         var configs = config.read(configFile);
         if (!configs.uuid) {
-          var uuid = uuidv4();
-          configs.uuid = uuid;
+          configs.uuid = uuidv4();
           config.write(configFile, configs);
         }
   
@@ -46,8 +43,9 @@ const agent = {
   
         const body = {
           uuid: configs.uuid,
-          agentName: configs.agentName,
-          hostName: hostName,
+          name: configs.agentName,
+          teamId: teamId,
+          hostname: hostName,
           ip: hostAddress,
           os: osVersion,
         }
@@ -58,9 +56,6 @@ const agent = {
         promise.then((response) => {
           logger.debug("RESPONSE: \n", response);
         });
-        // http.request(baseUrl, relativeUrl, options, 'POST');
-  
-        logger.info(new Date());
       }, requestInterval);
     });    
   },
