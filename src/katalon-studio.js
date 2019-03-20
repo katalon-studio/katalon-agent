@@ -13,9 +13,11 @@ module.exports = {
   execute: function(ksVersionNumber, ksLocation, ksProjectPath, ksArgs, x11Display, xvfbConfiguration) {
 
     return getKsLocation(ksVersionNumber, ksLocation)
-      .then(({ ksLocation }) => {
+      .then(({ ksLocationParentDir }) => {
+        logger.info(`KSKSKSKSKS: ${ksLocationParentDir}`);
         const osVersion = os.getVersion();
-        let ksExecutable = find(ksLocation, /katalon$|katalon\.exe$/);
+        let ksExecutable = find(ksLocationParentDir, /katalon$|katalon\.exe$/);
+        logger.info(`KSKSKSKSKS: ${ksExecutable}`);
         fs.chmodSync(ksExecutable, '755');
 
         if (ksExecutable.indexOf(' ') >= 0) {
@@ -82,6 +84,7 @@ function getKsLocation(ksVersionNumber, ksLocation) {
           const ksLocationParentDir = path.join(userhome, '.katalon', ksVersionNumber);
           const katalonDoneFilePath = path.join(ksLocationParentDir, '.katalon.done');
           const ksLocation = path.join(ksLocationParentDir, ksLocationDirName);
+          logger.info(`KSKSKSKSKS: ${ksLocationParentDir}`);
           if (fs.existsSync(katalonDoneFilePath)) {
             resolve({
               ksLocationParentDir
@@ -91,6 +94,7 @@ function getKsLocation(ksVersionNumber, ksLocation) {
             return file.downloadAndExtract(ksVersion.url, ksLocationParentDir)
               .then(() => {
                 fs.writeFileSync(katalonDoneFilePath, '');
+                logger.info(`KSKSKSKSKS: ${ksLocationParentDir}`);
                 resolve({
                   ksLocationParentDir
                 });
