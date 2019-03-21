@@ -20,7 +20,6 @@ var version = "Version: " + packageJson.version;
 const _ = require("lodash");
 
 global.appRoot = path.resolve(__dirname);
-logger.error(appRoot);
 
 // program options and arguments
 program

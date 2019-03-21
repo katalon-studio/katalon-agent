@@ -7,18 +7,13 @@ const katalonRequest = require('./katalon-request');
 const logger = require('./logger');
 const os = require('./os');
 
-// const configFile = path.resolve(os.getUserHome(), '.katalon', "agentconfig");
+configFile = path.resolve('agentconfig');
 const requestInterval = 5000;
 let defaultAgentName = 'katalon-agent';
 let options = { body: {}}
 
 const agent = {
-  getConfigFile() {
-    return path.resolve(appRoot, 'agentconfig'); 
-  },
-
   start(commandLineConfigs={}) {
-    const configFile = this.getConfigFile();
     logger.info('Agent started @ ' + new Date());
     const hostAddress = ip.address();
     const hostName = os.getHostName();
@@ -28,41 +23,41 @@ const agent = {
     const email = config.email;
     const password = config.password;
     const teamId = config.teamId;
-    
-    katalonRequest.requestToken(email, password)
-    .then(response => {
 
-      const token = response.body.access_token;
-      logger.debug("Token: " + token);
+    katalonRequest
+      .requestToken(email, password)
+      .then(response => {
+        const token = response.body.access_token;
+        logger.debug("Token: " + token);
 
-      setInterval(() => {
-        var configs = config.read(configFile);
-        if (!configs.uuid) {
-          configs.uuid = uuidv4();
-          config.write(configFile, configs);
-        }
+        setInterval(() => {
+          var configs = config.read(configFile);
+          if (!configs.uuid) {
+            configs.uuid = uuidv4();
+            config.write(configFile, configs);
+          }
   
-        if (!configs.agentName) {
-          configs.agentName=hostName;
-        }
+          if (!configs.agentName) {
+            configs.agentName=hostName;
+          }
   
-        const body = {
-          uuid: configs.uuid,
-          name: configs.agentName,
-          teamId: teamId,
-          hostname: hostName,
-          ip: hostAddress,
-          os: osVersion,
-        }
-        options.body = body;  
+          const body = {
+            uuid: configs.uuid,
+            name: configs.agentName,
+            teamId: teamId,
+            hostname: hostName,
+            ip: hostAddress,
+            os: osVersion,
+          }
+          options.body = body;  
   
-        logger.debug(body);
-        var promise = katalonRequest.requestAgentInfo(token, options);
-        promise.then((response) => {
-          logger.debug("RESPONSE: \n", response);
-        });
-      }, requestInterval);
-    });    
+          logger.debug(body);
+          var promise = katalonRequest.requestAgentInfo(token, options);
+          promise.then((response) => {
+            logger.debug("RESPONSE: \n", response);
+          });
+        }, requestInterval);
+      });    
   },
 
   stop() {
@@ -70,7 +65,6 @@ const agent = {
   },
 
   updateConfigs(options) {
-    const configFile = this.getConfigFile();
     config.update(options, configFile);
     if (!config.uuid) {
       config.uuid = uuidv4();
