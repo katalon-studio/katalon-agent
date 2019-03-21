@@ -1,21 +1,16 @@
 // add an empty argument to the front in case the package is compiled to native code
 process.isPackaged && process.argv.unshift('');
-process.chdir(__dirname);
 
 var program = require('commander');
-const service = require('os-service');
-// const getRemainingArgs = require('commander-remaining-args');
 const path = require('path');
 
 var packageJson = require('./package.json');
 const agent = require('./src/agent');
 var bdd = require('./src/bdd');
 var config = require('./src/config');
-const ks = require('./src/katalon-studio');
 const logger = require('./src/logger');
 var reportUploader = require('./src/report-uploader');
 
-const serviceName = "Katalon Agent";
 var version = "Version: " + packageJson.version;
 const _ = require("lodash");
 
@@ -31,7 +26,7 @@ program
   .option("-p, --password <value>", "Password")
   .option("-o, --output <value>", "Output Directory")
   .option("-x, --proxy <value>", "HTTTP/HTTPS Proxy")
-  .on('--help', () => {})
+  .on("--help", () => {})
   .action((JQL, command) => {
     var options = {
       outputDir: command.output,
@@ -54,7 +49,7 @@ program
   .option("-p, --password <value>", "Password")
   .option("-k, --katalon-project <value>", "Katalon Project Id")
   .option("-x, --proxy <value>", "HTTTP/HTTPS Proxy")
-  .on('--help', () => {})
+  .on("--help", () => {})
   .action((path, command) => {
     var options = {
       serverUrl: command.serverUrl,
@@ -66,54 +61,6 @@ program
 
     config.update(options);
     reportUploader.upload(path);
-  });
-
-program
-  .command("katalon-studio")
-  .version(version)
-  .allowUnknownOption()
-  .option("-v, --ks-version <value>", "Katalon Studio version number")
-  .option("-d, --ks-location <value>", "Katalon Studio directory")
-  .option("-p, --ks-project-path <value>", "Katalon Studio project directory")
-  .option("-k, --ks-args <value>", "Test execution arguments")
-  .action((command) => {
-    ks.execute(command.ksVersion, command.ksLocation, command.ksProjectPath, command.ksArgs, null, '-a -n 0 -s "-screen 0 1024x768x24"')
-  });
-
-// NOTE: MUST RUN AS ADMINISTRATOR TO ADD SERVICE
-program
-  .command("agent-service-add")
-  .version(version)
-  .action(() => {
-    var options = {
-      programArgs: ["agent-service-run"]
-    };
-    service.add(serviceName, options, (error) => {
-      if (error)
-        logger.log(error.toString());
-    });
-  });
-
-program
-  .command("agent-service-remove")
-  .version(version)
-  .action(() => {
-    service.remove(serviceName, (error) => {
-      if (error)
-        logger.log(error.toString());
-    });
-  });
-
-program
-  .command("agent-service-run")
-  .version(version)
-  .action(() => {
-    service.run(() => {
-      agent.stop();
-      service.stop(0);
-    });
-
-    agent.start();
   });
 
 program
