@@ -59,7 +59,7 @@ function getKsLocation(ksVersionNumber, ksLocation) {
   return new Promise((resolve) => {
     if (ksLocation) {
       resolve({
-        ksLocation
+        ksLocationParentDir: ksLocation
       });
     } else {
       return http.request(releasesList, '', {}, 'GET')

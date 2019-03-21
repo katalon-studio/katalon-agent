@@ -3,12 +3,15 @@ process.isPackaged && process.argv.unshift('');
 process.chdir(__dirname);
 
 var program = require('commander');
-const service = require("os-service");
+const service = require('os-service');
+// const getRemainingArgs = require('commander-remaining-args');
+const path = require('path');
 
 var packageJson = require('./package.json');
-const agent = require("./src/agent").default;
+const agent = require('./src/agent');
 var bdd = require('./src/bdd');
 var config = require('./src/config');
+const ks = require('./src/katalon-studio');
 const logger = require('./src/logger');
 var reportUploader = require('./src/report-uploader');
 
@@ -16,7 +19,8 @@ const serviceName = "Katalon Agent";
 var version = "Version: " + packageJson.version;
 const _ = require("lodash");
 
-console.log(__dirname)
+global.appRoot = path.resolve(__dirname);
+logger.error(appRoot);
 
 // program options and arguments
 program
@@ -63,6 +67,18 @@ program
 
     config.update(options);
     reportUploader.upload(path);
+  });
+
+program
+  .command("katalon-studio")
+  .version(version)
+  .allowUnknownOption()
+  .option("-v, --ks-version <value>", "Katalon Studio version number")
+  .option("-d, --ks-location <value>", "Katalon Studio directory")
+  .option("-p, --ks-project-path <value>", "Katalon Studio project directory")
+  .option("-k, --ks-args <value>", "Test execution arguments")
+  .action((command) => {
+    ks.execute(command.ksVersion, command.ksLocation, command.ksProjectPath, command.ksArgs, null, '-a -n 0 -s "-screen 0 1024x768x24"')
   });
 
 // NOTE: MUST RUN AS ADMINISTRATOR TO ADD SERVICE

@@ -7,13 +7,18 @@ const katalonRequest = require('./katalon-request');
 const logger = require('./logger');
 const os = require('./os');
 
-const configFile = path.resolve(os.getUserHome(), '.katalon', "agentconfig");
+// const configFile = path.resolve(os.getUserHome(), '.katalon', "agentconfig");
 const requestInterval = 5000;
 let defaultAgentName = 'katalon-agent';
 let options = { body: {}}
 
 const agent = {
+  getConfigFile() {
+    return path.resolve(appRoot, 'agentconfig'); 
+  },
+
   start(commandLineConfigs={}) {
+    const configFile = this.getConfigFile();
     logger.info('Agent started @ ' + new Date());
     const hostAddress = ip.address();
     const hostName = os.getHostName();
@@ -23,9 +28,10 @@ const agent = {
     const email = config.email;
     const password = config.password;
     const teamId = config.teamId;
-
+    
     katalonRequest.requestToken(email, password)
     .then(response => {
+
       const token = response.body.access_token;
       logger.debug("Token: " + token);
 
@@ -37,7 +43,7 @@ const agent = {
         }
   
         if (!configs.agentName) {
-          configs.agentName=defaultAgentName;
+          configs.agentName=hostName;
         }
   
         const body = {
@@ -64,6 +70,7 @@ const agent = {
   },
 
   updateConfigs(options) {
+    const configFile = this.getConfigFile();
     config.update(options, configFile);
     if (!config.uuid) {
       config.uuid = uuidv4();
