@@ -44,20 +44,23 @@ module.exports = {
     let cmd;
     const args = [];
     const type = os.type();
+    let shell;
     if (type === 'Windows_NT') {
       cmd = 'cmd';
       args.push('/c');
       args.push(command);
+      shell = true;
     } else {
       if (x11Display) {
         command = `DISPLAY=${x11Display} ${command}`;
       }
       if (xvfbConfiguration) {
-        command = `xvfb-run ${xvfbConfiguration} command`;
+        command = `xvfb-run ${xvfbConfiguration} ${command}`;
       }
       cmd = 'sh';
       args.push('-c');
       args.push(command);
+      shell = false;
     }
     const tmpDir = tmp.dirSync();
     const tmpDirPath = tmpDir.name;
@@ -65,7 +68,7 @@ module.exports = {
     const promise = new Promise((resolve) => {
       const cmdProcess = childProcess.spawn(cmd, args, {
         cwd: tmpDirPath,
-        shell: true
+        shell
       });
       cmdProcess.stdout.on('data', (data) => {
         process.stdout.write(data.toString());
