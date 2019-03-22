@@ -1,13 +1,12 @@
-const fs = require('fs');
-const fse = require('fs-extra');
-const http = require('./http');
-const logger = require('./logger');
 const decompress = require('decompress');
 const tmp = require('tmp');
 
+const http = require('./http');
+const defaultLogger = require('./logger');
+
 module.exports = {
 
-  downloadAndExtract: function(url, targetDir) {
+  downloadAndExtract: function (url, targetDir, logger = defaultLogger) {
     logger.info(`Downloading from ${url}. It may take a few minutes.`);
     const file = tmp.fileSync();
     const filePath = file.name;
