@@ -88,12 +88,14 @@ program
   .option("-u, --username <value>", "Email")
   .option("-p, --password <value>", "Password")
   .option("-t, --teamid <value>", "Team ID")
+  .option("-a, --agent-name <value>", "Agent name")
   .action((command) => {
     var options = {
       serverUrl: command.serverUrl,
       email: command.username,
       password: command.password,
       teamId: command.teamid,
+      agentName: command.agentName,
     };
     agent.start(options);
   });
