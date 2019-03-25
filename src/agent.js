@@ -82,10 +82,10 @@ const agent = {
               res.ksProjectPath = path.resolve(tmpDir.name, 'ci-samples-master/test.prj');
               running = true;
               
-              return file.downloadAndExtract(res.projectUrl, tmpDirPath)
+              return file.downloadAndExtract(res.projectUrl, tmpDirPath, jLogger)
               .then(() => ks.execute(res.ksVersionNumber, res.ksLocation,
                 res.ksProjectPath, res.ksArgs,
-                res.x11Display, res.xvfbConfiguration))
+                res.x11Display, res.xvfbConfiguration, jLogger))
               .then((status) => {
                 logger.info("TASK FINISHED WITH STATUS:", status);
                 logger.debug("tmpDirPath:", tmpDirPath);
