@@ -1,3 +1,4 @@
+const glob = require('glob');
 const ip = require('ip');
 const path = require('path');
 const tmp = require('tmp');
@@ -11,12 +12,16 @@ const ks = require('./katalon-studio');
 const logger = require('./logger');
 const os = require('./os');
 
-configFile = path.resolve('agentconfig');
+const configFile = path.resolve('agentconfig');
 const requestInterval = 5000;
-let defaultAgentName = 'katalon-agent';
+const projectFilePattern = '**/*.prj'
 let options = { body: {}}
 
-let running = false;
+function updateJob(token, jobOptions) {
+  return katalonRequest.updateJob(token, jobOptions)
+    .then((response) => logger.debug("updateJob RESPONSE", response))
+    .catch((err) => logger.error(err));
+}
 
 const agent = {
   start(commandLineConfigs={}) {
@@ -63,41 +68,83 @@ const agent = {
           logger.debug(body);
           katalonRequest.requestAgentInfo(token, options)
           .then((response) => {
-            logger.debug("RESPONSE: \n", response);
-            let res = {
+            logger.debug("requestAgentInfo RESPONSE: \n", response);
+            return katalonRequest.requestJob(token, configs.uuid, teamId);
+          })
+          .then((response) => {
+            logger.debug("requestJob RESPONSE: \n", response);
+            const body = response.body;
+            if (!body) {
+              return;
+            }
+
+            const parameter = body.parameter;
+            if (!parameter) {
+              return;
+            }
+
+            let jobInfo = {
               ksVersionNumber: ksVersion,
               ksLocation: ksLocation,
-              ksArgs: '-retry=0 -testSuitePath="Test Suites/TS_RegressionTest" -executionProfile="default" -browserType="Chrome (headless)"',
+              ksArgs: parameter.command,
               x11Display: null,
               xvfbConfiguration: '-a -n 0 -s "-screen 0 1024x768x24"',
-              projectUrl: "https://github.com/katalon-studio-samples/ci-samples/archive/master.zip",
-            };
-            return res;            
+              downloadUrl: parameter.downloadUrl,
+              jobId: body.id,
+            }
+            return jobInfo;            
           })
-          .then((res) => {
-            if (!running) {
-              let tmpDir = tmp.dirSync({ unsafeCleanup: true, keep: true });
-              let tmpDirPath = tmpDir.name;
-              let jLogger = jobLogger.getLogger(path.resolve(tmpDirPath, 'debug.log'));
-              res.ksProjectPath = path.resolve(tmpDir.name, 'ci-samples-master/test.prj');
-              running = true;
-              
-              return file.downloadAndExtract(res.projectUrl, tmpDirPath, jLogger)
-              .then(() => ks.execute(res.ksVersionNumber, res.ksLocation,
-                res.ksProjectPath, res.ksArgs,
-                res.x11Display, res.xvfbConfiguration, jLogger))
+          .then((jobInfo) => {
+            if (jobInfo) {
+              const tmpDir = tmp.dirSync({ unsafeCleanup: true, keep: true });
+              const tmpDirPath = tmpDir.name;
+
+              const logFilePath = path.resolve(tmpDirPath, 'debug.log');
+              let jLogger = jobLogger.getLogger(logFilePath);
+
+              return file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, jLogger)
+              .then(() => {
+                const projectPathPattern = path.resolve(tmpDirPath, projectFilePattern);
+                jobInfo.ksProjectPath = glob.sync(projectPathPattern)[0];
+
+                const jobOptions = {
+                  body: {
+                    id: jobInfo.jobId,
+                    status: 'RUNNING',
+                    startTime: new Date(),
+                  }
+                }                
+                updateJob(token, jobOptions);
+
+                return ks.execute(jobInfo.ksVersionNumber, jobInfo.ksLocation,
+                                  jobInfo.ksProjectPath, jobInfo.ksArgs,
+                                  jobInfo.x11Display, jobInfo.xvfbConfiguration, jLogger)
+              })
               .then((status) => {
                 logger.info("TASK FINISHED WITH STATUS:", status);
                 logger.debug("tmpDirPath:", tmpDirPath);
+
+                let jobStatus = "SUCCESS";
+                if (status != 0) {
+                  jobStatus = "FAILED";
+                }
+
+                const jobOptions = {
+                  body: {
+                    id: jobInfo.jobId,
+                    status: jobStatus,
+                    stopTime: new Date(),
+                  }
+                }
+                updateJob(token, jobOptions);
+
                 if (!keepFiles) {
                   return tmpDir.removeCallback();
                 }
                 return;
               })
               .catch((err) => logger.error(err));
-            }
-
-            return logger.info("TASK IS RUNNING.");           
+            }       
           })
           .catch((err) => logger.error(err));
         }, requestInterval);
