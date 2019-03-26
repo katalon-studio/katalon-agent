@@ -17,13 +17,38 @@ const requestInterval = 5000;
 const projectFilePattern = '**/*.prj'
 let options = { body: {}}
 
+const JOB_STATUS = Object.freeze({
+  RUNNING: 'RUNNING',
+  SUCCESS: 'SUCCESS',
+  FAILED: 'FAILED',
+});
+
 function updateJob(token, jobOptions) {
   return katalonRequest.updateJob(token, jobOptions)
     .then((response) => logger.debug("updateJob RESPONSE", response))
     .catch((err) => logger.error(err));
 }
 
+function buildJobResponse(jobInfo, jobStatus) {
+  let jobOptions = {
+    body: {
+      id: jobInfo.jobId,
+      status: jobStatus,
+    },
+  }
+  const time = new Date();
+  if (jobStatus == JOB_STATUS.RUNNING) {
+    jobOptions.body.startTime = time;
+  } else if (jobStatus == JOB_STATUS.SUCCESS || jobStatus == JOB_STATUS.FAILED) {
+    jobOptions.body.stopTime = time;
+  }
+
+  return jobOptions;
+}
+
 const agent = {
+  running: false,
+
   start(commandLineConfigs={}) {
     logger.info('Agent started @ ' + new Date());
     const hostAddress = ip.address();
@@ -95,27 +120,26 @@ const agent = {
             return jobInfo;            
           })
           .then((jobInfo) => {
-            if (jobInfo) {
+            if (jobInfo && !running) {
+              // Create temporary directory to keep extracted project
               const tmpDir = tmp.dirSync({ unsafeCleanup: true, keep: true });
               const tmpDirPath = tmpDir.name;
 
+              // Create job logger
               const logFilePath = path.resolve(tmpDirPath, 'debug.log');
               let jLogger = jobLogger.getLogger(logFilePath);
 
+              // Update job status to running
+              const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.RUNNING);
+              updateJob(token, jobOptions);
+              this.running = true;
+
               return file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, jLogger)
               .then(() => {
+                // Find project file inside project directory
                 const projectPathPattern = path.resolve(tmpDirPath, projectFilePattern);
                 jobInfo.ksProjectPath = glob.sync(projectPathPattern)[0];
-
-                const jobOptions = {
-                  body: {
-                    id: jobInfo.jobId,
-                    status: 'RUNNING',
-                    startTime: new Date(),
-                  }
-                }                
-                updateJob(token, jobOptions);
-
+                
                 return ks.execute(jobInfo.ksVersionNumber, jobInfo.ksLocation,
                                   jobInfo.ksProjectPath, jobInfo.ksArgs,
                                   jobInfo.x11Display, jobInfo.xvfbConfiguration, jLogger)
@@ -124,26 +148,26 @@ const agent = {
                 logger.info("TASK FINISHED WITH STATUS:", status);
                 logger.debug("tmpDirPath:", tmpDirPath);
 
-                let jobStatus = "SUCCESS";
-                if (status != 0) {
-                  jobStatus = "FAILED";
-                }
-
-                const jobOptions = {
-                  body: {
-                    id: jobInfo.jobId,
-                    status: jobStatus,
-                    stopTime: new Date(),
-                  }
-                }
+                // Update job status after execution
+                const jobStatus = (status == 0) ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
+                const jobOptions = buildJobResponse(jobInfo, jobStatus);
                 updateJob(token, jobOptions);
+                this.running = false;
 
+                // Remove temporary directory when `keepFiles` is false
                 if (!keepFiles) {
                   return tmpDir.removeCallback();
                 }
                 return;
               })
-              .catch((err) => logger.error(err));
+              .catch((err) => {
+                this.running = false;
+                // Update job status to failed when exception occured
+                const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.FAILED);
+                updateJob(token, jobOptions);
+
+                logger.error(err);
+              });
             }       
           })
           .catch((err) => logger.error(err));
