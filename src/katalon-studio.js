@@ -1,16 +1,17 @@
-const http = require('./http');
-const os = require('./os');
-const file = require('./file');
-const path = require('path');
-const fs = require('fs');
-const logger = require('./logger');
 var _ = require('lodash');
+const fs = require('fs');
+const path = require('path');
+
+const file = require('./file');
+const http = require('./http');
+const defaultLogger = require('./logger');
+const os = require('./os');
 
 const releasesList = 'https://raw.githubusercontent.com/katalon-studio/katalon-studio/master/releases.json';
 
 module.exports = {
 
-  execute: function(ksVersionNumber, ksLocation, ksProjectPath, ksArgs, x11Display, xvfbConfiguration) {
+  execute: function (ksVersionNumber, ksLocation, ksProjectPath, ksArgs, x11Display, xvfbConfiguration, logger=defaultLogger) {
 
     return getKsLocation(ksVersionNumber, ksLocation)
       .then(({ ksLocationParentDir }) => {
@@ -29,7 +30,7 @@ module.exports = {
         }
         ksCommand = `${ksCommand} ${ksArgs}`;
         logger.info(`Execute Katalon Studio: ${ksCommand}`);
-        return os.runCommand(ksCommand, x11Display, xvfbConfiguration);
+        return os.runCommand(ksCommand, x11Display, xvfbConfiguration, logger);
       });
   }
 };
@@ -59,7 +60,7 @@ function getKsLocation(ksVersionNumber, ksLocation) {
   return new Promise((resolve) => {
     if (ksLocation) {
       resolve({
-        ksLocation
+        ksLocationParentDir: ksLocation
       });
     } else {
       return http.request(releasesList, '', {}, 'GET')
@@ -80,7 +81,7 @@ function getKsLocation(ksVersionNumber, ksLocation) {
             throw `Unexpected file name ${fileName}`;
           }
           const ksLocationDirName = fileName.replace(fileExtension, '');
-          const userhome = os.getUserhome();
+          const userhome = os.getUserHome();
           const ksLocationParentDir = path.join(userhome, '.katalon', ksVersionNumber);
           const katalonDoneFilePath = path.join(ksLocationParentDir, '.katalon.done');
           const ksLocation = path.join(ksLocationParentDir, ksLocationDirName);

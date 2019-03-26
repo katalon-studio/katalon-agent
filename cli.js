@@ -1,20 +1,20 @@
 // add an empty argument to the front in case the package is compiled to native code
 process.isPackaged && process.argv.unshift('');
-process.chdir(__dirname);
 
 var program = require('commander');
+const path = require('path');
+
 var packageJson = require('./package.json');
+const agent = require('./src/agent');
 var bdd = require('./src/bdd');
 var config = require('./src/config');
-var reportUploader = require('./src/report-uploader');
-const service = require("os-service");
-const agent = require("./src/agent");
 const logger = require('./src/logger');
+var reportUploader = require('./src/report-uploader');
 
-const serviceName = "Katalon Agent";
 var version = "Version: " + packageJson.version;
+const _ = require("lodash");
 
-console.log(__dirname)
+global.appRoot = path.resolve(__dirname);
 
 // program options and arguments
 program
@@ -26,7 +26,7 @@ program
   .option("-p, --password <value>", "Password")
   .option("-o, --output <value>", "Output Directory")
   .option("-x, --proxy <value>", "HTTTP/HTTPS Proxy")
-  .on('--help', () => {})
+  .on("--help", () => {})
   .action((JQL, command) => {
     var options = {
       outputDir: command.output,
@@ -49,7 +49,7 @@ program
   .option("-p, --password <value>", "Password")
   .option("-k, --katalon-project <value>", "Katalon Project Id")
   .option("-x, --proxy <value>", "HTTTP/HTTPS Proxy")
-  .on('--help', () => {})
+  .on("--help", () => {})
   .action((path, command) => {
     var options = {
       serverUrl: command.serverUrl,
@@ -64,38 +64,44 @@ program
   });
 
 program
-  .command("service-add")
-  .version(version)
-  .action(() => {
+  .command("config")
+  .option("-s, --server-url <value>", "Katalon Analytics URL")
+  .option("-u, --username <value>", "Email")
+  .option("-p, --password <value>", "Password")
+  .option("-t, --teamid <value>", "Team ID")
+  .option("-a, --agent-name <value>", "Agent name")
+  .option("-k, --ks-version <value>", "Katalon Studio version number")
+  .option("-d, --ks-dir <value>", "Katalon Studio directory")
+  .action((command) => {
     var options = {
-      programArgs: ["service-run"]
+      serverUrl: command.serverUrl,
+      email: command.username,
+      password: command.password,
+      teamId: command.teamid,
+      agentName: command.agentName,
+      ksVersionNumber: command.ksVersion,
+      ksLocation: command.ksDir,
     };
-    service.add(serviceName, options, (error) => {
-      if (error)
-        logger.log(error.toString());
-    });
+    agent.updateConfigs(options);
   });
 
 program
-  .command("service-remove")
+  .command("start-agent")
   .version(version)
-  .action(() => {
-    service.remove(serviceName, (error) => {
-      if (error)
-        logger.log(error.toString());
-    });
-  });
-
-program
-  .command("service-run")
-  .version(version)
-  .action(() => {
-    service.run(() => {
-      agent.stop();
-      service.stop(0);
-    });
-
-    agent.start();
+  .option("-s, --server-url <value>", "Katalon Analytics URL")
+  .option("-u, --username <value>", "Email")
+  .option("-p, --password <value>", "Password")
+  .option("-t, --teamid <value>", "Team ID")
+  .option("-a, --agent-name <value>", "Agent name")
+  .action((command) => {
+    var options = {
+      serverUrl: command.serverUrl,
+      email: command.username,
+      password: command.password,
+      teamId: command.teamid,
+      agentName: command.agentName,
+    };
+    agent.start(options);
   });
 
 program.parse(process.argv);
