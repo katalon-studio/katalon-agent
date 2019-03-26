@@ -94,83 +94,80 @@ const agent = {
           katalonRequest.requestAgentInfo(token, options)
           .then((response) => {
             logger.debug("requestAgentInfo RESPONSE: \n", response);
+          }).catch((err) => logger.error(err));
 
-            if (this.running) {
-              return;
-            }
-            return katalonRequest.requestJob(token, configs.uuid, teamId);
-          })
-          .then((response) => {
-            logger.debug("requestJob RESPONSE: \n", response);
-            if (!response || !response.body || !response.body.parameter) {
-              return;
-            }
-            const body = response.body;
-            const parameter = body.parameter;
-
-            let jobInfo = {
-              ksVersionNumber: ksVersion,
-              ksLocation: ksLocation,
-              ksArgs: parameter.command,
-              x11Display: null,
-              xvfbConfiguration: '-a -n 0 -s "-screen 0 1024x768x24"',
-              downloadUrl: parameter.downloadUrl,
-              jobId: body.id,
-            }
-            return jobInfo;            
-          })
-          .then((jobInfo) => {
-            if (jobInfo) {
-              // Create temporary directory to keep extracted project
-              const tmpDir = tmp.dirSync({ unsafeCleanup: true, keep: true });
-              const tmpDirPath = tmpDir.name;
-
-              // Create job logger
-              const logFilePath = path.resolve(tmpDirPath, 'debug.log');
-              let jLogger = jobLogger.getLogger(logFilePath);
-
-              // Update job status to running
-              const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.RUNNING);
-              updateJob(token, jobOptions);
-              this.running = true;
-
-              return file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, jLogger)
-              .then(() => {
-                // Find project file inside project directory
-                const projectPathPattern = path.resolve(tmpDirPath, projectFilePattern);
-                jobInfo.ksProjectPath = glob.sync(projectPathPattern)[0];
-                
-                return ks.execute(jobInfo.ksVersionNumber, jobInfo.ksLocation,
-                                  jobInfo.ksProjectPath, jobInfo.ksArgs,
-                                  jobInfo.x11Display, jobInfo.xvfbConfiguration, jLogger)
-              })
-              .then((status) => {
-                logger.info("TASK FINISHED WITH STATUS:", status);
-                logger.debug("tmpDirPath:", tmpDirPath);
-
-                // Update job status after execution
-                const jobStatus = (status == 0) ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
-                const jobOptions = buildJobResponse(jobInfo, jobStatus);
-                updateJob(token, jobOptions);
-                this.running = false;
-
-                // Remove temporary directory when `keepFiles` is false
-                if (!keepFiles) {
-                  return tmpDir.removeCallback();
-                }
+          if (!this.running) {
+            katalonRequest.requestJob(token, configs.uuid, teamId).then((response) => {
+              logger.debug("requestJob RESPONSE: \n", response);
+              if (!response || !response.body || !response.body.parameter) {
                 return;
-              })
-              .catch((err) => {
-                this.running = false;
-                // Update job status to failed when exception occured
-                const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.FAILED);
+              }
+              const body = response.body;
+              const parameter = body.parameter;
+  
+              let jobInfo = {
+                ksVersionNumber: ksVersion,
+                ksLocation: ksLocation,
+                ksArgs: parameter.command,
+                x11Display: null,
+                xvfbConfiguration: '-a -n 0 -s "-screen 0 1024x768x24"',
+                downloadUrl: parameter.downloadUrl,
+                jobId: body.id,
+              }
+              return jobInfo;            
+            })
+            .then((jobInfo) => {
+              if (jobInfo) {
+                // Create temporary directory to keep extracted project
+                const tmpDir = tmp.dirSync({ unsafeCleanup: true, keep: true });
+                const tmpDirPath = tmpDir.name;
+  
+                // Create job logger
+                const logFilePath = path.resolve(tmpDirPath, 'debug.log');
+                let jLogger = jobLogger.getLogger(logFilePath);
+  
+                // Update job status to running
+                const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.RUNNING);
                 updateJob(token, jobOptions);
-
-                logger.error(err);
-              });
-            }       
-          })
-          .catch((err) => logger.error(err));
+                this.running = true;
+  
+                return file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, jLogger)
+                  .then(() => {
+                    // Find project file inside project directory
+                    const projectPathPattern = path.resolve(tmpDirPath, projectFilePattern);
+                    jobInfo.ksProjectPath = glob.sync(projectPathPattern)[0];
+                    
+                    return ks.execute(jobInfo.ksVersionNumber, jobInfo.ksLocation,
+                                      jobInfo.ksProjectPath, jobInfo.ksArgs,
+                                      jobInfo.x11Display, jobInfo.xvfbConfiguration, jLogger)
+                  })
+                  .then((status) => {
+                    logger.info("TASK FINISHED WITH STATUS:", status);
+                    logger.debug("tmpDirPath:", tmpDirPath);
+    
+                    // Update job status after execution
+                    const jobStatus = (status == 0) ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
+                    const jobOptions = buildJobResponse(jobInfo, jobStatus);
+                    updateJob(token, jobOptions);
+                    this.running = false;
+    
+                    // Remove temporary directory when `keepFiles` is false
+                    if (!keepFiles) {
+                      return tmpDir.removeCallback();
+                    }
+                    return;
+                  })
+                  .catch((err) => {
+                    this.running = false;
+                    // Update job status to failed when exception occured
+                    const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.FAILED);
+                    updateJob(token, jobOptions);
+    
+                    logger.error(err);
+                  });
+              }       
+            });
+          }
         }, requestInterval);
       }); 
   },
