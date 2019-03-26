@@ -94,19 +94,19 @@ const agent = {
           katalonRequest.requestAgentInfo(token, options)
           .then((response) => {
             logger.debug("requestAgentInfo RESPONSE: \n", response);
+
+            if (this.running) {
+              return;
+            }
             return katalonRequest.requestJob(token, configs.uuid, teamId);
           })
           .then((response) => {
             logger.debug("requestJob RESPONSE: \n", response);
+            if (!response || !response.body || !response.body.parameter) {
+              return;
+            }
             const body = response.body;
-            if (!body) {
-              return;
-            }
-
             const parameter = body.parameter;
-            if (!parameter) {
-              return;
-            }
 
             let jobInfo = {
               ksVersionNumber: ksVersion,
@@ -120,7 +120,7 @@ const agent = {
             return jobInfo;            
           })
           .then((jobInfo) => {
-            if (jobInfo && !running) {
+            if (jobInfo) {
               // Create temporary directory to keep extracted project
               const tmpDir = tmp.dirSync({ unsafeCleanup: true, keep: true });
               const tmpDirPath = tmpDir.name;
