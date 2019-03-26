@@ -10,7 +10,7 @@ var archiver = require('archiver');
 const logExtension=/.*[^\.har|.zip]$/
 const harExtension=/.*\.(har)$/
 
-const uploadInfoOutPath=ka_upload_info.json
+// const uploadInfoOutPath=ka_upload_info.json
 
 // const oauth2 = {
 //   grant_type: "password",
