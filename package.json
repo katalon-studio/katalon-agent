@@ -20,7 +20,8 @@
     "rsvp": "^4.8.4",
     "tmp": "0.0.33",
     "url-join": "^4.0.0",
-    "uuid": "^3.3.2"
+    "uuid": "^3.3.2",
+    "winston": "^3.2.1"
   },
   "author": "katalon",
   "license": "ISC",
