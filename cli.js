@@ -70,6 +70,8 @@ program
   .option("-p, --password <value>", "Password")
   .option("-t, --teamid <value>", "Team ID")
   .option("-a, --agent-name <value>", "Agent name")
+  .option("-k, --ks-version <value>", "Katalon Studio version number")
+  .option("-d, --ks-dir <value>", "Katalon Studio directory")
   .action((command) => {
     var options = {
       serverUrl: command.serverUrl,
@@ -77,6 +79,8 @@ program
       password: command.password,
       teamId: command.teamid,
       agentName: command.agentName,
+      ksVersionNumber: command.ksVersion,
+      ksLocation: command.ksDir,
     };
     agent.updateConfigs(options);
   });
