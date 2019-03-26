@@ -1,12 +1,17 @@
-const os = require('os');
 const childProcess = require('child_process');
+const os = require('os');
 const tmp = require('tmp');
+
 const logger = require('./logger');
 
 module.exports = {
 
-  getUserhome: function() {
+  getUserHome: function() {
     return os.homedir();
+  },
+
+  getHostName: function() {
+    return os.hostname();
   },
 
   getVersion: function() {
@@ -39,7 +44,7 @@ module.exports = {
     return version;
   },
 
-  runCommand: function(command, x11Display, xvfbConfiguration) {
+  runCommand: function(command, x11Display, xvfbConfiguration, logger=logger) {
 
     let cmd;
     const args = [];
@@ -71,10 +76,10 @@ module.exports = {
         shell
       });
       cmdProcess.stdout.on('data', (data) => {
-        process.stdout.write(data.toString());
+        logger.debug(data.toString());
       });
       cmdProcess.stderr.on('data', (data) => {
-        process.stderr.write(data.toString());
+        logger.debug(data.toString());
       });
       cmdProcess.on('close', (code) => {
         logger.info(`Exit code: ${code}.`);

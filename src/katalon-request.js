@@ -9,6 +9,9 @@ const KATALON_TEST_REPORTS_URI = "/api/v1/katalon-test-reports";
 const KATALON_RECORDER_TEST_REPORTS_URI = "/api/v1/katalon-recorder/test-reports";
 const KATALON_JUNIT_TEST_REPORTS_URI = "/api/v1/junit/test-reports";
 
+const KATALON_AGENT_URI = "/api/v1/agent/";
+const KATALON_JOB_URI = "/api/v1/jobs/"
+
 const oauth2 = {
   grant_type: "password",
   client_secret: "kit_uploader",
@@ -72,5 +75,32 @@ module.exports = {
       },
     }
     return http.request(config.serverUrl, url, options, 'post');
-  }
+  },
+
+  requestAgentInfo: function(token, options) {
+    options.auth = {
+      bearer: token,
+    };
+    return http.request(config.serverUrl, KATALON_AGENT_URI, options, 'POST');
+  },
+
+  requestJob: function(token, uuid, teamId) {
+    const options = {
+      auth: {
+        bearer: token,
+      },
+      qs: {
+        uuid,
+        teamId,
+      },
+    }
+    return http.request(config.serverUrl, KATALON_JOB_URI + 'get-job', options, 'GET');
+  },
+
+  updateJob: function(token, options) {
+    options.auth = {
+      bearer: token,
+    };
+    return http.request(config.serverUrl, KATALON_JOB_URI + 'update-job', options, 'POST');
+  },
 }
