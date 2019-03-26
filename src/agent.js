@@ -47,6 +47,8 @@ function buildJobResponse(jobInfo, jobStatus) {
 }
 
 const agent = {
+  running: false,
+
   start(commandLineConfigs={}) {
     logger.info('Agent started @ ' + new Date());
     const hostAddress = ip.address();
@@ -118,7 +120,7 @@ const agent = {
             return jobInfo;            
           })
           .then((jobInfo) => {
-            if (jobInfo) {
+            if (jobInfo && !running) {
               // Create temporary directory to keep extracted project
               const tmpDir = tmp.dirSync({ unsafeCleanup: true, keep: true });
               const tmpDirPath = tmpDir.name;
@@ -130,6 +132,7 @@ const agent = {
               // Update job status to running
               const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.RUNNING);
               updateJob(token, jobOptions);
+              this.running = true;
 
               return file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, jLogger)
               .then(() => {
@@ -149,6 +152,7 @@ const agent = {
                 const jobStatus = (status == 0) ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
                 const jobOptions = buildJobResponse(jobInfo, jobStatus);
                 updateJob(token, jobOptions);
+                this.running = false;
 
                 // Remove temporary directory when `keepFiles` is false
                 if (!keepFiles) {
@@ -157,6 +161,7 @@ const agent = {
                 return;
               })
               .catch((err) => {
+                this.running = false;
                 // Update job status to failed when exception occured
                 const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.FAILED);
                 updateJob(token, jobOptions);
