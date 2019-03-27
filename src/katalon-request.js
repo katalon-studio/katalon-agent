@@ -77,7 +77,7 @@ module.exports = {
     return http.request(config.serverUrl, url, options, 'post');
   },
 
-  requestAgentInfo: function(token, options) {
+  pingAgent: function(token, options) {
     options.auth = {
       bearer: token,
     };

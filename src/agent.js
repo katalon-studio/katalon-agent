@@ -91,9 +91,9 @@ const agent = {
           options.body = body;  
   
           logger.debug(body);
-          katalonRequest.requestAgentInfo(token, options)
+          katalonRequest.pingAgent(token, options)
           .then((response) => {
-            logger.debug("requestAgentInfo RESPONSE: \n", response);
+            logger.debug("ping Agent, RESPONSE: \n", response);
           }).catch((err) => logger.error(err));
 
           if (!this.running) {
@@ -121,6 +121,7 @@ const agent = {
                 // Create temporary directory to keep extracted project
                 const tmpDir = tmp.dirSync({ unsafeCleanup: true, keep: true });
                 const tmpDirPath = tmpDir.name;
+                logger.debug("tmpDirPath:", tmpDirPath);
   
                 // Create job logger
                 const logFilePath = path.resolve(tmpDirPath, 'debug.log');
@@ -143,8 +144,6 @@ const agent = {
                   })
                   .then((status) => {
                     logger.info("TASK FINISHED WITH STATUS:", status);
-                    logger.debug("tmpDirPath:", tmpDirPath);
-    
                     // Update job status after execution
                     const jobStatus = (status == 0) ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
                     const jobOptions = buildJobResponse(jobInfo, jobStatus);
