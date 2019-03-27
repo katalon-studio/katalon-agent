@@ -26,13 +26,12 @@ logConfigs = {
         },
     },
     categories: {
-        default: { appenders: ["app", "errors", "out"], level: "DEBUG", },
+        default: { appenders: ["app", "errors", "out"], level: "INFO", },
     },
 }
 
 log4js.configure(logConfigs);
 var logger = log4js.getLogger('katalon');
-logger.level = 'all';
 
  
 module.exports = logger;

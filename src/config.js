@@ -32,13 +32,11 @@ module.exports = {
     // Merge both configs
     let configs = _.extend({}, fileConfigs, commandLineConfigs, {pathPatterns: _.get(fileConfigs, "paths.path", [])});
 
-    logger.debug("Update configs: \n", configs);
     // Add configs to global and export configs
     global = _.extend(global, configs);
     for (var p in global) {
       module.exports[p] = global[p];
     }
-    logger.debug("Global configs: \n", global);
   },
 
   read: function(filepath) {

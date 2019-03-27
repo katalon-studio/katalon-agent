@@ -7,3 +7,4 @@ teamId=
 ksVersionNumber=
 ksLocation=
 keepFiles=false
+logLevel=INFO

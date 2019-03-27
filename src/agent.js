@@ -62,12 +62,16 @@ const agent = {
     const ksVersion = config.ksVersionNumber;
     const ksLocation = config.ksLocation;
     const keepFiles = config.keepFiles;
+    const logLevel = config.logLevel;
+    if (logLevel) {
+      logger.level = logLevel;
+    }
 
     katalonRequest
       .requestToken(email, password)
       .then(response => {
         const token = response.body.access_token;
-        logger.debug("Token: " + token);
+        logger.trace("Token: " + token);
 
         setInterval(() => {
           var configs = config.read(configFile);
@@ -90,11 +94,8 @@ const agent = {
           }
           options.body = body;  
   
-          logger.debug(body);
-          katalonRequest.requestAgentInfo(token, options)
-          .then((response) => {
-            logger.debug("requestAgentInfo RESPONSE: \n", response);
-          }).catch((err) => logger.error(err));
+          logger.trace(body);
+          katalonRequest.requestAgentInfo(token, options).catch((err) => logger.error(err));
 
           if (!this.running) {
             katalonRequest.requestJob(token, configs.uuid, teamId).then((response) => {
@@ -110,7 +111,7 @@ const agent = {
                 ksLocation: ksLocation,
                 ksArgs: parameter.command,
                 x11Display: null,
-                xvfbConfiguration: '-a -n 0 -s "-screen 0 1024x768x24"',
+                xvfbConfiguration: null,
                 downloadUrl: parameter.downloadUrl,
                 jobId: body.id,
               }
@@ -142,8 +143,7 @@ const agent = {
                                       jobInfo.x11Display, jobInfo.xvfbConfiguration, jLogger)
                   })
                   .then((status) => {
-                    logger.info("TASK FINISHED WITH STATUS:", status);
-                    logger.debug("tmpDirPath:", tmpDirPath);
+                    logger.debug("TASK FINISHED WITH STATUS:", status);
     
                     // Update job status after execution
                     const jobStatus = (status == 0) ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
