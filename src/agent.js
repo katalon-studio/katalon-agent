@@ -11,8 +11,9 @@ const katalonRequest = require('./katalon-request');
 const ks = require('./katalon-studio');
 const logger = require('./logger');
 const os = require('./os');
+const utils = require('./utils')
 
-const configFile = path.resolve('agentconfig');
+const configFile = utils.getPath('agentconfig');
 const requestInterval = 5000;
 const projectFilePattern = '**/*.prj'
 let options = { body: {}}
@@ -46,6 +47,51 @@ function buildJobResponse(jobInfo, jobStatus) {
   return jobOptions;
 }
 
+function executeJob(token, jobInfo, keepFiles) {
+  // Create temporary directory to keep extracted project
+  const tmpDir = tmp.dirSync({ unsafeCleanup: true, keep: true });
+  const tmpDirPath = tmpDir.name;
+  logger.info('tmpDirPath:', tmpDirPath)
+
+  // Create job logger
+  const logFilePath = path.resolve(tmpDirPath, 'debug.log');
+  let jLogger = jobLogger.getLogger(logFilePath);
+
+  return file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, jLogger)
+    .then(() => {
+      // Find project file inside project directory
+      const projectPathPattern = path.resolve(tmpDirPath, projectFilePattern);
+      jobInfo.ksProjectPath = glob.sync(projectPathPattern)[0];
+
+      return ks.execute(jobInfo.ksVersionNumber, jobInfo.ksLocation,
+        jobInfo.ksProjectPath, jobInfo.ksArgs,
+        jobInfo.x11Display, jobInfo.xvfbConfiguration, jLogger)
+    })
+    .then((status) => {
+      logger.debug("TASK FINISHED WITH STATUS:", status);
+
+      // Update job status after execution
+      const jobStatus = (status == 0) ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
+      const jobOptions = buildJobResponse(jobInfo, jobStatus);
+      updateJob(token, jobOptions);
+      this.running = false;
+
+      // Remove temporary directory when `keepFiles` is false
+      if (!keepFiles) {
+        return tmpDir.removeCallback();
+      }
+      return;
+    })
+    .catch((err) => {
+      this.running = false;
+      // Update job status to failed when exception occured
+      const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.FAILED);
+      updateJob(token, jobOptions);
+
+      logger.error(err);
+    });
+}
+
 const agent = {
   running: false,
 
@@ -67,23 +113,24 @@ const agent = {
       logger.level = logLevel;
     }
 
-    katalonRequest
-      .requestToken(email, password)
-      .then(response => {
-        const token = response.body.access_token;
-        logger.trace("Token: " + token);
+    var token;
 
-        setInterval(() => {
+    setInterval(() => {
+      katalonRequest.requestToken(email, password)
+        .then(response => {
+          token = response.body.access_token;
+          logger.trace("Token: " + token);
+
           var configs = config.read(configFile);
           if (!configs.uuid) {
             configs.uuid = uuidv4();
             config.write(configFile, configs);
           }
-  
+
           if (!configs.agentName) {
-            configs.agentName=hostName;
+            configs.agentName = hostName;
           }
-  
+
           const body = {
             uuid: configs.uuid,
             name: configs.agentName,
@@ -92,20 +139,26 @@ const agent = {
             ip: hostAddress,
             os: osVersion,
           }
-          options.body = body;  
-  
+          options.body = body;
+
           logger.trace(body);
           katalonRequest.requestAgentInfo(token, options).catch((err) => logger.error(err));
 
-          if (!this.running) {
-            katalonRequest.requestJob(token, configs.uuid, teamId).then((response) => {
-              logger.debug("requestJob RESPONSE: \n", response);
+          if (this.running) {
+            // Agent is executing a job, do nothing
+            return;
+          }
+
+          // Agent is not executing job, request new job
+          return katalonRequest.requestJob(token, configs.uuid, teamId)
+            .then((response) => {
               if (!response || !response.body || !response.body.parameter) {
+                // There is no job to execute
                 return;
               }
               const body = response.body;
               const parameter = body.parameter;
-  
+
               let jobInfo = {
                 ksVersionNumber: ksVersion,
                 ksLocation: ksLocation,
@@ -115,61 +168,24 @@ const agent = {
                 downloadUrl: parameter.downloadUrl,
                 jobId: body.id,
               }
-              return jobInfo;            
+              return jobInfo;
             })
             .then((jobInfo) => {
-              if (jobInfo) {
-                // Create temporary directory to keep extracted project
-                const tmpDir = tmp.dirSync({ unsafeCleanup: true, keep: true });
-                const tmpDirPath = tmpDir.name;
-  
-                // Create job logger
-                const logFilePath = path.resolve(tmpDirPath, 'debug.log');
-                let jLogger = jobLogger.getLogger(logFilePath);
-  
-                // Update job status to running
-                const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.RUNNING);
-                updateJob(token, jobOptions);
-                this.running = true;
-  
-                return file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, jLogger)
-                  .then(() => {
-                    // Find project file inside project directory
-                    const projectPathPattern = path.resolve(tmpDirPath, projectFilePattern);
-                    jobInfo.ksProjectPath = glob.sync(projectPathPattern)[0];
-                    
-                    return ks.execute(jobInfo.ksVersionNumber, jobInfo.ksLocation,
-                                      jobInfo.ksProjectPath, jobInfo.ksArgs,
-                                      jobInfo.x11Display, jobInfo.xvfbConfiguration, jLogger)
-                  })
-                  .then((status) => {
-                    logger.debug("TASK FINISHED WITH STATUS:", status);
-    
-                    // Update job status after execution
-                    const jobStatus = (status == 0) ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
-                    const jobOptions = buildJobResponse(jobInfo, jobStatus);
-                    updateJob(token, jobOptions);
-                    this.running = false;
-    
-                    // Remove temporary directory when `keepFiles` is false
-                    if (!keepFiles) {
-                      return tmpDir.removeCallback();
-                    }
-                    return;
-                  })
-                  .catch((err) => {
-                    this.running = false;
-                    // Update job status to failed when exception occured
-                    const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.FAILED);
-                    updateJob(token, jobOptions);
-    
-                    logger.error(err);
-                  });
-              }       
+              if (!jobInfo) {
+                // There is no job to execute
+                return;
+              }             
+
+              // Update job status to running
+              const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.RUNNING);
+              updateJob(token, jobOptions);
+              this.running = true;
+
+              return executeJob(token, jobInfo, keepFiles);
             });
-          }
-        }, requestInterval);
-      }); 
+        })
+        .catch(err => logger.error(err));
+    }, requestInterval);
   },
 
   stop() {
