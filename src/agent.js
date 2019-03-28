@@ -142,7 +142,7 @@ const agent = {
           options.body = body;
 
           logger.trace(body);
-          katalonRequest.requestAgentInfo(token, options).catch((err) => logger.error(err));
+          katalonRequest.pingAgent(token, options).catch((err) => logger.error(err));
 
           if (this.running) {
             // Agent is executing a job, do nothing

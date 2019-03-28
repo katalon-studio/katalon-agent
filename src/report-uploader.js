@@ -41,7 +41,11 @@ let zip = (folderPath, harFiles) => {
 }
 
 let writeUploadInfo = (batch, files) => {
-  
+  let uploadInfo = {};
+  uploadInfo[batch] = files;
+  if (uploadInfoOutPath) {
+    fse.outputJSONSync(file, uploadInfo);
+  }
 }
 
 
@@ -118,6 +122,8 @@ module.exports = {
             });
           });
       });
+
+      writeUploadInfo(batch, logFiles);
     });
 
 
