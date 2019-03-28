@@ -49,7 +49,7 @@ function buildJobResponse(jobInfo, jobStatus) {
 
 function executeJob(token, jobInfo, keepFiles) {
   // Create temporary directory to keep extracted project
-  const tmpDir = tmp.dirSync({ unsafeCleanup: true, keep: true });
+  const tmpDir = tmp.dirSync({ unsafeCleanup: true, keep: true, dir: appRoot });
   const tmpDirPath = tmpDir.name;
   logger.info('tmpDirPath:', tmpDirPath)
 
