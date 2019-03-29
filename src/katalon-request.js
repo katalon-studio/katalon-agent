@@ -103,4 +103,31 @@ module.exports = {
     };
     return http.request(config.serverUrl, KATALON_JOB_URI + 'update-job', options, 'POST');
   },
+
+  saveJobLog: function(token, jobInfo, batch, fileName) {
+    options = {
+      auth: {
+        bearer: token,
+      },
+      qs: {
+        projectId: jobInfo.projectId,
+        jobId: jobInfo.jobId,
+        batch,
+        folderPath: '',
+        fileName,
+        uploadedPath: jobInfo.uploadPath,
+      }
+    };
+    return http.request(config.serverUrl, KATALON_JOB_URI + 'save-job', options, 'POST');
+  },
+
+  getJobLog: function(token, jobInfo) {
+    const jobId = jobInfo.jobId;
+    const options = {
+      auth: {
+        bearer: token,
+      },
+    }
+    return http.request(config.serverUrl, KATALON_JOB_URI + jobId + '/get-job', options, 'GET');
+  },
 }

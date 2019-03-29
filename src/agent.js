@@ -14,7 +14,7 @@ const os = require('./os');
 const utils = require('./utils')
 
 const configFile = utils.getPath('agentconfig');
-const requestInterval = 5000;
+const requestInterval = 10000;
 const projectFilePattern = '**/*.prj'
 let options = { body: {}}
 
@@ -73,22 +73,54 @@ function executeJob(token, jobInfo, keepFiles) {
       // Update job status after execution
       const jobStatus = (status == 0) ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
       const jobOptions = buildJobResponse(jobInfo, jobStatus);
-      updateJob(token, jobOptions);
-      this.running = false;
 
       // Remove temporary directory when `keepFiles` is false
       if (!keepFiles) {
-        return tmpDir.removeCallback();
+        tmpDir.removeCallback();
       }
-      return;
+
+      this.running = false;
+      return updateJob(token, jobOptions);
+    })
+    .then(() => {
+      return uploadLog(token, jobInfo, logFilePath);
     })
     .catch((err) => {
-      this.running = false;
-      // Update job status to failed when exception occured
-      const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.FAILED);
-      updateJob(token, jobOptions);
-
       logger.error(err);
+      this.running = false;
+
+      // Update job status to failed when exception occured
+      // NOTE: Job status is set FAILED might not be because of a failed execution
+      // but because of other reasons such as cannot remove tmp directory or cannot upload log
+      const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.FAILED);
+      return updateJob(token, jobOptions);
+    });
+}
+
+function uploadLog(token, jobInfo, filePath) {
+  // Request upload URL
+  return katalonRequest.getUploadInfo(token, jobInfo.projectId)
+    .then((response) => {
+      if (!response || !response.body) {
+        return;
+      }
+
+      const body = response.body;
+      const uploadUrl = body.uploadUrl;
+      const uploadPath = body.path;
+
+      jobInfo.uploadUrl = uploadUrl;
+      jobInfo.uploadPath = uploadPath;
+
+      // Upload file with received URL
+      return katalonRequest.uploadFile(uploadUrl, filePath);
+    })
+    .then(() => {
+      const batch = new Date().getTime() + "-" + uuidv4();
+      const fileName = path.basename(filePath);
+
+      // Update job's upload file
+      return katalonRequest.saveJobLog(token, jobInfo, batch, fileName);
     });
 }
 
@@ -152,12 +184,13 @@ const agent = {
           // Agent is not executing job, request new job
           return katalonRequest.requestJob(token, configs.uuid, teamId)
             .then((response) => {
-              if (!response || !response.body || !response.body.parameter) {
+              if (!response || !response.body || !response.body.parameter || !response.body.testProject) {
                 // There is no job to execute
                 return;
               }
               const body = response.body;
               const parameter = body.parameter;
+              const testProject = body.testProject
 
               let jobInfo = {
                 ksVersionNumber: ksVersion,
@@ -167,6 +200,7 @@ const agent = {
                 xvfbConfiguration: null,
                 downloadUrl: parameter.downloadUrl,
                 jobId: body.id,
+                projectId: testProject.projectId,
               }
               return jobInfo;
             })
@@ -174,7 +208,7 @@ const agent = {
               if (!jobInfo) {
                 // There is no job to execute
                 return;
-              }             
+              }
 
               // Update job status to running
               const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.RUNNING);
