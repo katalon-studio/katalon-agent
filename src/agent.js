@@ -26,8 +26,7 @@ const JOB_STATUS = Object.freeze({
 
 function updateJob(token, jobOptions) {
   return katalonRequest.updateJob(token, jobOptions)
-    .then((response) => logger.debug("updateJob RESPONSE", response))
-    .catch((err) => logger.error(err));
+    .catch((err) => logger.error(`${updateJob.name}:`, err));
 }
 
 function buildJobResponse(jobInfo, jobStatus) {
@@ -74,24 +73,23 @@ function executeJob(token, jobInfo, keepFiles) {
       const jobStatus = (status == 0) ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
       const jobOptions = buildJobResponse(jobInfo, jobStatus);
 
-      // Remove temporary directory when `keepFiles` is false
-      if (!keepFiles) {
-        tmpDir.removeCallback();
-      }
-
       return updateJob(token, jobOptions);
     })
-    .then(() => {
-      return uploadLog(token, jobInfo, logFilePath);
-    })
+    .then(() => uploadLog(token, jobInfo, logFilePath))
     .catch((err) => {
-      logger.error(err);
+      logger.error(`${executeJob.name}:`, err);
 
       // Update job status to failed when exception occured
       // NOTE: Job status is set FAILED might not be because of a failed execution
       // but because of other reasons such as cannot remove tmp directory or cannot upload log
       const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.FAILED);
       return updateJob(token, jobOptions);
+    })
+    .finally(() => {
+      // Remove temporary directory when `keepFiles` is false
+      if (!keepFiles) {
+        tmpDir.removeCallback();
+      }
     });
 }
 
@@ -203,7 +201,7 @@ const agent = {
               return jobInfo;
             })
             .then((jobInfo) => {
-              if (!jobInfo) {
+              if (!jobInfo) {`${uploadLog.name}:`
                 // There is no job to execute
                 return;
               }
@@ -214,9 +212,7 @@ const agent = {
               this.running = true;
 
               return executeJob(token, jobInfo, keepFiles);
-            }).then(() => {
-              this.running = false;
-            }).catch((ex) => {
+            }).catch(() => {
               this.running = false;
             });
         })
