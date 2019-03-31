@@ -79,7 +79,6 @@ function executeJob(token, jobInfo, keepFiles) {
         tmpDir.removeCallback();
       }
 
-      this.running = false;
       return updateJob(token, jobOptions);
     })
     .then(() => {
@@ -87,7 +86,6 @@ function executeJob(token, jobInfo, keepFiles) {
     })
     .catch((err) => {
       logger.error(err);
-      this.running = false;
 
       // Update job status to failed when exception occured
       // NOTE: Job status is set FAILED might not be because of a failed execution
@@ -216,6 +214,10 @@ const agent = {
               this.running = true;
 
               return executeJob(token, jobInfo, keepFiles);
+            }).then(() => {
+              this.running = false;
+            }).catch((ex) => {
+              this.running = false;
             });
         })
         .catch(err => logger.error(err));
