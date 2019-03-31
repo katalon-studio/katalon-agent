@@ -118,7 +118,7 @@ module.exports = {
         uploadedPath: jobInfo.uploadPath,
       }
     };
-    return http.request(config.serverUrl, KATALON_JOB_URI + 'save-job', options, 'POST');
+    return http.request(config.serverUrl, KATALON_JOB_URI + 'save-log', options, 'POST');
   },
 
   getJobLog: function(token, jobInfo) {
@@ -128,6 +128,6 @@ module.exports = {
         bearer: token,
       },
     }
-    return http.request(config.serverUrl, KATALON_JOB_URI + jobId + '/get-job', options, 'GET');
+    return http.request(config.serverUrl, KATALON_JOB_URI + jobId + '/get-log', options, 'GET');
   },
 }
