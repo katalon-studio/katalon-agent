@@ -10,7 +10,7 @@
     "build:pkg": "pkg --targets node10-linux-x64,node10-linux-x86,node10-macos-x64,node10-win-x64,node10-win-x86 --out-path bin cli.js",
     "afterbuild": "npm run copyConfig && npm run copyService",
     "copyConfig": "cpy agentconfig_template bin --rename agentconfig",
-    "copyService": "cpy nssm.exe service.bat bin"
+    "copyService": "cpy nssm.exe service.bat service.sh bin"
   },
   "dependencies": {
     "archiver": "^3.0.0",
