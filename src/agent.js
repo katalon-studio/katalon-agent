@@ -120,6 +120,14 @@ function uploadLog(token, jobInfo, filePath) {
     });
 }
 
+function validateField(config, propertyName) {
+  if (!config[propertyName]) {
+    logger.error(`Please specify '${propertyName}' property in ${path.basename(configFile)}.`);
+    return false;
+  }
+  return true;
+}
+
 const agent = {
   running: false,
 
@@ -131,7 +139,7 @@ const agent = {
 
     config.update(commandLineConfigs, configFile);
     const email = config.email;
-    const password = config.password;
+    const password = config.apikey;
     const teamId = config.teamId;
     const ksVersion = config.ksVersionNumber;
     const ksLocation = config.ksLocation;
@@ -139,6 +147,15 @@ const agent = {
     const logLevel = config.logLevel;
     if (logLevel) {
       logger.level = logLevel;
+    }
+
+    validateField(config, "email");
+    validateField(config, "apikey");
+    validateField(config, "serverUrl");
+    validateField(config, "teamId");
+
+    if (!ksVersion && !ksLocation) {
+      logger.error(`Please specify 'ksVersionNumber' or 'ksLocation' property in ${path.basename(configFile)}.`);
     }
 
     var token;

@@ -72,7 +72,7 @@ program
   .command("config")
   .option("-s, --server-url <value>", "Katalon Analytics URL")
   .option("-u, --username <value>", "Email")
-  .option("-p, --password <value>", "Password")
+  .option("-p, --apikey <value>", "API key")
   .option("-t, --teamid <value>", "Team ID")
   .option("-a, --agent-name <value>", "Agent name")
   .option("-k, --ks-version <value>", "Katalon Studio version number")
@@ -81,7 +81,7 @@ program
     var options = {
       serverUrl: command.serverUrl,
       email: command.username,
-      password: command.password,
+      apikey: command.apikey,
       teamId: command.teamid,
       agentName: command.agentName,
       ksVersionNumber: command.ksVersion,
@@ -95,14 +95,14 @@ program
   .version(version)
   .option("-s, --server-url <value>", "Katalon Analytics URL")
   .option("-u, --username <value>", "Email")
-  .option("-p, --password <value>", "Password")
+  .option("-p, --apikey <value>", "API key")
   .option("-t, --teamid <value>", "Team ID")
   .option("-a, --agent-name <value>", "Agent name")
   .action((command) => {
     var options = {
       serverUrl: command.serverUrl,
       email: command.username,
-      password: command.password,
+      apikey: command.apikey,
       teamId: command.teamid,
       agentName: command.agentName,
     };
