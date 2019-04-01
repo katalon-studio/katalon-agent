@@ -4,6 +4,7 @@ const path = require('path');
 const tmp = require('tmp');
 const uuidv4 = require('uuid/v4');
 
+const agentState = require('./agent-state');
 const config = require('./config');
 const file = require('./file');
 const jobLogger = require('./job-logger');
@@ -86,6 +87,8 @@ function executeJob(token, jobInfo, keepFiles) {
       return updateJob(token, jobOptions);
     })
     .finally(() => {
+      agentState.executingJob = false;
+
       // Remove temporary directory when `keepFiles` is false
       if (!keepFiles) {
         tmpDir.removeCallback();
@@ -129,8 +132,6 @@ function validateField(config, propertyName) {
 }
 
 const agent = {
-  running: false,
-
   start(commandLineConfigs={}) {
     logger.info('Agent started @ ' + new Date());
     const hostAddress = ip.address();
@@ -189,7 +190,7 @@ const agent = {
           logger.trace(body);
           katalonRequest.pingAgent(token, options).catch((err) => logger.error(err));
 
-          if (this.running) {
+          if (agentState.executingJob) {
             // Agent is executing a job, do nothing
             return;
           }
@@ -226,11 +227,11 @@ const agent = {
               // Update job status to running
               const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.RUNNING);
               updateJob(token, jobOptions);
-              this.running = true;
+              agentState.executingJob = true;
 
               return executeJob(token, jobInfo, keepFiles);
             }).catch(() => {
-              this.running = false;
+              agentState.executingJob = false;
             });
         })
         .catch(err => logger.error(err));
