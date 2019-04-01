@@ -1,20 +1,25 @@
 // add an empty argument to the front in case the package is compiled to native code
 process.isPackaged && process.argv.unshift('');
 
-var program = require('commander');
+const _ = require("lodash");
+const program = require('commander');
 const path = require('path');
 
-var packageJson = require('./package.json');
+if (_.includes(process.argv, '--service')) {
+  global.appRoot = path.resolve(path.dirname(process.execPath));
+  _.pull(process.argv, '--service');
+} else {
+  global.appRoot = path.resolve('.');
+}
+
 const agent = require('./src/agent');
 var bdd = require('./src/bdd');
 var config = require('./src/config');
 const logger = require('./src/logger');
+var packageJson = require('./package.json');
 var reportUploader = require('./src/report-uploader');
 
 var version = "Version: " + packageJson.version;
-const _ = require("lodash");
-
-global.appRoot = path.resolve(__dirname);
 
 // program options and arguments
 program

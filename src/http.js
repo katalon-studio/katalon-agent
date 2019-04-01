@@ -52,6 +52,7 @@ module.exports = {
       json: true,
       method,
     });
+    logger.debug("REQUEST:\n", options);
     var promise = new Promise((resolve, reject) => {
       request(options, (error, response, body) => {
         if (error) {
@@ -62,6 +63,10 @@ module.exports = {
           resolve({status: response.statusCode, body: body});
         }
       })
+    }).then((response) => {
+      response.requestUrl = options.url;
+      logger.debug("RESPONSE:\n", response);
+      return response
     });
     return promise;
   },
