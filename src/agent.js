@@ -4,6 +4,7 @@ const path = require('path');
 const tmp = require('tmp');
 const uuidv4 = require('uuid/v4');
 
+const agentState = require('./agent-state');
 const config = require('./config');
 const file = require('./file');
 const jobLogger = require('./job-logger');
@@ -86,6 +87,8 @@ function executeJob(token, jobInfo, keepFiles) {
       return updateJob(token, jobOptions);
     })
     .finally(() => {
+      agentState.executingJob = false;
+
       // Remove temporary directory when `keepFiles` is false
       if (!keepFiles) {
         tmpDir.removeCallback();
@@ -120,9 +123,15 @@ function uploadLog(token, jobInfo, filePath) {
     });
 }
 
-const agent = {
-  running: false,
+function validateField(config, propertyName) {
+  if (!config[propertyName]) {
+    logger.error(`Please specify '${propertyName}' property in ${path.basename(configFile)}.`);
+    return false;
+  }
+  return true;
+}
 
+const agent = {
   start(commandLineConfigs={}) {
     logger.info('Agent started @ ' + new Date());
     const hostAddress = ip.address();
@@ -131,7 +140,7 @@ const agent = {
 
     config.update(commandLineConfigs, configFile);
     const email = config.email;
-    const password = config.password;
+    const password = config.apikey;
     const teamId = config.teamId;
     const ksVersion = config.ksVersionNumber;
     const ksLocation = config.ksLocation;
@@ -139,6 +148,15 @@ const agent = {
     const logLevel = config.logLevel;
     if (logLevel) {
       logger.level = logLevel;
+    }
+
+    validateField(config, "email");
+    validateField(config, "apikey");
+    validateField(config, "serverUrl");
+    validateField(config, "teamId");
+
+    if (!ksVersion && !ksLocation) {
+      logger.error(`Please specify 'ksVersionNumber' or 'ksLocation' property in ${path.basename(configFile)}.`);
     }
 
     var token;
@@ -172,7 +190,7 @@ const agent = {
           logger.trace(body);
           katalonRequest.pingAgent(token, options).catch((err) => logger.error(err));
 
-          if (this.running) {
+          if (agentState.executingJob) {
             // Agent is executing a job, do nothing
             return;
           }
@@ -209,11 +227,11 @@ const agent = {
               // Update job status to running
               const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.RUNNING);
               updateJob(token, jobOptions);
-              this.running = true;
+              agentState.executingJob = true;
 
               return executeJob(token, jobInfo, keepFiles);
             }).catch(() => {
-              this.running = false;
+              agentState.executingJob = false;
             });
         })
         .catch(err => logger.error(err));
