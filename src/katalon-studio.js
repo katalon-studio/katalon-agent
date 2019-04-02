@@ -22,7 +22,7 @@ module.exports = {
         fs.chmodSync(ksExecutable, '755');
 
         if (ksExecutable.indexOf(' ') >= 0) {
-          ksExecutable = `"${ksExecutable}"`;
+          ksExecutable = `""${ksExecutable}""`;
         }
         let ksCommand = `${ksExecutable} -noSplash -runMode=console`;
         if (ksArgs.indexOf('-projectPath') < 0) {
