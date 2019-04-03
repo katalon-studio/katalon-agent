@@ -2,19 +2,19 @@ const childProcess = require('child_process');
 const os = require('os');
 const tmp = require('tmp');
 
-const logger = require('./logger');
+const defaultLogger = require('./logger');
 
 module.exports = {
 
-  getUserHome: function() {
+  getUserHome() {
     return os.homedir();
   },
 
-  getHostName: function() {
+  getHostName() {
     return os.hostname();
   },
 
-  getVersion: function() {
+  getVersion() {
     let version = '';
     const type = os.type();
     switch (type) {
@@ -44,8 +44,7 @@ module.exports = {
     return version;
   },
 
-  runCommand: function(command, x11Display, xvfbConfiguration, logger=logger) {
-
+  runCommand(command, x11Display, xvfbConfiguration, logger = defaultLogger) {
     let cmd;
     const args = [];
     const type = os.type();
@@ -53,7 +52,6 @@ module.exports = {
     if (type === 'Windows_NT') {
       cmd = 'cmd';
       args.push('/c');
-      args.push(command);
       shell = true;
     } else {
       if (x11Display) {
@@ -64,16 +62,16 @@ module.exports = {
       }
       cmd = 'sh';
       args.push('-c');
-      args.push(command);
       shell = false;
     }
+    args.push(`"${command}"`);
     const tmpDir = tmp.dirSync();
     const tmpDirPath = tmpDir.name;
     logger.info(`Execute "${cmd} ${args.join(' ')}" in ${tmpDirPath}.`);
     const promise = new Promise((resolve) => {
       const cmdProcess = childProcess.spawn(cmd, args, {
         cwd: tmpDirPath,
-        shell
+        shell,
       });
       cmdProcess.stdout.on('data', (data) => {
         logger.debug(data.toString());
@@ -87,5 +85,5 @@ module.exports = {
       });
     });
     return promise;
-  }
-}
+  },
+};
