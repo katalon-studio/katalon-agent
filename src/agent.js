@@ -12,11 +12,13 @@ const katalonRequest = require('./katalon-request');
 const ks = require('./katalon-studio');
 const logger = require('./logger');
 const os = require('./os');
-const utils = require('./utils')
+const properties = require('./properties');
+const utils = require('./utils');
 
 const configFile = utils.getPath('agentconfig');
 const requestInterval = 10000;
-const projectFilePattern = '**/*.prj'
+const projectFilePattern = '**/*.prj';
+const testOpsPropertiesFile = 'com.kms.katalon.integration.analytics.properties';
 let options = { body: {}}
 
 const JOB_STATUS = Object.freeze({
@@ -61,7 +63,14 @@ function executeJob(token, jobInfo, keepFiles) {
     .then(() => {
       // Find project file inside project directory
       const projectPathPattern = path.resolve(tmpDirPath, projectFilePattern);
-      jobInfo.ksProjectPath = glob.sync(projectPathPattern)[0];
+      jobInfo.ksProjectPath = glob.sync(projectPathPattern, { nodir: true })[0];
+
+      // Manually configure integration settings for KS to upload execution report
+      const ksProjectDir = path.dirname(jobInfo.ksProjectPath);
+      const testOpsPropertiesPath = path.resolve(ksProjectDir, 'settings', 'internal', 
+                                                testOpsPropertiesFile);
+      properties.writeProperties(testOpsPropertiesPath, 
+        buildTestOpsIntegrationProperties(token, jobInfo.teamId, jobInfo.projectId));
 
       return ks.execute(jobInfo.ksVersionNumber, jobInfo.ksLocation,
         jobInfo.ksProjectPath, jobInfo.ksArgs,
@@ -129,6 +138,23 @@ function validateField(config, propertyName) {
     return false;
   }
   return true;
+}
+
+function buildTestOpsIntegrationProperties(token, teamId, projectId) {
+  return {
+    "analytics.authentication.token": token,
+    "analytics.integration.enable": true,
+    "analytics.server.endpoint": config.serverUrl,
+    "analytics.authentication.email": config.email,
+    "analytics.authentication.password": config.apikey,
+    "analytics.authentication.encryptionEnabled": false,
+    "analytics.team": JSON.stringify({ id: teamId.toString() }),
+    "analytics.project": JSON.stringify({ id: projectId.toString() }),
+    "analytics.testresult.autosubmit": true,
+    "analytics.testresult.attach.screenshot": true,
+    "analytics.testresult.attach.log": true,
+    "analytics.testresult.attach.capturedvideos": false,
+  }
 }
 
 const agent = {
@@ -204,7 +230,7 @@ const agent = {
               }
               const body = response.body;
               const parameter = body.parameter;
-              const testProject = body.testProject
+              const testProject = body.testProject;
 
               let jobInfo = {
                 ksVersionNumber: ksVersion,
@@ -215,6 +241,7 @@ const agent = {
                 downloadUrl: parameter.downloadUrl,
                 jobId: body.id,
                 projectId: testProject.projectId,
+                teamId: teamId,
               }
               return jobInfo;
             })
