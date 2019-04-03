@@ -13,7 +13,12 @@ module.exports = {
     return http.stream(url, filePath)
       .then(() => {
         logger.info(`Decompressing the file into ${targetDir}.`);
-        return decompress(filePath, targetDir);
+        return decompress(filePath, targetDir, {
+          filter: decompressFile => {
+            const decompressPath = decompressFile.path;
+            return !decompressPath.includes('.git') && !decompressPath.includes('__MACOSX');
+          },
+        });
       });
   }
 }

@@ -63,7 +63,7 @@ function executeJob(token, jobInfo, keepFiles) {
     .then(() => {
       // Find project file inside project directory
       const projectPathPattern = path.resolve(tmpDirPath, projectFilePattern);
-      jobInfo.ksProjectPath = glob.sync(projectPathPattern)[0];
+      jobInfo.ksProjectPath = glob.sync(projectPathPattern, { nodir: true })[0];
 
       // Manually configure integration settings for KS to upload execution report
       const ksProjectDir = path.dirname(jobInfo.ksProjectPath);
