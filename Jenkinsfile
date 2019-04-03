@@ -7,7 +7,7 @@ pipeline {
             
             steps {
                sh 'npm install'
-               sh 'chmod u+x package.sh && ./package.sh'
+               sh 'npm run build'
             }
             
             post {
