@@ -29,5 +29,28 @@ pipeline {
             }
         }
 
+        stage ('Upload') {
+            agent {
+                docker {
+                    image 'garland/aws-cli-docker'
+                    args '-e AWS_DEFAULT_REGION=us-east-1'
+                }
+            }
+            steps {
+                withAWS(region: 'us-east-1', credentials: 'katalon-analytics-deploy') {
+                   unstash 'agents'
+                   sh 'ls -al bin'
+                   sh "aws s3 cp bin/cli-linux-x64 s3://ap-southeast-1/cli-linux-x64;"
+                   sh "aws s3 cp bin/cli-linux-x86 s3://ap-southeast-1/cli-linux-x86;"
+                   sh "aws s3 cp bin/cli-macos-x64 s3://ap-southeast-1/cli-macos-x64;"
+                   sh "aws s3 cp bin/cli-win-x64.exe s3://ap-southeast-1/cli-win-x64.exe;"
+                   sh "aws s3 cp bin/cli-win-x86.exe s3://ap-southeast-1/cli-win-x86.exe;"
+                   sh "aws s3 cp bin/nssm.exe s3://ap-southeast-1/nssm.exe;"
+                   sh "aws s3 cp bin/service.bat s3://ap-southeast-1/service.bat;"
+                   sh "aws s3 cp bin/service.sh s3://ap-southeast-1/service.sh;"
+               }
+            }
+        }
+
     }
 }
