@@ -19,6 +19,9 @@ pipeline {
         }
 
         stage ('Upload') {
+            when {
+                branch 'master'
+            }
             agent {
                 docker {
                     image 'garland/aws-cli-docker'
