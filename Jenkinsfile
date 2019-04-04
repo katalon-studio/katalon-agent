@@ -40,6 +40,15 @@ pipeline {
                    sh "aws s3 cp bin/nssm.exe s3://katalon-analytics-local/nssm.exe;"
                    sh "aws s3 cp bin/service.bat s3://katalon-analytics-local/service.bat;"
                    sh "aws s3 cp bin/service.sh s3://katalon-analytics-local/service.sh;"
+
+                   sh "aws s3api put-object-acl --bucket katalon-analytics-local --key cli-linux-x64 --acl public-read"
+                   sh "aws s3api put-object-acl --bucket katalon-analytics-local --key cli-linux-x86 --acl public-read"
+                   sh "aws s3api put-object-acl --bucket katalon-analytics-local --key cli-macos-x64 --acl public-read"
+                   sh "aws s3api put-object-acl --bucket katalon-analytics-local --key cli-win-x64.exe --acl public-read"
+                   sh "aws s3api put-object-acl --bucket katalon-analytics-local --key cli-win-x86.exe --acl public-read"
+                   sh "aws s3api put-object-acl --bucket katalon-analytics-local --key nssm.exe --acl public-read"
+                   sh "aws s3api put-object-acl --bucket katalon-analytics-local --key service.bat --acl public-read"
+                   sh "aws s3api put-object-acl --bucket katalon-analytics-local --key service.sh --acl public-read"
                }
             }
         }
