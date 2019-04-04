@@ -15,7 +15,7 @@ function find(startPath, filter, callback) {
   }
 
   const files = fs.readdirSync(startPath);
-  for (let i = 0; i < files.length; i++) {
+  for (let i = 0; i < files.length; i += 1) {
     const filename = path.join(startPath, files[i]);
     const stat = fs.lstatSync(filename);
     if (stat.isDirectory()) {
@@ -80,7 +80,6 @@ module.exports = {
     return getKsLocation(ksVersionNumber, ksLocation)
       .then(({ ksLocationParentDir }) => {
         logger.info(`Katalon Folder: ${ksLocationParentDir}`);
-        const osVersion = os.getVersion();
         let ksExecutable = find(ksLocationParentDir, /katalon$|katalon\.exe$/);
         logger.info(`Katalon Executable File: ${ksExecutable}`);
         fs.chmodSync(ksExecutable, '755');

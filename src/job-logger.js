@@ -5,7 +5,7 @@ const winstonLogFormat = winston.format.combine(
   winston.format.printf(({ level, message, timestamp }) => `[${timestamp}] [${level.toUpperCase()}]: ${message}`),
 );
 
-var logger = {
+const logger = {
   getLogger(filename) {
     return winston.createLogger({
       level: 'debug',

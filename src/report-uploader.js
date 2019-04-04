@@ -78,7 +78,7 @@ module.exports = {
       .then((response) => {
         const token = response.body.access_token;
 
-        for (let i = 0; i < logFiles.length - 1; i++) {
+        for (let i = 0; i < logFiles.length - 1; i += 1) {
           const filePath = logFiles[i];
           const promise = katalonRequest.getUploadInfo(token, projectId).then(({ body }) => {
             const { uploadUrl } = body;

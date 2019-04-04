@@ -52,6 +52,7 @@ module.exports = {
     if (type === 'Windows_NT') {
       cmd = 'cmd';
       args.push('/c');
+      args.push(`"${command}"`);
       shell = true;
     } else {
       if (x11Display) {
@@ -62,9 +63,9 @@ module.exports = {
       }
       cmd = 'sh';
       args.push('-c');
+      args.push(`${command}`);
       shell = false;
     }
-    args.push(`"${command}"`);
     const tmpDir = tmp.dirSync();
     const tmpDirPath = tmpDir.name;
     logger.info(`Execute "${cmd} ${args.join(' ')}" in ${tmpDirPath}.`);

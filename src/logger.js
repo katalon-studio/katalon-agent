@@ -32,6 +32,6 @@ const logConfigs = {
 };
 
 log4js.configure(logConfigs);
-var logger = log4js.getLogger('katalon');
+const logger = log4js.getLogger('katalon');
 
 module.exports = logger;
