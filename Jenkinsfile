@@ -7,7 +7,7 @@ pipeline {
             steps {
                sh 'npm install'
                sh 'npm run build'
-               sh 'ls -al'
+               sh 'ls -al bin'
             //    stash includes: 'bin/*', name: 'agents'
             //    withAWS(region: 'us-east-1', credentials: 'katalon-analytics-deploy') {
             //        unstash 'agents'
