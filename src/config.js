@@ -1,56 +1,57 @@
-const _ = require("lodash");
-const fs = require("fs");
-const fse = require("fs-extra");
-const ini = require("ini");
+const _ = require('lodash');
+const fs = require('fs');
+const fse = require('fs-extra');
+const ini = require('ini');
 const path = require('path');
 
-const logger = require("./logger");
+const logger = require('./logger');
 
-var configFile = path.resolve(process.cwd(), "config.ini");
-var global = {};
+const configFile = path.resolve(process.cwd(), 'config.ini');
+let global = {};
 
 function isConfigFileEmpty() {
-  var empty = true;
+  let empty = true;
   if (fs.existsSync(configFile)) {
-    var configs = ini.parse(fs.readFileSync(configFile, "utf-8"));
+    const configs = ini.parse(fs.readFileSync(configFile, 'utf-8'));
     empty = _.isEmpty(configs);
   }
   if (empty) {
-    logger.debug("config file is empty");
+    logger.debug('config file is empty');
   }
   return empty;
 }
 
 // NOTE: ONLY EXPORT FUNCTIONS, DO NOT EXPORT FIELDS
 module.exports = {
-  update: function(commandLineConfigs, filepath=configFile) {
+  update(commandLineConfigs, filepath = configFile) {
     /* Update the module with configs read from both config file and command line */
     // Filter undefined fields
-    commandLineConfigs = _.pickBy(commandLineConfigs, (value) => { return value != undefined });
+    commandLineConfigs = _.pickBy(commandLineConfigs, value => value !== undefined);
     // Read configs from file
-    let fileConfigs = this.read(filepath);
+    const fileConfigs = this.read(filepath);
     // Merge both configs
-    let configs = _.extend({}, fileConfigs, commandLineConfigs, {pathPatterns: _.get(fileConfigs, "paths.path", [])});
+    const configs = _.extend({}, fileConfigs, commandLineConfigs,
+      { pathPatterns: _.get(fileConfigs, 'paths.path', []) });
 
     // Add configs to global and export configs
     global = _.extend(global, configs);
-    for (var p in global) {
+    for (let p in global) {
       module.exports[p] = global[p];
     }
   },
 
-  read: function(filepath) {
+  read(filepath) {
     fse.ensureFileSync(filepath);
-    let fp = fse.readFileSync(filepath, "utf-8");
+    const fp = fse.readFileSync(filepath, 'utf-8');
     return ini.parse(fp);
   },
 
-  write: function(filepath, configs) {
+  write(filepath, configs) {
     // Filter undefined and function fields
-    configs = _.pickBy(configs, (value) => { return !_.isUndefined(value) && !_.isFunction(value); });
-    outputINI = ini.stringify(configs);
+    configs = _.pickBy(configs, value => !_.isUndefined(value) && !_.isFunction(value));
+    const outputINI = ini.stringify(configs);
     fse.outputFileSync(filepath, outputINI);
   },
 
   getConfigFile: () => configFile,
-}
+};
