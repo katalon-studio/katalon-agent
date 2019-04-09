@@ -1,5 +1,7 @@
+const fs = require('fs-extra');
 const glob = require('glob');
 const ip = require('ip');
+const moment = require('moment');
 const path = require('path');
 const tmp = require('tmp');
 const uuidv4 = require('uuid/v4');
@@ -96,8 +98,15 @@ function uploadLog(token, jobInfo, filePath) {
 }
 
 function executeJob(token, jobInfo, keepFiles) {
+  // Create directory where temporary files are contained
+  const tmpRoot = path.resolve(global.appRoot, 'tmp/');
+  fs.ensureDir(tmpRoot);
+
   // Create temporary directory to keep extracted project
-  const tmpDir = tmp.dirSync({ unsafeCleanup: true, keep: true, dir: global.appRoot });
+  const tmpPrefix = moment(new Date()).format('YYYY.MM.DD-H.m-');
+  const tmpDir = tmp.dirSync({
+    unsafeCleanup: true, keep: true, dir: tmpRoot, prefix: tmpPrefix,
+  });
   const tmpDirPath = tmpDir.name;
   logger.info('tmpDirPath:', tmpDirPath);
 
@@ -107,6 +116,7 @@ function executeJob(token, jobInfo, keepFiles) {
 
   return file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, jLogger)
     .then(() => {
+      logger.info('Executing job...');
       // Find project file inside project directory
       const projectPathPattern = path.resolve(tmpDirPath, projectFilePattern);
       // eslint-disable-next-line no-param-reassign
@@ -144,6 +154,7 @@ function executeJob(token, jobInfo, keepFiles) {
     })
     .finally(() => {
       agentState.executingJob = false;
+      jLogger.close();
 
       // Remove temporary directory when `keepFiles` is false
       if (!keepFiles) {
@@ -169,7 +180,7 @@ const agent = {
 
     config.update(commandLineConfigs, configFile);
     const {
-      email, teamId, ksLocation, keepFiles, logLevel,
+      email, teamId, ksLocation, keepFiles, logLevel, x11Display, xvfbRun,
     } = config;
     const password = config.apikey;
     const ksVersion = config.ksVersionNumber;
@@ -240,8 +251,8 @@ const agent = {
                 ksVersionNumber: ksVersion,
                 ksLocation,
                 ksArgs: parameter.command,
-                x11Display: null,
-                xvfbConfiguration: null,
+                x11Display,
+                xvfbConfiguration: xvfbRun,
                 downloadUrl: parameter.downloadUrl,
                 jobId: body.id,
                 projectId: testProject.projectId,
