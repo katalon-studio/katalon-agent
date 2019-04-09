@@ -7,6 +7,17 @@ if [[ $2 ]]; then
 	SERVICE_NAME=$2
 fi
 
+case `arch` in
+  *64*) BIN="cli-linux-x64";;
+  *) BIN="cli-linux-x86";;
+esac
+
+if [[ ${SUDO_USER} ]]; then
+	USER_NAME=${SUDO_USER}
+else
+	USER_NAME=`whoami`
+fi
+
 if [[ $1 == "uninstall" || $1 == "remove" ]]; then
 	echo Uninstalling Katalon Agent service...
 	set -x +e
@@ -18,7 +29,7 @@ if [[ $1 == "uninstall" || $1 == "remove" ]]; then
 	set +x -e
 elif [[ $1 == "install" ]]; then
         echo Installing Katalon Agent service...
-        useradd -r -m -U -d /opt/${USER_NAME} -s /bin/false ${USER_NAME} || echo "User '${USER_NAME}' already exists."
+        #useradd -r -m -U -d /opt/${USER_NAME} -s /bin/false ${USER_NAME} || echo "User '${USER_NAME}' already exists."
 	chown ${USER_NAME}:${USER_NAME} -R ${CURRENT_DIR}
         cat >/etc/systemd/system/${SERVICE_NAME}.service <<EOF
 [Unit]
@@ -27,7 +38,7 @@ After=network.target
 [Service]
 Type=simple
 User=${USER_NAME}
-ExecStart=${CURRENT_DIR}/cli-linux-x64 --service start-agent
+ExecStart=${CURRENT_DIR}/${BIN} --service start-agent
 UMask=0007
 RestartSec=10
 Restart=on-failure
