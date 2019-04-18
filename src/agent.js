@@ -227,7 +227,7 @@ const agent = {
 
           const requestBody = {
             uuid,
-            agentName,
+            name: agentName,
             teamId,
             hostname: hostName,
             ip: hostAddress,
