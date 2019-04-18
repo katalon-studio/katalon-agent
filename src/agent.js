@@ -171,6 +171,12 @@ function validateField(configs, propertyName) {
   return true;
 }
 
+function setLogLevel(logLevel) {
+  if (logLevel) {
+    logger.level = logLevel;
+  }
+}
+
 const agent = {
   start(commandLineConfigs = {}) {
     logger.info(`Agent started @ ${new Date()}`);
@@ -180,22 +186,15 @@ const agent = {
 
     config.update(commandLineConfigs, configFile);
     const {
-      email, teamId, ksLocation, keepFiles, logLevel, x11Display, xvfbRun,
+      email, teamId,
     } = config;
     const password = config.apikey;
-    const ksVersion = config.ksVersionNumber;
-    if (logLevel) {
-      logger.level = logLevel;
-    }
+    setLogLevel(config.logLevel);
 
     validateField(config, 'email');
     validateField(config, 'apikey');
     validateField(config, 'serverUrl');
     validateField(config, 'teamId');
-
-    if (!ksVersion && !ksLocation) {
-      logger.error(`Please specify 'ksVersionNumber' or 'ksLocation' property in ${path.basename(configFile)}.`);
-    }
 
     let token;
 
@@ -215,9 +214,20 @@ const agent = {
             configs.agentName = hostName;
           }
 
+          const {
+            uuid, agentName, ksLocation, keepFiles, logLevel, x11Display, xvfbRun,
+          } = configs;
+          const ksVersion = configs.ksVersionNumber;
+
+          if (!ksVersion && !ksLocation) {
+            logger.error(`Please specify 'ksVersionNumber' or 'ksLocation' property in ${path.basename(configFile)}.`);
+          }
+
+          setLogLevel(logLevel);
+
           const requestBody = {
-            uuid: configs.uuid,
-            name: configs.agentName,
+            uuid,
+            agentName,
             teamId,
             hostname: hostName,
             ip: hostAddress,
@@ -237,7 +247,7 @@ const agent = {
 
           // Agent is not executing job, request new job
           // eslint-disable-next-line consistent-return
-          return katalonRequest.requestJob(token, configs.uuid, teamId)
+          return katalonRequest.requestJob(token, uuid, teamId)
             .then((response) => {
               if (!response || !response.body
                 || !response.body.parameter || !response.body.testProject) {
