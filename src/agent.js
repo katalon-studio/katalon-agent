@@ -68,6 +68,7 @@ function buildTestOpsIntegrationProperties(token, teamId, projectId) {
 }
 
 function uploadLog(token, jobInfo, filePath) {
+  logger.info('Uploading job execution log...');
   // Request upload URL
   return katalonRequest.getUploadInfo(token, jobInfo.projectId)
     .then((response) => {
@@ -108,7 +109,7 @@ function executeJob(token, jobInfo, keepFiles) {
     unsafeCleanup: true, keep: true, dir: tmpRoot, prefix: tmpPrefix,
   });
   const tmpDirPath = tmpDir.name;
-  logger.info('tmpDirPath:', tmpDirPath);
+  logger.info('Download test project to temp directory:', tmpDirPath);
 
   // Create job logger
   const logFilePath = path.resolve(tmpDirPath, 'debug.log');
@@ -140,6 +141,7 @@ function executeJob(token, jobInfo, keepFiles) {
       const jobStatus = (status === 0) ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
       const jobOptions = buildJobResponse(jobInfo, jobStatus);
 
+      logger.debug(`Update job with status '${jobStatus}'`);
       return updateJob(token, jobOptions);
     })
     .then(() => uploadLog(token, jobInfo, logFilePath))
@@ -149,7 +151,9 @@ function executeJob(token, jobInfo, keepFiles) {
       // Update job status to failed when exception occured
       // NOTE: Job status is set FAILED might not be because of a failed execution
       // but because of other reasons such as cannot remove tmp directory or cannot upload log
-      const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.FAILED);
+      const jobStatus = JOB_STATUS.FAILED;
+      const jobOptions = buildJobResponse(jobInfo, jobStatus);
+      logger.debug(`Error caught during job execution! Update job with status '${jobStatus}'`);
       return updateJob(token, jobOptions);
     })
     .finally(() => {
@@ -196,6 +200,10 @@ const agent = {
     validateField(config, 'serverUrl');
     validateField(config, 'teamId');
 
+    if (!config.ksVersionNumber && !config.ksLocation) {
+      logger.error(`Please specify 'ksVersionNumber' or 'ksLocation' property in ${path.basename(configFile)}.`);
+    }
+
     let token;
 
     setInterval(() => {
@@ -218,10 +226,6 @@ const agent = {
             uuid, agentName, ksLocation, keepFiles, logLevel, x11Display, xvfbRun,
           } = configs;
           const ksVersion = configs.ksVersionNumber;
-
-          if (!ksVersion && !ksLocation) {
-            logger.error(`Please specify 'ksVersionNumber' or 'ksLocation' property in ${path.basename(configFile)}.`);
-          }
 
           setLogLevel(logLevel);
 
@@ -284,8 +288,9 @@ const agent = {
 
               // eslint-disable-next-line consistent-return
               return executeJob(token, jobInfo, keepFiles);
-            }).catch(() => {
+            }).catch((err) => {
               agentState.executingJob = false;
+              return logger.error(err);
             });
         })
         .catch(err => logger.error(err));

@@ -30,47 +30,48 @@ function find(startPath, filter, callback) {
 }
 
 function getKsLocation(ksVersionNumber, ksLocation) {
-  return new Promise((resolve) => {
-    if (ksLocation) {
-      resolve({
-        ksLocationParentDir: ksLocation,
-      });
-    } else {
-      return http.request(releasesList, '', {}, 'GET')
-        .then(({ body }) => {
-          const osVersion = os.getVersion();
-          const ksVersion = body.find(item => item.version === ksVersionNumber
-            && item.os === osVersion);
-          const fileName = ksVersion.filename;
-          let fileExtension;
-          if (fileName.endsWith('.zip')) {
-            fileExtension = '.zip';
-          } else if (fileName.endsWith('.tar.gz')) {
-            fileExtension = '.tar.gz';
-          } else {
-            throw `Unexpected file name ${fileName}`;
-          }
-          const ksLocationDirName = fileName.replace(fileExtension, '');
-          const userhome = os.getUserHome();
-          const ksLocationParentDir = path.join(userhome, '.katalon', ksVersionNumber);
-          const katalonDoneFilePath = path.join(ksLocationParentDir, '.katalon.done');
-          const ksLocation = path.join(ksLocationParentDir, ksLocationDirName);
-          if (fs.existsSync(katalonDoneFilePath)) {
-            resolve({
-              ksLocationParentDir,
-            });
-          } else {
-            return file.downloadAndExtract(ksVersion.url, ksLocationParentDir)
-              .then(() => {
-                fs.writeFileSync(katalonDoneFilePath, '');
-                resolve({
-                  ksLocationParentDir,
-                });
-              });
-          }
+  if (!ksVersionNumber && !ksLocation) {
+    defaultLogger.error("Please specify 'ksVersionNumber' or 'ksLocation'");
+  }
+
+  if (ksLocation) {
+    return Promise.resolve({
+      ksLocationParentDir: ksLocation,
+    });
+  }
+
+  return http.request(releasesList, '', {}, 'GET')
+    .then(({ body }) => {
+      const osVersion = os.getVersion();
+      const ksVersion = body.find(item => item.version === ksVersionNumber
+        && item.os === osVersion);
+      const fileName = ksVersion.filename;
+      let fileExtension;
+      if (fileName.endsWith('.zip')) {
+        fileExtension = '.zip';
+      } else if (fileName.endsWith('.tar.gz')) {
+        fileExtension = '.tar.gz';
+      } else {
+        throw `Unexpected file name ${fileName}`;
+      }
+      const userhome = os.getUserHome();
+      const ksLocationParentDir = path.join(userhome, '.katalon', ksVersionNumber);
+      const katalonDoneFilePath = path.join(ksLocationParentDir, '.katalon.done');
+
+      const ksLocationDirName = fileName.replace(fileExtension, '');
+      const ksLocation = path.join(ksLocationParentDir, ksLocationDirName);
+
+      if (fs.existsSync(katalonDoneFilePath)) {
+        return Promise.resolve({ ksLocationParentDir });
+      }
+
+      defaultLogger.info(`Download Katalon Studio ${ksVersionNumber} to ${ksLocationParentDir}.`);
+      return file.downloadAndExtract(ksVersion.url, ksLocationParentDir)
+        .then(() => {
+          fs.writeFileSync(katalonDoneFilePath, '');
+          return Promise.resolve({ ksLocationParentDir });
         });
-    }
-  });
+    });
 }
 
 module.exports = {
@@ -93,7 +94,12 @@ module.exports = {
         }
         ksCommand = `${ksCommand} ${ksArgs}`;
         logger.info(`Execute Katalon Studio: ${ksCommand}`);
+        if (logger !== defaultLogger) {
+          defaultLogger.debug(`Execute Katalon Studio command: ${ksCommand}`);
+        }
         return os.runCommand(ksCommand, x11Display, xvfbConfiguration, logger);
       });
   },
+
+  getKsLocation,
 };
