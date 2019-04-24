@@ -37,13 +37,11 @@ function getKsLocation(ksVersionNumber, ksLocation) {
   if (ksLocation) {
     const fileExtension = path.extname(ksLocation);
     if (['.zip', '.tar.gz'].includes(fileExtension)) {
-      return file.extract(ksLocation, path.dirname(ksLocation))
-        .then(() => {
-          const baseDirName = path.basename(ksLocation, fileExtension);
-          const dirName = path.dirname(ksLocation);
-          const ksLocationParentDir = path.resolve(dirName, baseDirName);
-          return Promise.resolve({ ksLocationParentDir });
-        });
+      const userhome = os.getUserHome();
+      const baseDirName = path.basename(ksLocation, fileExtension);
+      const ksLocationParentDir = path.join(userhome, '.katalon', baseDirName);
+      return file.extract(ksLocation, ksLocationParentDir)
+        .then(() => Promise.resolve({ ksLocationParentDir }));
     }
     return Promise.resolve({
       ksLocationParentDir: ksLocation,
