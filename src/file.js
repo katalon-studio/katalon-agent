@@ -16,7 +16,7 @@ module.exports = {
         return decompress(filePath, targetDir, {
           filter: (decompressFile) => {
             const decompressPath = decompressFile.path;
-            return !decompressPath.includes('.git') && !decompressPath.includes('__MACOSX');
+            return !decompressPath.includes('.git/') && !decompressPath.includes('__MACOSX');
           },
         });
       });
