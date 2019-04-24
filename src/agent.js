@@ -115,7 +115,7 @@ function executeJob(token, jobInfo, keepFiles) {
   const logFilePath = path.resolve(tmpDirPath, 'debug.log');
   const jLogger = jobLogger.getLogger(logFilePath);
 
-  return file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, jLogger)
+  return file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, true, jLogger)
     .then(() => {
       logger.info('Executing job...');
       // Find project file inside project directory

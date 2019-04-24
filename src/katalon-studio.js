@@ -66,7 +66,7 @@ function getKsLocation(ksVersionNumber, ksLocation) {
       }
 
       defaultLogger.info(`Download Katalon Studio ${ksVersionNumber} to ${ksLocationParentDir}.`);
-      return file.downloadAndExtract(ksVersion.url, ksLocationParentDir)
+      return file.downloadAndExtract(ksVersion.url, ksLocationParentDir, false)
         .then(() => {
           fs.writeFileSync(katalonDoneFilePath, '');
           return Promise.resolve({ ksLocationParentDir });
