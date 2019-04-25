@@ -21,9 +21,11 @@ function find(startPath, filter, callback) {
     if (stat.isDirectory()) {
       const file = find(filename, filter, callback);
       if (!_.isEmpty(file)) {
+        // eslint-disable-next-line consistent-return
         return file;
       }
     } else if (filter.test(filename)) {
+      // eslint-disable-next-line consistent-return
       return filename;
     }
   }
@@ -31,18 +33,11 @@ function find(startPath, filter, callback) {
 
 function getKsLocation(ksVersionNumber, ksLocation) {
   if (!ksVersionNumber && !ksLocation) {
+    // eslint-disable-next-line prefer-promise-reject-errors
     return Promise.reject("Please specify 'ksVersionNumber' or 'ksLocation'");
   }
 
   if (ksLocation) {
-    const fileExtension = path.extname(ksLocation);
-    if (['.zip', '.tar.gz'].includes(fileExtension)) {
-      const userhome = os.getUserHome();
-      const baseDirName = path.basename(ksLocation, fileExtension);
-      const ksLocationParentDir = path.join(userhome, '.katalon', baseDirName);
-      return file.extract(ksLocation, ksLocationParentDir, false)
-        .then(() => Promise.resolve({ ksLocationParentDir }));
-    }
     return Promise.resolve({
       ksLocationParentDir: ksLocation,
     });
@@ -57,6 +52,7 @@ function getKsLocation(ksVersionNumber, ksLocation) {
 
       const fileExtension = path.extname(ksLocation);
       if (['.zip', '.tar.gz'].includes(fileExtension)) {
+        // eslint-disable-next-line prefer-promise-reject-errors
         return Promise.reject(`Unexpected file name ${fileName}`);
       }
 
