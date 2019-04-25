@@ -6,7 +6,7 @@ const defaultLogger = require('./logger');
 
 module.exports = {
 
-  downloadAndExtract(url, targetDir, haveFilter = true, logger = defaultLogger) {
+  downloadAndExtract(url, targetDir, haveFilter, logger = defaultLogger) {
     logger.info(`Downloading from ${url}. It may take a few minutes.`);
     const file = tmp.fileSync();
     const filePath = file.name;
@@ -18,8 +18,9 @@ module.exports = {
             if (haveFilter) {
               const decompressPath = decompressFile.path;
               return !decompressPath.includes('.git/') && !decompressPath.includes('__MACOSX');
+            } else {
+              return decompressFile;
             }
-            return null;
           },
         });
       });
