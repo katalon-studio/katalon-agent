@@ -40,7 +40,7 @@ function getKsLocation(ksVersionNumber, ksLocation) {
       const userhome = os.getUserHome();
       const baseDirName = path.basename(ksLocation, fileExtension);
       const ksLocationParentDir = path.join(userhome, '.katalon', baseDirName);
-      return file.extract(ksLocation, ksLocationParentDir)
+      return file.extract(ksLocation, ksLocationParentDir, false)
         .then(() => Promise.resolve({ ksLocationParentDir }));
     }
     return Promise.resolve({
