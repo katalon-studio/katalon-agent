@@ -13,7 +13,7 @@ module.exports = {
           const decompressPath = decompressFile.path;
           return !decompressPath.includes('.git/') && !decompressPath.includes('__MACOSX');
         } else {
-          return decompressFile;
+          return true;
         }
       },
     });
