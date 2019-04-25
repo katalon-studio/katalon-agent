@@ -48,13 +48,6 @@ function getKsLocation(ksVersionNumber, ksLocation) {
       const osVersion = os.getVersion();
       const ksVersion = body.find(item => item.version === ksVersionNumber
         && item.os === osVersion);
-      const fileName = ksVersion.filename;
-
-      const fileExtension = path.extname(ksLocation);
-      if (['.zip', '.tar.gz'].includes(fileExtension)) {
-        // eslint-disable-next-line prefer-promise-reject-errors
-        return Promise.reject(`Unexpected file name ${fileName}`);
-      }
 
       const userhome = os.getUserHome();
       const ksLocationParentDir = path.join(userhome, '.katalon', ksVersionNumber);
