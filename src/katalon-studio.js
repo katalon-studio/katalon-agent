@@ -31,10 +31,18 @@ function find(startPath, filter, callback) {
 
 function getKsLocation(ksVersionNumber, ksLocation) {
   if (!ksVersionNumber && !ksLocation) {
-    defaultLogger.error("Please specify 'ksVersionNumber' or 'ksLocation'");
+    return Promise.reject("Please specify 'ksVersionNumber' or 'ksLocation'");
   }
 
   if (ksLocation) {
+    const fileExtension = path.extname(ksLocation);
+    if (['.zip', '.tar.gz'].includes(fileExtension)) {
+      const userhome = os.getUserHome();
+      const baseDirName = path.basename(ksLocation, fileExtension);
+      const ksLocationParentDir = path.join(userhome, '.katalon', baseDirName);
+      return file.extract(ksLocation, ksLocationParentDir)
+        .then(() => Promise.resolve({ ksLocationParentDir }));
+    }
     return Promise.resolve({
       ksLocationParentDir: ksLocation,
     });
@@ -46,20 +54,15 @@ function getKsLocation(ksVersionNumber, ksLocation) {
       const ksVersion = body.find(item => item.version === ksVersionNumber
         && item.os === osVersion);
       const fileName = ksVersion.filename;
-      let fileExtension;
-      if (fileName.endsWith('.zip')) {
-        fileExtension = '.zip';
-      } else if (fileName.endsWith('.tar.gz')) {
-        fileExtension = '.tar.gz';
-      } else {
-        throw `Unexpected file name ${fileName}`;
+
+      const fileExtension = path.extname(ksLocation);
+      if (['.zip', '.tar.gz'].includes(fileExtension)) {
+        return Promise.reject(`Unexpected file name ${fileName}`);
       }
+
       const userhome = os.getUserHome();
       const ksLocationParentDir = path.join(userhome, '.katalon', ksVersionNumber);
       const katalonDoneFilePath = path.join(ksLocationParentDir, '.katalon.done');
-
-      const ksLocationDirName = fileName.replace(fileExtension, '');
-      const ksLocation = path.join(ksLocationParentDir, ksLocationDirName);
 
       if (fs.existsSync(katalonDoneFilePath)) {
         return Promise.resolve({ ksLocationParentDir });

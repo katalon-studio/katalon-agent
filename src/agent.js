@@ -18,7 +18,7 @@ const properties = require('./properties');
 const utils = require('./utils');
 
 const configFile = utils.getPath('agentconfig');
-const requestInterval = 10000;
+const requestInterval = 60 * 1000;
 const projectFilePattern = '**/*.prj';
 const testOpsPropertiesFile = 'com.kms.katalon.integration.analytics.properties';
 
