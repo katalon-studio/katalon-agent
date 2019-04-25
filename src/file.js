@@ -5,21 +5,25 @@ const http = require('./http');
 const defaultLogger = require('./logger');
 
 module.exports = {
-  extract(filePath, targetDir, logger = defaultLogger) {
+  extract(filePath, targetDir, haveFilter, logger = defaultLogger) {
     logger.info(`Decompressing the ${filePath} into ${targetDir}.`);
-    return decompress(filePath, targetDir, {
+    return decompress(filePath, targetDir, haveFilter, {
       filter: (decompressFile) => {
-        const decompressPath = decompressFile.path;
-        return !decompressPath.includes('.git/') && !decompressPath.includes('__MACOSX');
+        if (haveFilter) {
+          const decompressPath = decompressFile.path;
+          return !decompressPath.includes('.git/') && !decompressPath.includes('__MACOSX');
+        } else {
+          return true;
+        }
       },
     });
   },
 
-  downloadAndExtract(url, targetDir, logger = defaultLogger) {
+  downloadAndExtract(url, targetDir, haveFilter, logger = defaultLogger) {
     logger.info(`Downloading from ${url}. It may take a few minutes.`);
     const file = tmp.fileSync();
     const filePath = file.name;
     return http.stream(url, filePath)
-      .then(() => this.extract(filePath, targetDir, logger));
+      .then(() => this.extract(filePath, targetDir, haveFilter, logger));
   },
 };
