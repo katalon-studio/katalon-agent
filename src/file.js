@@ -23,6 +23,7 @@ module.exports = {
     logger.info(`Downloading from ${url}. It may take a few minutes.`);
     const file = tmp.fileSync();
     const filePath = file.name;
+    logger.trace(`Download into temporary directory: ${filePath}`);
     return http.stream(url, filePath)
       .then(() => this.extract(filePath, targetDir, haveFilter, logger));
   },

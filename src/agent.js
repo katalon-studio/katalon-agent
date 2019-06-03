@@ -18,7 +18,7 @@ const properties = require('./properties');
 const utils = require('./utils');
 
 const configFile = utils.getPath('agentconfig');
-const requestInterval = 60 * 1000;
+const requestInterval = 15 * 1000;
 const projectFilePattern = '**/*.prj';
 const testOpsPropertiesFile = 'com.kms.katalon.integration.analytics.properties';
 
@@ -135,6 +135,7 @@ function executeJob(token, jobInfo, keepFiles) {
         jobInfo.x11Display, jobInfo.xvfbConfiguration, jLogger);
     })
     .then((status) => {
+      logger.info('Job execution finished.');
       logger.debug('TASK FINISHED WITH STATUS:', status);
 
       // Update job status after execution
