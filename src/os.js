@@ -44,7 +44,7 @@ module.exports = {
     return version;
   },
 
-  runCommand(command, x11Display, xvfbConfiguration, logger = defaultLogger) {
+  runCommand(command, x11Display, xvfbConfiguration, logger = defaultLogger, tmpDirPath = '') {
     let cmd;
     const args = [];
     const type = os.type();
@@ -66,8 +66,12 @@ module.exports = {
       args.push(`${command}`);
       shell = false;
     }
-    const tmpDir = tmp.dirSync();
-    const tmpDirPath = tmpDir.name;
+
+    if (tmpDirPath === '') {
+      const tmpDir = tmp.dirSync();
+      tmpDirPath = tmpDir.name;
+    }
+
     logger.info(`Execute "${cmd} ${args.join(' ')}" in ${tmpDirPath}.`);
     const promise = new Promise((resolve) => {
       const cmdProcess = childProcess.spawn(cmd, args, {

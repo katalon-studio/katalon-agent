@@ -9,6 +9,7 @@ const uuidv4 = require('uuid/v4');
 const agentState = require('./agent-state');
 const config = require('./config');
 const file = require('./file');
+const genericCommand = require('./generic-command');
 const jobLogger = require('./job-logger');
 const katalonRequest = require('./katalon-request');
 const ks = require('./katalon-studio');
@@ -98,6 +99,25 @@ function uploadLog(token, jobInfo, filePath) {
     });
 }
 
+function executeKatalonCommand(token, jobInfo, tmpDirPath, jLogger) {
+  logger.info('Executing job...');
+  // Find project file inside project directory
+  const projectPathPattern = path.resolve(tmpDirPath, projectFilePattern);
+  // eslint-disable-next-line no-param-reassign
+  [jobInfo.ksProjectPath] = glob.sync(projectPathPattern, { nodir: true });
+
+  // Manually configure integration settings for KS to upload execution report
+  const ksProjectDir = path.dirname(jobInfo.ksProjectPath);
+  const testOpsPropertiesPath = path.resolve(ksProjectDir, 'settings', 'internal',
+    testOpsPropertiesFile);
+  properties.writeProperties(testOpsPropertiesPath,
+    buildTestOpsIntegrationProperties(token, jobInfo.teamId, jobInfo.projectId));
+
+  return ks.execute(jobInfo.ksVersionNumber, jobInfo.ksLocation,
+    jobInfo.ksProjectPath, jobInfo.ksArgs,
+    jobInfo.x11Display, jobInfo.xvfbConfiguration, jLogger);
+}
+
 function executeJob(token, jobInfo, keepFiles) {
   // Create directory where temporary files are contained
   const tmpRoot = path.resolve(global.appRoot, 'tmp/');
@@ -117,22 +137,12 @@ function executeJob(token, jobInfo, keepFiles) {
 
   return file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, true, jLogger)
     .then(() => {
-      logger.info('Executing job...');
-      // Find project file inside project directory
-      const projectPathPattern = path.resolve(tmpDirPath, projectFilePattern);
-      // eslint-disable-next-line no-param-reassign
-      [jobInfo.ksProjectPath] = glob.sync(projectPathPattern, { nodir: true });
+      if (jobInfo.configType === 'GENERIC_COMMAND') {
+        const { commands } = jobInfo;
+        return genericCommand.executeCommands(commands, tmpDirPath, jLogger);
+      }
 
-      // Manually configure integration settings for KS to upload execution report
-      const ksProjectDir = path.dirname(jobInfo.ksProjectPath);
-      const testOpsPropertiesPath = path.resolve(ksProjectDir, 'settings', 'internal',
-        testOpsPropertiesFile);
-      properties.writeProperties(testOpsPropertiesPath,
-        buildTestOpsIntegrationProperties(token, jobInfo.teamId, jobInfo.projectId));
-
-      return ks.execute(jobInfo.ksVersionNumber, jobInfo.ksLocation,
-        jobInfo.ksProjectPath, jobInfo.ksArgs,
-        jobInfo.x11Display, jobInfo.xvfbConfiguration, jLogger);
+      return executeKatalonCommand(token, jobInfo, tmpDirPath, jLogger);
     })
     .then((status) => {
       logger.info('Job execution finished.');
@@ -260,7 +270,7 @@ const agent = {
                 return;
               }
               const { body } = response;
-              const { parameter, testProject } = body;
+              const { parameter, testProject, runConfiguration } = body;
 
               const jobInfo = {
                 ksVersionNumber: ksVersion,
@@ -272,6 +282,8 @@ const agent = {
                 jobId: body.id,
                 projectId: testProject.projectId,
                 teamId,
+                configType: runConfiguration.configType,
+                commands: runConfiguration.genericCommand,
               };
               // eslint-disable-next-line consistent-return
               return jobInfo;
