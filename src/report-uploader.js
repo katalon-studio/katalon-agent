@@ -1,6 +1,7 @@
 const archiver = require('archiver');
 const find = require('find');
 const fse = require('fs-extra');
+const glob = require('glob');
 const path = require('path');
 const uuidv4 = require('uuid/v4');
 const config = require('./config');
@@ -48,8 +49,42 @@ const writeUploadInfo = (batch, files) => {
   }
 };
 
+function uploadFile(token, projectId, batch, folderName, filePath, isEnd, reportType) {
+  return katalonRequest.getUploadInfo(token, projectId)
+    .then(({ body }) => {
+      const { uploadUrl } = body;
+      const uploadPath = body.path;
+
+      return katalonRequest.uploadFile(uploadUrl, filePath)
+        .then(() => {
+          const fileName = path.basename(filePath);
+          return katalonRequest.uploadFileInfo(token, projectId,
+            batch, folderName, fileName, uploadPath, isEnd, reportType);
+        });
+    });
+}
+
 module.exports = {
-  upload: (folderPath) => {
+  uploadReports(token, projectId, folderPath, reportType, reportPattern) {
+    const pathPattern = path.resolve(folderPath, reportPattern);
+    const reports = glob.sync(pathPattern, { nodir: true });
+    const dirName = path.basename(folderPath);
+
+    const [first, ...rest] = reports;
+    if (!first) {
+      return Promise.resolve();
+    }
+
+    const batch = `${new Date().getTime()}-${uuidv4()}`;
+
+    const uploadPromises = rest.map(report =>
+      uploadFile(token, projectId, batch, dirName, report, false, reportType));
+
+    return Promise.all(uploadPromises)
+      .then(() => uploadFile(token, projectId, batch, dirName, first, true, reportType));
+  },
+
+  upload(folderPath) {
     const { email, password, projectId } = config;
     const harFiles = find.fileSync(harExtension, folderPath);
     const logFiles = find.fileSync(logExtension, folderPath);
