@@ -1,7 +1,6 @@
 const fs = require('fs-extra');
 const glob = require('glob');
 const ip = require('ip');
-const moment = require('moment');
 const path = require('path');
 const tmp = require('tmp');
 const uuidv4 = require('uuid/v4');
@@ -16,12 +15,17 @@ const ks = require('./katalon-studio');
 const logger = require('./logger');
 const os = require('./os');
 const properties = require('./properties');
+const reportUploader = require('./report-uploader');
 const utils = require('./utils');
 
 const configFile = utils.getPath('agentconfig');
 const requestInterval = 15 * 1000;
+
 const projectFilePattern = '**/*.prj';
+const junitFilePattern = '*.xml';
+
 const testOpsPropertiesFile = 'com.kms.katalon.integration.analytics.properties';
+const genericCommandOutputDir = 'katalon-agent-output';
 
 const JOB_STATUS = Object.freeze({
   RUNNING: 'RUNNING',
@@ -99,6 +103,16 @@ function uploadLog(token, jobInfo, filePath) {
     });
 }
 
+function testCopyJUnitReports(outputDir) {
+  const sampleDir = 'C:/Projects/katalon-analytics/misc/sample-junit-reports';
+  const files = [
+    'casperjs.xml',
+    'sample-junit.xml',
+    'sample-junit-out.xml',
+  ];
+  files.forEach(file => fs.copyFileSync(path.join(sampleDir, file), path.join(outputDir, file)))
+}
+
 function executeKatalonCommand(token, jobInfo, tmpDirPath, jLogger) {
   logger.info('Executing job...');
   // Find project file inside project directory
@@ -124,10 +138,7 @@ function executeJob(token, jobInfo, keepFiles) {
   fs.ensureDir(tmpRoot);
 
   // Create temporary directory to keep extracted project
-  const tmpPrefix = moment(new Date()).format('YYYY.MM.DD-H.m-');
-  const tmpDir = tmp.dirSync({
-    unsafeCleanup: true, keep: true, dir: tmpRoot, prefix: tmpPrefix,
-  });
+  const tmpDir = utils.createTempDir(tmpRoot);
   const tmpDirPath = tmpDir.name;
   logger.info('Download test project to temp directory:', tmpDirPath);
 
@@ -139,7 +150,21 @@ function executeJob(token, jobInfo, keepFiles) {
     .then(() => {
       if (jobInfo.configType === 'GENERIC_COMMAND') {
         const { commands } = jobInfo;
-        return genericCommand.executeCommands(commands, tmpDirPath, jLogger);
+        const outputDir = path.join(tmpDirPath, genericCommandOutputDir);
+        fs.ensureDir(outputDir);
+
+        const {
+          projectId,
+        } = jobInfo;
+        let executionStatus;
+        return genericCommand.executeCommands(commands, tmpDirPath, outputDir, jLogger)
+          .then((status) => {
+            executionStatus = status;
+            // testCopyJUnitReports(outputDir);
+            // Collect all junit xml files and upload to TestOps
+            return reportUploader.uploadReports(token, projectId, outputDir, 'junit', junitFilePattern);
+          })
+          .then(() => executionStatus);
       }
 
       return executeKatalonCommand(token, jobInfo, tmpDirPath, jLogger);

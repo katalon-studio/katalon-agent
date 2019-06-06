@@ -4,7 +4,7 @@ const path = require('path');
 const logger = require('./logger');
 const os = require('./os');
 
-function executeCommands(commands, tmpDirPath, jLogger) {
+function executeCommands(commands, tmpDirPath, outputDir, jLogger) {
   const osVersion = os.getVersion();
   let scriptExtension;
 
@@ -17,7 +17,10 @@ function executeCommands(commands, tmpDirPath, jLogger) {
   fs.writeFileSync(scriptPath, commands);
   fs.chmodSync(scriptPath, '755');
 
-  logger.info('Executing commands in', scriptPath);
+  process.env.KATALON_WORKING_DIR = tmpDirPath;
+  process.env.KATALON_OUTPUT_DIR = outputDir;
+
+  logger.info('Executing commands inside', scriptPath);
   logger.debug('Executing following command(s)\n', commands);
   return os.runCommand(scriptPath, null, null, jLogger, tmpDirPath);
 }
