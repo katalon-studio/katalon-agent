@@ -53,7 +53,7 @@ module.exports = {
       json: true,
       method,
     });
-    logger.debug('REQUEST:\n', options);
+    logger.trace('REQUEST:\n', options);
     const promise = new Promise((resolve, reject) => {
       request(options, (error, response, body) => {
         if (error) {
@@ -66,7 +66,7 @@ module.exports = {
       });
     }).then((response) => {
       response.requestUrl = options.url;
-      logger.debug('RESPONSE:\n', response);
+      logger.trace('RESPONSE:\n', response);
       return response;
     });
     return promise;

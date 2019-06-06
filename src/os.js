@@ -67,7 +67,7 @@ module.exports = {
       shell = false;
     }
 
-    if (tmpDirPath === '') {
+    if (!tmpDirPath) {
       const tmpDir = tmp.dirSync();
       tmpDirPath = tmpDir.name;
     }
