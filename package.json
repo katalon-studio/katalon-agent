@@ -1,6 +1,6 @@
 {
   "name": "katalon-cli",
-  "version": "1.0.1",
+  "version": "v1.0.2",
   "description": "",
   "main": "cli.js",
   "scripts": {
