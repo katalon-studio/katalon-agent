@@ -49,7 +49,7 @@ const writeUploadInfo = (batch, files) => {
   }
 };
 
-function uploadFile(token, projectId, batch, folderName, filePath, isEnd, reportType) {
+function uploadFile(token, projectId, batch, folderName, filePath, isEnd, reportType, opts = {}) {
   return katalonRequest.getUploadInfo(token, projectId)
     .then(({ body }) => {
       const { uploadUrl } = body;
@@ -59,29 +59,30 @@ function uploadFile(token, projectId, batch, folderName, filePath, isEnd, report
         .then(() => {
           const fileName = path.basename(filePath);
           return katalonRequest.uploadFileInfo(token, projectId,
-            batch, folderName, fileName, uploadPath, isEnd, reportType);
+            batch, folderName, fileName, uploadPath, isEnd, reportType, opts);
         });
     });
 }
 
 module.exports = {
-  uploadReports(token, projectId, folderPath, reportType, reportPattern) {
+  uploadReports(token, projectId, folderPath, reportType, reportPattern, opts = {}) {
     const pathPattern = path.resolve(folderPath, reportPattern);
     const reports = glob.sync(pathPattern, { nodir: true });
-    const dirName = path.basename(folderPath);
+    const dirNames = reports.map(report => path.dirname(path.relative(folderPath, report)));
 
     const [first, ...rest] = reports;
+    const [firstDirName, ...restDirNames] = dirNames;
     if (!first) {
       return Promise.resolve();
     }
 
     const batch = `${new Date().getTime()}-${uuidv4()}`;
 
-    const uploadPromises = rest.map(report =>
-      uploadFile(token, projectId, batch, dirName, report, false, reportType));
+    const uploadPromises = rest.map((report, idx) =>
+      uploadFile(token, projectId, batch, restDirNames[idx], report, false, reportType, opts));
 
     return Promise.all(uploadPromises)
-      .then(() => uploadFile(token, projectId, batch, dirName, first, true, reportType));
+      .then(() => uploadFile(token, projectId, batch, firstDirName, first, true, reportType, opts));
   },
 
   upload(folderPath) {

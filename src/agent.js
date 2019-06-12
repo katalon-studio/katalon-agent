@@ -2,7 +2,6 @@ const fs = require('fs-extra');
 const glob = require('glob');
 const ip = require('ip');
 const path = require('path');
-const tmp = require('tmp');
 const uuidv4 = require('uuid/v4');
 
 const agentState = require('./agent-state');
@@ -22,7 +21,7 @@ const configFile = utils.getPath('agentconfig');
 const requestInterval = 15 * 1000;
 
 const projectFilePattern = '**/*.prj';
-const junitFilePattern = '*.xml';
+const junitFilePattern = '**/*.xml';
 
 const testOpsPropertiesFile = 'com.kms.katalon.integration.analytics.properties';
 const genericCommandOutputDir = 'katalon-agent-output';
@@ -161,8 +160,12 @@ function executeJob(token, jobInfo, keepFiles) {
           .then((status) => {
             executionStatus = status;
             // testCopyJUnitReports(outputDir);
+
+            const opts = {
+              sessionId: jobInfo.sessionId,
+            };
             // Collect all junit xml files and upload to TestOps
-            return reportUploader.uploadReports(token, projectId, outputDir, 'junit', junitFilePattern);
+            return reportUploader.uploadReports(token, projectId, outputDir, 'junit', junitFilePattern, opts);
           })
           .then(() => executionStatus);
       }
@@ -309,6 +312,7 @@ const agent = {
                 teamId,
                 configType: runConfiguration.configType,
                 commands: runConfiguration.genericCommand,
+                sessionId: parameter.sessionId,
               };
               // eslint-disable-next-line consistent-return
               return jobInfo;
