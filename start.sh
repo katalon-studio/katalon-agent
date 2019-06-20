@@ -5,4 +5,4 @@ esac
 
 CURRENT_DIR="$(cd "$(dirname "$BASH_SOURCE")"; pwd -P)"
 
-${CURRENT_DIR}/bin/${BIN} start-agent
+${CURRENT_DIR}/${BIN} start-agent
