@@ -19,6 +19,7 @@ const utils = require('./utils');
 
 const configFile = utils.getPath('agentconfig');
 const requestInterval = 5 * 1000;
+const pingInterval = 1 * 1000;
 
 const projectFilePattern = '**/*.prj';
 const junitFilePattern = '**/*.xml';
@@ -164,15 +165,17 @@ async function executeJob(token, jobInfo, keepFiles) {
     }
 
     logger.info('Job execution finished.');
-    logger.debug('TASK FINISHED WITH STATUS:', status);
+    logger.debug('JOB FINISHED WITH STATUS:', status);
 
     // Update job status after execution
     const jobStatus = (status === 0) ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
     const jobOptions = buildJobResponse(jobInfo, jobStatus);
 
-    logger.debug(`Update job with status '${jobStatus}'`);
+    logger.debug(`Update job with status '${jobStatus}.'`);
     await updateJob(token, jobOptions);
     await uploadLog(token, jobInfo, logFilePath);
+    logger.info('Job execution log uploaded.');
+    logger.info('Job execution has been completed.');
   } catch (err) {
     logger.error(`${executeJob.name}:`, err);
 
@@ -253,26 +256,11 @@ const agent = {
         }
 
         const {
-          uuid, agentName, ksLocation, keepFiles, logLevel, x11Display, xvfbRun,
+          uuid, ksLocation, keepFiles, logLevel, x11Display, xvfbRun,
         } = configs;
         const ksVersion = configs.ksVersionNumber;
 
         setLogLevel(logLevel);
-
-        const requestBody = {
-          uuid,
-          name: agentName,
-          teamId,
-          hostname: hostName,
-          ip: hostAddress,
-          os: osVersion,
-        };
-        const options = {
-          body: requestBody,
-        };
-        logger.trace(requestBody);
-
-        katalonRequest.pingAgent(token, options).catch(err => logger.error(err)); // async
 
         if (agentState.executingJob) {
           // Agent is executing a job, do nothing
@@ -310,12 +298,40 @@ const agent = {
         agentState.executingJob = true;
 
         await executeJob(token, jobInfo, keepFiles);
-        agentState.executingJob = false;
       } catch (err) {
         agentState.executingJob = false;
         logger.error(err);
       }
     }, requestInterval);
+
+    setInterval(() => {
+      if (!token) {
+        return;
+      }
+
+      const configs = config.read(configFile);
+      if (!configs.uuid) {
+        return;
+      }
+
+      const { uuid, agentName } = configs;
+
+      const requestBody = {
+        uuid,
+        name: agentName,
+        teamId,
+        hostname: hostName,
+        ip: hostAddress,
+        os: osVersion,
+      };
+      const options = {
+        body: requestBody,
+      };
+      logger.trace(requestBody);
+
+      katalonRequest.pingAgent(token, options)
+        .catch(err => logger.error('Cannot send agent info to server:', err)); // async
+    }, pingInterval);
   },
 
   stop() {
