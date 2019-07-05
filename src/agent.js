@@ -18,7 +18,7 @@ const reportUploader = require('./report-uploader');
 const utils = require('./utils');
 
 const configFile = utils.getPath('agentconfig');
-const requestInterval = 15 * 1000;
+const requestInterval = 60 * 1000;
 
 const projectFilePattern = '**/*.prj';
 const junitFilePattern = '**/*.xml';
@@ -198,6 +198,8 @@ function executeJob(token, jobInfo, keepFiles) {
     .finally(() => {
       agentState.executingJob = false;
       jLogger.close();
+
+      logger.info('Job execution has been completed.');
 
       // Remove temporary directory when `keepFiles` is false
       if (!keepFiles) {
