@@ -8,7 +8,7 @@ const config = require('./config');
 
 const katalonRequest = require('./katalon-request');
 
-const logExtension = /.*[^\.har|.zip]$/;
+const logExtension = /^[^.]+$|\.(?!(zip|har)$)([^.]+$)/;
 const harExtension = /.*\.(har)$/;
 
 // const uploadInfoOutPath=ka_upload_info.json
