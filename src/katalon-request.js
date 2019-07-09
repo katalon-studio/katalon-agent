@@ -35,6 +35,22 @@ module.exports = {
     return http.request(config.serverUrl, TOKEN_URI, options, 'post');
   },
 
+  refreshToken(refreshToken) {
+    const data = {
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+    };
+    const options = {
+      auth: {
+        username: oauth2.client_id,
+        password: oauth2.client_secret,
+      },
+      form: data,
+      json: true,
+    };
+    return http.request(config.serverUrl, TOKEN_URI, options, 'post');
+  },
+
   getUploadInfo(token, projectId) {
     const options = {
       auth: {
@@ -129,5 +145,32 @@ module.exports = {
       },
     };
     return http.request(config.serverUrl, `${KATALON_JOB_URI + jobId}/get-log`, options, 'GET');
+  },
+
+  requestWrapper(request, email, password, token, ...args) {
+    return request(token, ...args)
+      .then((response) => {
+        const {
+          status,
+          body: {
+            error: errorType,
+            error_description: errorMessage,
+          },
+        } = response;
+
+        if (status === 401) {
+          if (errorType === 'invalid_token' && errorMessage.includes('expired')) {
+            return this.requestToken(email, password)
+              .then((requestTokenResponse) => {
+                // Save new token to global
+                global.token = requestTokenResponse.body.access_token;
+                // Remake request with newly saved token
+                return request(global.token, ...args);
+              });
+          }
+        }
+        // Token not expired, resolve response normally
+        return response;
+      });
   },
 };

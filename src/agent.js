@@ -4,6 +4,8 @@ const ip = require('ip');
 const path = require('path');
 const uuidv4 = require('uuid/v4');
 
+const TokenManager = require('./token-manager');
+
 const agentState = require('./agent-state');
 const config = require('./config');
 const file = require('./file');
@@ -18,8 +20,10 @@ const reportUploader = require('./report-uploader');
 const utils = require('./utils');
 
 const configFile = utils.getPath('agentconfig');
-const requestInterval = 5 * 1000;
-const pingInterval = 1 * 1000;
+const requestInterval = 15 * 1000;
+const pingInterval = 30 * 1000;
+const tokenManager = new TokenManager();
+tokenManager.expiryExpectancy = 3 * requestInterval;
 
 const projectFilePattern = '**/*.prj';
 const junitFilePattern = '**/*.xml';
@@ -220,9 +224,8 @@ const agent = {
 
     config.update(commandLineConfigs, configFile);
     const {
-      email, teamId,
+      email, teamId, apikey,
     } = config;
-    const password = config.apikey;
     setLogLevel(config.logLevel);
 
     validateField(config, 'email');
@@ -234,16 +237,13 @@ const agent = {
       logger.error(`Please specify 'ksVersionNumber' or 'ksLocation' property in ${path.basename(configFile)}.`);
     }
 
-    let token;
+    tokenManager.email = email;
+    tokenManager.password = apikey;
 
+    let token;
     setInterval(async () => {
       try {
-        const requestTokenResponse = await katalonRequest.requestToken(email, password);
-        if (!requestTokenResponse || !requestTokenResponse.body) {
-          logger.error('Cannot request for access token to', config.serverUrl);
-          return;
-        }
-        token = requestTokenResponse.body.access_token;
+        token = await tokenManager.ensureToken();
 
         const configs = config.read(configFile);
         if (!configs.uuid) {
