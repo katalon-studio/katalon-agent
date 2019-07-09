@@ -59,6 +59,9 @@ class TokenManager {
       const requestMethod = this.refreshToken ? this.refreshAccessToken : this.requestAccessToken;
       return requestMethod();
     }
+    // Use previous token if it has not yet expired
+    // This will not take care of the scenario where
+    // token is accidentally removed due to internal error or being revoked
     return Promise.resolve(this.accessToken);
   }
 }
