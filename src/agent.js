@@ -20,7 +20,7 @@ const reportUploader = require('./report-uploader');
 const utils = require('./utils');
 
 const configFile = utils.getPath('agentconfig');
-const requestInterval = 15 * 1000;
+const requestInterval = 5 * 1000;
 const pingInterval = 30 * 1000;
 const tokenManager = new TokenManager();
 tokenManager.expiryExpectancy = 3 * requestInterval;
@@ -233,10 +233,6 @@ const agent = {
     validateField(config, 'serverUrl');
     validateField(config, 'teamId');
 
-    if (!config.ksVersionNumber && !config.ksLocation) {
-      logger.error(`Please specify 'ksVersionNumber' or 'ksLocation' property in ${path.basename(configFile)}.`);
-    }
-
     tokenManager.email = email;
     tokenManager.password = apikey;
 
@@ -278,8 +274,8 @@ const agent = {
         const { parameter, testProject, runConfiguration } = jobBody;
 
         const jobInfo = {
-          ksVersionNumber: ksVersion,
-          ksLocation,
+          ksVersionNumber: parameter.ksVersion || ksVersion,
+          ksLocation: parameter.ksLocation || ksLocation,
           ksArgs: parameter.command,
           x11Display,
           xvfbConfiguration: xvfbRun,
@@ -287,8 +283,8 @@ const agent = {
           jobId: jobBody.id,
           projectId: testProject.projectId,
           teamId,
-          configType: runConfiguration.configType,
-          commands: runConfiguration.genericCommand,
+          configType: parameter.configType || runConfiguration.configType,
+          commands: parameter.command,
           sessionId: parameter.sessionId,
         };
 
