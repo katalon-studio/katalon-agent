@@ -134,7 +134,7 @@ async function executeGenericCommand(token, jobInfo, tmpDirPath, jLogger) {
   fs.ensureDir(outputDir);
 
   const status = await genericCommand.executeCommands(commands, tmpDirPath, outputDir, jLogger);
-  // testCopyJUnitReports(outputDir);
+  testCopyJUnitReports(outputDir);
 
   const opts = {
     sessionId: jobInfo.sessionId,
@@ -273,9 +273,16 @@ const agent = {
         const jobBody = requestJobResponse.body;
         const { parameter, testProject, runConfiguration } = jobBody;
 
+        const ksVer = parameter.ksVersion || ksVersion;
+        const ksLoc = parameter.ksVersion ? parameter.ksLocation : (parameter.ksLocation || ksLocation);
+
+        if (!ksVer && !ksLoc) {
+          logger.error("Please specify 'ksVersionNumber' or 'ksLocation' property.");
+        }
+
         const jobInfo = {
-          ksVersionNumber: parameter.ksVersion || ksVersion,
-          ksLocation: parameter.ksLocation || ksLocation,
+          ksVersionNumber: ksVer,
+          ksLocation: ksLoc,
           ksArgs: parameter.command,
           x11Display,
           xvfbConfiguration: xvfbRun,
