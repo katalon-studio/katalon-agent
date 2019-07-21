@@ -5,7 +5,7 @@ const token = '${GITHUB_TOKEN}';
 module.exports = {
     git: {
       pushRepo: `https://${user}:${token}@github.com/katalon-studio/katalon-agent.git`,
-      changelog: 'git log -1 --pretty=format:"%s"',
+      changelog: 'git log -1 --pretty=format:"%s%n%n>**Commit:** %h%d%n>**Author:** %an%n>**Date:** %ai%n"',
       tagName: `v${version}`,
       requireCleanWorkingDir: false,
       tag: false,
