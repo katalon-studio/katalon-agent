@@ -177,8 +177,6 @@ async function executeJob(token, jobInfo, keepFiles) {
 
     logger.debug(`Update job with status '${jobStatus}.'`);
     await updateJob(token, jobOptions);
-    await uploadLog(token, jobInfo, logFilePath);
-    logger.info('Job execution log uploaded.');
     logger.info('Job execution has been completed.');
   } catch (err) {
     logger.error(`${executeJob.name}:`, err);
@@ -193,6 +191,9 @@ async function executeJob(token, jobInfo, keepFiles) {
   } finally {
     agentState.executingJob = false;
     jLogger.close();
+
+    await uploadLog(token, jobInfo, logFilePath);
+    logger.info('Job execution log uploaded.');
 
     // Remove temporary directory when `keepFiles` is false
     if (!keepFiles) {
@@ -275,10 +276,6 @@ const agent = {
 
         const ksVer = parameter.ksVersion || ksVersion;
         const ksLoc = parameter.ksVersion ? parameter.ksLocation : (parameter.ksLocation || ksLocation);
-
-        if (!ksVer && !ksLoc) {
-          logger.error("Please specify 'ksVersionNumber' or 'ksLocation' property.");
-        }
 
         const jobInfo = {
           ksVersionNumber: ksVer,
