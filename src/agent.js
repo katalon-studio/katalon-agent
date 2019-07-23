@@ -134,7 +134,7 @@ async function executeGenericCommand(token, jobInfo, tmpDirPath, jLogger) {
   fs.ensureDir(outputDir);
 
   const status = await genericCommand.executeCommands(commands, tmpDirPath, outputDir, jLogger);
-  testCopyJUnitReports(outputDir);
+  // testCopyJUnitReports(outputDir);
 
   const opts = {
     sessionId: jobInfo.sessionId,
