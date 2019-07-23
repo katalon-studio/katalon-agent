@@ -68,6 +68,10 @@ module.exports = {
     return http.uploadToS3(uploadUrl, filePath);
   },
 
+  streamContent(uploadUrl, content) {
+    return http.streamToS3(uploadUrl, content);
+  },
+
   uploadFileInfo(token, projectId, batch, folderName, fileName, uploadedPath, isEnd, reportType, opts = {}) {
     let url = KATALON_TEST_REPORTS_URI;
     if (reportType === 'junit') {

@@ -3,6 +3,7 @@ const fs = require('fs');
 const request = require('request');
 const urljoin = require('url-join');
 
+const Readable = require('stream').Readable;
 const logger = require('./logger');
 const config = require('./config');
 
@@ -98,4 +99,32 @@ module.exports = {
     return promise;
   },
 
+  streamToS3(signedUrl, content) {
+    const headers = {
+      'content-type': 'application/octet-stream',
+      'Content-Length': content.length,
+    };
+    const method = 'PUT';
+    const options = buildOptions(signedUrl, headers, {
+      method,
+      json: true,
+    });
+
+    const strStream = new Readable();
+    strStream.push(content);
+    strStream.push(null);
+
+    const promise = new Promise((resolve, reject) => {
+      strStream.pipe(request(options, (error, response, body) => {
+        if (error) {
+          logger.error(error);
+          reject(error);
+        } else {
+          logger.info(`${method} ${response.request.href} ${response.statusCode}.`);
+          resolve({ status: response.statusCode, body });
+        }
+      }));
+    });
+    return promise;
+  },
 };

@@ -4,7 +4,9 @@ const ip = require('ip');
 const path = require('path');
 const uuidv4 = require('uuid/v4');
 
+const JobLogManager = require('./job-log-manager');
 const TokenManager = require('./token-manager');
+const { S3FileTransport } = require('./transports');
 
 const agentState = require('./agent-state');
 const config = require('./config');
@@ -159,7 +161,20 @@ async function executeJob(token, jobInfo, keepFiles) {
   const logFilePath = path.resolve(tmpDirPath, 'debug.log');
   const jLogger = jobLogger.getLogger(logFilePath);
 
+  // Create log manager
+  const logManager = new JobLogManager(jobInfo.projectId);
+
   try {
+    // Upload log and add new transport to stream log content to s3
+    // Everytime a new log entry is written to file
+    await logManager.uploadLog(token, jobInfo, logFilePath);
+    jLogger.add(new S3FileTransport({
+      filePath: logFilePath,
+      signedUrl: logManager.uploadUrl,
+      logger,
+    }));
+    jLogger.info('hello');
+
     await file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, true, jLogger);
     let status;
     if (jobInfo.configType === 'GENERIC_COMMAND') {
@@ -192,7 +207,8 @@ async function executeJob(token, jobInfo, keepFiles) {
     agentState.executingJob = false;
     jLogger.close();
 
-    await uploadLog(token, jobInfo, logFilePath);
+    // await uploadLog(token, jobInfo, logFilePath);
+    await logManager.uploadLog(token, jobInfo, logFilePath);
     logger.info('Job execution log uploaded.');
 
     // Remove temporary directory when `keepFiles` is false
