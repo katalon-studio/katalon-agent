@@ -1,90 +1,43 @@
-const fs = require('fs');
-const http = require('http');
-const https = require('https');
-const winston = require('winston');
+const _ = require('lodash');
 const TransportStream = require('winston-transport');
-
-const katalonHttp = require('./http');
 const { MESSAGE } = require('triple-beam');
 
-class MyHttpTransport extends winston.transports.Http {
-  constructor(options = {}) {
-    super(options);
-  }
-
-  log(info, callback) {
-    this._request(info[MESSAGE], (err, res) => {
-      // if (res) {
-      //   console.log('MyHttpTransport response:', res.statusCode, res.statusMessage);
-      // } else {
-      //   console.log('<no response>', res);
-      // }
-
-      if (res && res.statusCode !== 200) {
-        err = new Error(`Invalid HTTP Status Code: ${res.statusCode}`);
-      }
-
-      if (err) {
-        this.emit('warn', err);
-      } else {
-        this.emit('logged', info);
-      }
-    });
-
-    // Remark: (jcrugzz) Fire and forget here so requests dont cause buffering
-    // and block more requests from happening?
-    if (callback) {
-      setImmediate(callback);
-    }
-  }
-
-  _request(options, callback) {
-    options = options || {};
-
-    const auth = options.auth || this.auth;
-    const path = options.path || this.path || '';
-
-    delete options.auth;
-    delete options.path;
-
-    // Prepare options for outgoing HTTP request
-    const req = (this.ssl ? https : http).request({
-      method: 'PUT',
-      host: this.host,
-      port: this.port,
-      path: `/${path.replace(/^\//, '')}`,
-      headers: this.headers,
-      auth: auth ? (`${auth.username}:${auth.password}`) : '',
-      agent: this.agent,
-    });
-
-    req.on('error', callback);
-    req.on('response', res => (
-      res.on('end', () => callback(null, res)).resume()
-    ));
-    req.end(Buffer.from(JSON.stringify(options), 'utf8'));
-  }
-}
+const katalonHttp = require('./http');
+const katalonRequest = require('./katalon-request');
 
 class S3FileTransport extends TransportStream {
-  constructor(options = {}) {
+  constructor(options = {}, projectId, topic) {
     super(options);
     this.filePath = options.filePath;
     this.signedUrl = options.signedUrl;
     this.parentLogger = options.logger;
-    console.log('[[[S3FileTransport]]]', this.signedUrl, this.filePath);
+
+    this.wait = options.wait;
+    this.projectId = projectId;
+    this.topic = topic;
+
+    this.uploadToS3 = this.uploadToS3.bind(this);
+    this.uploadToS3Throttled = _.throttle(this.uploadToS3, this.wait);
   }
 
-  log(info, callback) {
+  uploadToS3(info, callback) {
     try {
-      const content = fs.readFileSync(this.filePath, 'utf-8');
+      // const content = fs.readFileSync(this.filePath, 'utf-8');
 
-      return katalonHttp.streamToS3(this.signedUrl, content)
-        .then(res => console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%', res))
-        .then(() => callback && callback())
+      return katalonHttp.uploadToS3(this.signedUrl, this.filePath)
+        .then(res => console.log('%%%%%S3FileTransport%%%%%', new Date(), res))
+        .then(() => katalonRequest.sendTrigger(this.projectId, this.topic))
         .catch(error => this._handleError(error));
     } catch (error) {
       this._handleError(error);
+      return null;
+    }
+  }
+
+  log(info, callback) {
+    this.uploadToS3Throttled(info, callback);
+    if (callback) {
+      callback();
     }
   }
 
@@ -93,5 +46,46 @@ class S3FileTransport extends TransportStream {
   }
 }
 
-module.exports.MyHttpTransport = MyHttpTransport;
+class S3BufferTransport extends TransportStream {
+  constructor(options = {}, projectId, topic) {
+    super(options);
+    this.filePath = options.filePath;
+    this.signedUrl = options.signedUrl;
+    this.parentLogger = options.logger;
+    this.wait = options.wait;
+
+    this.contentBuffer = '';
+    this.projectId = projectId;
+    this.topic = topic;
+
+    this.streamToS3 = this.streamToS3.bind(this);
+    this.streamToS3Throttled = _.throttle(this.streamToS3, this.wait);
+  }
+
+  streamToS3(info, callback) {
+    this.contentBuffer += `${info[MESSAGE]}\n`;
+    try {
+      return katalonHttp.streamToS3(this.signedUrl, this.contentBuffer)
+        .then(res => console.log('$$$$$$S3BufferTransport$$$$$', new Date(), res))
+        .then(() => katalonRequest.sendTrigger(this.projectId, this.topic))
+        .catch(error => this._handleError(error));
+    } catch (error) {
+      this._handleError(error);
+      return null;
+    }
+  }
+
+  log(info, callback) {
+    this.streamToS3(info, callback);
+    if (callback) {
+      callback();
+    }
+  }
+
+  _handleError(error) {
+    this.parentLogger.error('Error caught during logging:', error);
+  }
+}
+
 module.exports.S3FileTransport = S3FileTransport;
+module.exports.S3BufferTransport = S3BufferTransport;
