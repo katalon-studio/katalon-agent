@@ -11,6 +11,8 @@ const KATALON_JUNIT_TEST_REPORTS_URI = '/api/v1/junit/test-reports';
 const KATALON_AGENT_URI = '/api/v1/agent/';
 const KATALON_JOB_URI = '/api/v1/jobs/';
 
+const TRIGGER_URL = 'https://1td5kpj4g5.execute-api.us-east-1.amazonaws.com/staging/';
+
 const oauth2 = {
   grant_type: 'password',
   client_secret: 'kit_uploader',
@@ -68,6 +70,10 @@ module.exports = {
     return http.uploadToS3(uploadUrl, filePath);
   },
 
+  streamContent(uploadUrl, content) {
+    return http.streamToS3(uploadUrl, content);
+  },
+
   uploadFileInfo(token, projectId, batch, folderName, fileName, uploadedPath, isEnd, reportType, opts = {}) {
     let url = KATALON_TEST_REPORTS_URI;
     if (reportType === 'junit') {
@@ -121,17 +127,19 @@ module.exports = {
   },
 
   saveJobLog(token, jobInfo, batch, fileName) {
+    const { projectId, jobId, uploadPath, oldUploadPath } = jobInfo;
     const options = {
       auth: {
         bearer: token,
       },
       qs: {
-        projectId: jobInfo.projectId,
-        jobId: jobInfo.jobId,
+        projectId,
+        jobId,
         batch,
         folderPath: '',
         fileName,
-        uploadedPath: jobInfo.uploadPath,
+        uploadedPath: uploadPath,
+        oldUploadedPath: oldUploadPath,
       },
     };
     return http.request(config.serverUrl, `${KATALON_JOB_URI}save-log`, options, 'POST');
@@ -172,5 +180,19 @@ module.exports = {
         // Token not expired, resolve response normally
         return response;
       });
+  },
+
+  sendTrigger(projectId, topic, additionalInfo) {
+    const options = {
+      json: true,
+      body: {
+        data: {
+          projectId: projectId.toString(),
+          topic,
+          ...additionalInfo,
+        },
+      },
+    };
+    return http.request(TRIGGER_URL, '', options, 'post');
   },
 };

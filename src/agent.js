@@ -5,6 +5,7 @@ const path = require('path');
 const uuidv4 = require('uuid/v4');
 
 const TokenManager = require('./token-manager');
+const { S3FileTransport } = require('./transports');
 
 const agentState = require('./agent-state');
 const config = require('./config');
@@ -22,6 +23,7 @@ const utils = require('./utils');
 const configFile = utils.getPath('agentconfig');
 const requestInterval = 5 * 1000;
 const pingInterval = 30 * 1000;
+const sendLogWaitInterval = 10 * 1000;
 const tokenManager = new TokenManager();
 tokenManager.expiryExpectancy = 3 * requestInterval;
 
@@ -87,6 +89,10 @@ async function uploadLog(token, jobInfo, filePath) {
   const { body } = response;
   const { uploadUrl } = body;
   const uploadPath = body.path;
+
+  if (jobInfo.uploadPath) {
+    jobInfo.oldUploadPath = jobInfo.uploadPath;
+  }
 
   jobInfo.uploadUrl = uploadUrl;
   jobInfo.uploadPath = uploadPath;
@@ -158,8 +164,20 @@ async function executeJob(token, jobInfo, keepFiles) {
   // Create job logger
   const logFilePath = path.resolve(tmpDirPath, 'debug.log');
   const jLogger = jobLogger.getLogger(logFilePath);
+  const topic = `Job-${jobInfo.jobId}`;
+  const projectId = jobInfo.projectId;
 
   try {
+    // Upload log and add new transport to stream log content to s3
+    // Everytime a new log entry is written to file
+    await uploadLog(token, jobInfo, logFilePath);
+    jLogger.add(new S3FileTransport({
+      filePath: logFilePath,
+      signedUrl: jobInfo.uploadUrl,
+      logger,
+      wait: sendLogWaitInterval,
+    }, projectId, topic));
+
     await file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, true, jLogger);
     let status;
     if (jobInfo.configType === 'GENERIC_COMMAND') {
@@ -194,6 +212,7 @@ async function executeJob(token, jobInfo, keepFiles) {
 
     await uploadLog(token, jobInfo, logFilePath);
     logger.info('Job execution log uploaded.');
+    katalonRequest.sendTrigger(projectId, topic);
 
     // Remove temporary directory when `keepFiles` is false
     if (!keepFiles) {
