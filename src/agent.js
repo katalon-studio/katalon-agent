@@ -5,7 +5,7 @@ const path = require('path');
 const uuidv4 = require('uuid/v4');
 
 const TokenManager = require('./token-manager');
-const { S3FileTransport, S3BufferTransport } = require('./transports');
+const { S3FileTransport } = require('./transports');
 
 const agentState = require('./agent-state');
 const config = require('./config');

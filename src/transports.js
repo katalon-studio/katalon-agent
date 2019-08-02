@@ -25,7 +25,6 @@ class S3FileTransport extends TransportStream {
       // const content = fs.readFileSync(this.filePath, 'utf-8');
 
       return katalonHttp.uploadToS3(this.signedUrl, this.filePath)
-        .then(res => console.log('%%%%%S3FileTransport%%%%%', new Date(), res))
         .then(() => katalonRequest.sendTrigger(this.projectId, this.topic))
         .catch(error => this._handleError(error));
     } catch (error) {
@@ -66,7 +65,6 @@ class S3BufferTransport extends TransportStream {
     this.contentBuffer += `${info[MESSAGE]}\n`;
     try {
       return katalonHttp.streamToS3(this.signedUrl, this.contentBuffer)
-        .then(res => console.log('$$$$$$S3BufferTransport$$$$$', new Date(), res))
         .then(() => katalonRequest.sendTrigger(this.projectId, this.topic))
         .catch(error => this._handleError(error));
     } catch (error) {
