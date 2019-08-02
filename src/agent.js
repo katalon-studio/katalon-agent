@@ -23,6 +23,7 @@ const utils = require('./utils');
 const configFile = utils.getPath('agentconfig');
 const requestInterval = 5 * 1000;
 const pingInterval = 30 * 1000;
+const sendLogWaitInterval = 10 * 1000;
 const tokenManager = new TokenManager();
 tokenManager.expiryExpectancy = 3 * requestInterval;
 
@@ -174,7 +175,7 @@ async function executeJob(token, jobInfo, keepFiles) {
       filePath: logFilePath,
       signedUrl: jobInfo.uploadUrl,
       logger,
-      wait: 10000,
+      wait: sendLogWaitInterval,
     }, projectId, topic));
 
     await file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, true, jLogger);
