@@ -22,8 +22,6 @@ class S3FileTransport extends TransportStream {
 
   uploadToS3(info, callback) {
     try {
-      // const content = fs.readFileSync(this.filePath, 'utf-8');
-
       return katalonHttp.uploadToS3(this.signedUrl, this.filePath)
         .then(() => katalonRequest.sendTrigger(this.projectId, this.topic))
         .catch(error => this._handleError(error));

@@ -210,7 +210,6 @@ async function executeJob(token, jobInfo, keepFiles) {
     agentState.executingJob = false;
     jLogger.close();
 
-    // await uploadLog(token, jobInfo, logFilePath);
     await uploadLog(token, jobInfo, logFilePath);
     logger.info('Job execution log uploaded.');
     katalonRequest.sendTrigger(projectId, topic);
