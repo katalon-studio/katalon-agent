@@ -4,6 +4,9 @@ const ip = require('ip');
 const path = require('path');
 const uuidv4 = require('uuid/v4');
 
+const TokenManager = require('./token-manager');
+const { S3FileTransport } = require('./transports');
+
 const agentState = require('./agent-state');
 const config = require('./config');
 const file = require('./file');
@@ -17,8 +20,14 @@ const properties = require('./properties');
 const reportUploader = require('./report-uploader');
 const utils = require('./utils');
 
-const configFile = utils.getPath('agentconfig');
-const requestInterval = 60 * 1000;
+const NODE_ENV = process.env.NODE_ENV;
+
+const defaultConfigFile = utils.getPath('agentconfig');
+const requestInterval = NODE_ENV === 'debug' ? 5 * 1000 : 60 * 1000;
+const pingInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 1000;
+const sendLogWaitInterval = 10 * 1000;
+const tokenManager = new TokenManager();
+tokenManager.expiryExpectancy = 3 * requestInterval;
 
 const projectFilePattern = '**/*.prj';
 const junitFilePattern = '**/*.xml';
@@ -71,35 +80,32 @@ function buildTestOpsIntegrationProperties(token, teamId, projectId) {
   };
 }
 
-function uploadLog(token, jobInfo, filePath) {
+async function uploadLog(token, jobInfo, filePath) {
   logger.info('Uploading job execution log...');
   // Request upload URL
-  return katalonRequest.getUploadInfo(token, jobInfo.projectId)
-    .then((response) => {
-      if (!response || !response.body) {
-        return;
-      }
+  const response = await katalonRequest.getUploadInfo(token, jobInfo.projectId);
+  if (!response || !response.body) {
+    return null;
+  }
 
-      const { body } = response;
-      const { uploadUrl } = body;
-      const uploadPath = body.path;
+  const { body } = response;
+  const { uploadUrl } = body;
+  const uploadPath = body.path;
 
-      // eslint-disable-next-line no-param-reassign
-      jobInfo.uploadUrl = uploadUrl;
-      // eslint-disable-next-line no-param-reassign
-      jobInfo.uploadPath = uploadPath;
+  if (jobInfo.uploadPath) {
+    jobInfo.oldUploadPath = jobInfo.uploadPath;
+  }
 
-      // Upload file with received URL
-      // eslint-disable-next-line consistent-return
-      return katalonRequest.uploadFile(uploadUrl, filePath);
-    })
-    .then(() => {
-      const batch = `${new Date().getTime()}-${uuidv4()}`;
-      const fileName = path.basename(filePath);
+  jobInfo.uploadUrl = uploadUrl;
+  jobInfo.uploadPath = uploadPath;
 
-      // Update job's upload file
-      return katalonRequest.saveJobLog(token, jobInfo, batch, fileName);
-    });
+  await katalonRequest.uploadFile(uploadUrl, filePath);
+
+  const batch = `${new Date().getTime()}-${uuidv4()}`;
+  const fileName = path.basename(filePath);
+
+  // Update job's upload file
+  return katalonRequest.saveJobLog(token, jobInfo, batch, fileName);
 }
 
 function testCopyJUnitReports(outputDir) {
@@ -109,14 +115,13 @@ function testCopyJUnitReports(outputDir) {
     'sample-junit.xml',
     'sample-junit-out.xml',
   ];
-  files.forEach(file => fs.copyFileSync(path.join(sampleDir, file), path.join(outputDir, file)))
+  files.forEach(file => fs.copyFileSync(path.join(sampleDir, file), path.join(outputDir, file)));
 }
 
 function executeKatalonCommand(token, jobInfo, tmpDirPath, jLogger) {
   logger.info('Executing job...');
   // Find project file inside project directory
   const projectPathPattern = path.resolve(tmpDirPath, projectFilePattern);
-  // eslint-disable-next-line no-param-reassign
   [jobInfo.ksProjectPath] = glob.sync(projectPathPattern, { nodir: true });
 
   // Manually configure integration settings for KS to upload execution report
@@ -131,7 +136,24 @@ function executeKatalonCommand(token, jobInfo, tmpDirPath, jLogger) {
     jobInfo.x11Display, jobInfo.xvfbConfiguration, jLogger);
 }
 
-function executeJob(token, jobInfo, keepFiles) {
+async function executeGenericCommand(token, jobInfo, tmpDirPath, jLogger) {
+  const { commands, projectId } = jobInfo;
+  const outputDir = path.join(tmpDirPath, genericCommandOutputDir);
+  fs.ensureDir(outputDir);
+
+  const status = await genericCommand.executeCommands(commands, tmpDirPath, outputDir, jLogger);
+  // testCopyJUnitReports(outputDir);
+
+  const opts = {
+    sessionId: jobInfo.sessionId,
+  };
+
+  // Collect all junit xml files and upload to TestOps
+  await reportUploader.uploadReports(token, projectId, outputDir, 'junit', junitFilePattern, opts);
+  return status;
+}
+
+async function executeJob(token, jobInfo, keepFiles) {
   // Create directory where temporary files are contained
   const tmpRoot = path.resolve(global.appRoot, 'tmp/');
   fs.ensureDir(tmpRoot);
@@ -144,71 +166,64 @@ function executeJob(token, jobInfo, keepFiles) {
   // Create job logger
   const logFilePath = path.resolve(tmpDirPath, 'debug.log');
   const jLogger = jobLogger.getLogger(logFilePath);
+  const topic = `Job-${jobInfo.jobId}`;
+  const projectId = jobInfo.projectId;
 
-  return file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, true, jLogger)
-    .then(() => {
-      if (jobInfo.configType === 'GENERIC_COMMAND') {
-        const { commands } = jobInfo;
-        const outputDir = path.join(tmpDirPath, genericCommandOutputDir);
-        fs.ensureDir(outputDir);
+  try {
+    // Upload log and add new transport to stream log content to s3
+    // Everytime a new log entry is written to file
+    // await uploadLog(token, jobInfo, logFilePath);
+    // jLogger.add(new S3FileTransport({
+    //   filePath: logFilePath,
+    //   signedUrl: jobInfo.uploadUrl,
+    //   logger,
+    //   wait: sendLogWaitInterval,
+    // }, projectId, topic));
 
-        const {
-          projectId,
-        } = jobInfo;
-        let executionStatus;
-        return genericCommand.executeCommands(commands, tmpDirPath, outputDir, jLogger)
-          .then((status) => {
-            executionStatus = status;
-            // testCopyJUnitReports(outputDir);
+    await file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, true, jLogger);
+    let status;
+    if (jobInfo.configType === 'GENERIC_COMMAND') {
+      status = await executeGenericCommand(token, jobInfo, tmpDirPath, jLogger);
+    } else {
+      status = await executeKatalonCommand(token, jobInfo, tmpDirPath, jLogger);
+    }
 
-            const opts = {
-              sessionId: jobInfo.sessionId,
-            };
-            // Collect all junit xml files and upload to TestOps
-            return reportUploader.uploadReports(token, projectId, outputDir, 'junit', junitFilePattern, opts);
-          })
-          .then(() => executionStatus);
-      }
+    logger.info('Job execution finished.');
+    logger.debug('JOB FINISHED WITH STATUS:', status);
 
-      return executeKatalonCommand(token, jobInfo, tmpDirPath, jLogger);
-    })
-    .then((status) => {
-      logger.info('Job execution finished.');
-      logger.debug('TASK FINISHED WITH STATUS:', status);
+    // Update job status after execution
+    const jobStatus = (status === 0) ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
+    const jobOptions = buildJobResponse(jobInfo, jobStatus);
 
-      // Update job status after execution
-      const jobStatus = (status === 0) ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
-      const jobOptions = buildJobResponse(jobInfo, jobStatus);
+    logger.debug(`Update job with status '${jobStatus}.'`);
+    await updateJob(token, jobOptions);
+    logger.info('Job execution has been completed.');
+  } catch (err) {
+    logger.error(`${executeJob.name}:`, err);
 
-      logger.debug(`Update job with status '${jobStatus}'`);
-      return updateJob(token, jobOptions);
-    })
-    .then(() => uploadLog(token, jobInfo, logFilePath))
-    .catch((err) => {
-      logger.error(`${executeJob.name}:`, err);
+    // Update job status to failed when exception occured
+    // NOTE: Job status is set FAILED might not be because of a failed execution
+    // but because of other reasons such as cannot remove tmp directory or cannot upload log
+    const jobStatus = JOB_STATUS.FAILED;
+    const jobOptions = buildJobResponse(jobInfo, jobStatus);
+    logger.debug(`Error caught during job execution! Update job with status '${jobStatus}'`);
+    await updateJob(token, jobOptions);
+  } finally {
+    agentState.executingJob = false;
+    jLogger.close();
 
-      // Update job status to failed when exception occured
-      // NOTE: Job status is set FAILED might not be because of a failed execution
-      // but because of other reasons such as cannot remove tmp directory or cannot upload log
-      const jobStatus = JOB_STATUS.FAILED;
-      const jobOptions = buildJobResponse(jobInfo, jobStatus);
-      logger.debug(`Error caught during job execution! Update job with status '${jobStatus}'`);
-      return updateJob(token, jobOptions);
-    })
-    .finally(() => {
-      agentState.executingJob = false;
-      jLogger.close();
+    await uploadLog(token, jobInfo, logFilePath);
+    logger.info('Job execution log uploaded.');
+    // katalonRequest.sendTrigger(projectId, topic);
 
-      logger.info('Job execution has been completed.');
-
-      // Remove temporary directory when `keepFiles` is false
-      if (!keepFiles) {
-        tmpDir.removeCallback();
-      }
-    });
+    // Remove temporary directory when `keepFiles` is false
+    if (!keepFiles) {
+      tmpDir.removeCallback();
+    }
+  }
 }
 
-function validateField(configs, propertyName) {
+function validateField(configs, propertyName, configFile = defaultConfigFile) {
   if (!configs[propertyName]) {
     logger.error(`Please specify '${propertyName}' property in ${path.basename(configFile)}.`);
     return false;
@@ -229,116 +244,117 @@ const agent = {
     const hostName = os.getHostName();
     const osVersion = os.getVersion();
 
+    const configFile = commandLineConfigs.configPath || defaultConfigFile;
+    logger.info('Loading agent configs @', configFile, NODE_ENV);
     config.update(commandLineConfigs, configFile);
     const {
-      email, teamId,
+      email, teamId, apikey,
     } = config;
-    const password = config.apikey;
     setLogLevel(config.logLevel);
 
-    validateField(config, 'email');
-    validateField(config, 'apikey');
-    validateField(config, 'serverUrl');
-    validateField(config, 'teamId');
+    validateField(config, 'email', configFile);
+    validateField(config, 'apikey', configFile);
+    validateField(config, 'serverUrl', configFile);
+    validateField(config, 'teamId', configFile);
 
-    if (!config.ksVersionNumber && !config.ksLocation) {
-      logger.error(`Please specify 'ksVersionNumber' or 'ksLocation' property in ${path.basename(configFile)}.`);
-    }
+    tokenManager.email = email;
+    tokenManager.password = apikey;
 
     let token;
+    setInterval(async () => {
+      try {
+        token = await tokenManager.ensureToken();
+
+        const configs = config.read(configFile);
+        if (!configs.uuid) {
+          configs.uuid = `${new Date().getTime()}-${uuidv4()}`;
+          config.write(configFile, configs);
+        }
+
+        if (!configs.agentName) {
+          configs.agentName = hostName;
+        }
+
+        const {
+          uuid, ksLocation, keepFiles, logLevel, x11Display, xvfbRun,
+        } = configs;
+        const ksVersion = configs.ksVersionNumber;
+
+        setLogLevel(logLevel);
+
+        if (agentState.executingJob) {
+          // Agent is executing a job, do nothing
+          return;
+        }
+
+        // Agent is not executing job, request new job
+        const requestJobResponse = await katalonRequest.requestJob(token, uuid, teamId);
+        if (!requestJobResponse || !requestJobResponse.body
+          || !requestJobResponse.body.parameter || !requestJobResponse.body.testProject) {
+          // There is no job to execute
+          return;
+        }
+        const jobBody = requestJobResponse.body;
+        const { parameter, testProject, runConfiguration } = jobBody;
+
+        const ksVer = parameter.ksVersion || ksVersion;
+        const ksLoc = parameter.ksVersion ? parameter.ksLocation : (parameter.ksLocation || ksLocation);
+
+        const jobInfo = {
+          ksVersionNumber: ksVer,
+          ksLocation: ksLoc,
+          ksArgs: parameter.command,
+          x11Display,
+          xvfbConfiguration: xvfbRun,
+          downloadUrl: parameter.downloadUrl,
+          jobId: jobBody.id,
+          projectId: testProject.projectId,
+          teamId,
+          configType: parameter.configType || runConfiguration.configType,
+          commands: parameter.command,
+          sessionId: parameter.sessionId,
+        };
+
+        // Update job status to running
+        const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.RUNNING);
+        await updateJob(token, jobOptions);
+        agentState.executingJob = true;
+
+        await executeJob(token, jobInfo, keepFiles);
+      } catch (err) {
+        agentState.executingJob = false;
+        logger.error(err);
+      }
+    }, requestInterval);
 
     setInterval(() => {
-      katalonRequest.requestToken(email, password)
-        .then((requestTokenResponse) => {
-          token = requestTokenResponse.body.access_token;
-          logger.trace(`Token: ${token}`);
+      if (!token) {
+        return;
+      }
 
-          const configs = config.read(configFile);
-          if (!configs.uuid) {
-            configs.uuid = uuidv4();
-            config.write(configFile, configs);
-          }
+      const configs = config.read(configFile);
+      if (!configs.uuid) {
+        return;
+      }
 
-          if (!configs.agentName) {
-            configs.agentName = hostName;
-          }
+      const { uuid, agentName } = configs;
 
-          const {
-            uuid, agentName, ksLocation, keepFiles, logLevel, x11Display, xvfbRun,
-          } = configs;
-          const ksVersion = configs.ksVersionNumber;
+      const requestBody = {
+        uuid,
+        name: agentName,
+        teamId,
+        hostname: hostName,
+        ip: hostAddress,
+        os: osVersion,
+      };
+      const options = {
+        body: requestBody,
+      };
+      logger.trace(requestBody);
 
-          setLogLevel(logLevel);
-
-          const requestBody = {
-            uuid,
-            name: agentName,
-            teamId,
-            hostname: hostName,
-            ip: hostAddress,
-            os: osVersion,
-          };
-          const options = {
-            body: requestBody,
-          };
-
-          logger.trace(requestBody);
-          katalonRequest.pingAgent(token, options).catch(err => logger.error(err));
-
-          if (agentState.executingJob) {
-            // Agent is executing a job, do nothing
-            return;
-          }
-
-          // Agent is not executing job, request new job
-          // eslint-disable-next-line consistent-return
-          return katalonRequest.requestJob(token, uuid, teamId)
-            .then((response) => {
-              if (!response || !response.body
-                || !response.body.parameter || !response.body.testProject) {
-                // There is no job to execute
-                return;
-              }
-              const { body } = response;
-              const { parameter, testProject, runConfiguration } = body;
-
-              const jobInfo = {
-                ksVersionNumber: ksVersion,
-                ksLocation,
-                ksArgs: parameter.command,
-                x11Display,
-                xvfbConfiguration: xvfbRun,
-                downloadUrl: parameter.downloadUrl,
-                jobId: body.id,
-                projectId: testProject.projectId,
-                teamId,
-                configType: runConfiguration.configType,
-                commands: runConfiguration.genericCommand,
-                sessionId: parameter.sessionId,
-              };
-              // eslint-disable-next-line consistent-return
-              return jobInfo;
-            })
-            .then((jobInfo) => {
-              if (!jobInfo) {
-                // There is no job to execute
-                return;
-              }
-
-              // Update job status to running
-              const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.RUNNING);
-              updateJob(token, jobOptions);
-              agentState.executingJob = true;
-
-              // eslint-disable-next-line consistent-return
-              return executeJob(token, jobInfo, keepFiles);
-            }).catch((err) => {
-              agentState.executingJob = false;
-              return logger.error(err);
-            });
-        })
-        .catch(err => logger.error(err));
-    }, requestInterval);
+      katalonRequest.pingAgent(token, options)
+        .catch(err => logger.error('Cannot send agent info to server:', err)); // async
+    }, pingInterval);
   },
 
   stop() {
@@ -346,11 +362,11 @@ const agent = {
   },
 
   updateConfigs(options) {
-    config.update(options, configFile);
+    config.update(options, defaultConfigFile);
     if (!config.uuid) {
       config.uuid = uuidv4();
     }
-    config.write(configFile, config);
+    config.write(defaultConfigFile, config);
   },
 };
 

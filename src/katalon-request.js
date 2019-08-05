@@ -11,6 +11,8 @@ const KATALON_JUNIT_TEST_REPORTS_URI = '/api/v1/junit/test-reports';
 const KATALON_AGENT_URI = '/api/v1/agent/';
 const KATALON_JOB_URI = '/api/v1/jobs/';
 
+const TRIGGER_URL = 'https://1td5kpj4g5.execute-api.us-east-1.amazonaws.com/staging/';
+
 const oauth2 = {
   grant_type: 'password',
   client_secret: 'kit_uploader',
@@ -23,6 +25,22 @@ module.exports = {
       username: email,
       password,
       grant_type: oauth2.grant_type,
+    };
+    const options = {
+      auth: {
+        username: oauth2.client_id,
+        password: oauth2.client_secret,
+      },
+      form: data,
+      json: true,
+    };
+    return http.request(config.serverUrl, TOKEN_URI, options, 'post');
+  },
+
+  refreshToken(refreshToken) {
+    const data = {
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
     };
     const options = {
       auth: {
@@ -50,6 +68,10 @@ module.exports = {
 
   uploadFile(uploadUrl, filePath) {
     return http.uploadToS3(uploadUrl, filePath);
+  },
+
+  streamContent(uploadUrl, content) {
+    return http.streamToS3(uploadUrl, content);
   },
 
   uploadFileInfo(token, projectId, batch, folderName, fileName, uploadedPath, isEnd, reportType, opts = {}) {
@@ -105,17 +127,19 @@ module.exports = {
   },
 
   saveJobLog(token, jobInfo, batch, fileName) {
+    const { projectId, jobId, uploadPath, oldUploadPath } = jobInfo;
     const options = {
       auth: {
         bearer: token,
       },
       qs: {
-        projectId: jobInfo.projectId,
-        jobId: jobInfo.jobId,
+        projectId,
+        jobId,
         batch,
         folderPath: '',
         fileName,
-        uploadedPath: jobInfo.uploadPath,
+        uploadedPath: uploadPath,
+        oldUploadedPath: oldUploadPath,
       },
     };
     return http.request(config.serverUrl, `${KATALON_JOB_URI}save-log`, options, 'POST');
@@ -129,5 +153,46 @@ module.exports = {
       },
     };
     return http.request(config.serverUrl, `${KATALON_JOB_URI + jobId}/get-log`, options, 'GET');
+  },
+
+  requestWrapper(request, email, password, token, ...args) {
+    return request(token, ...args)
+      .then((response) => {
+        const {
+          status,
+          body: {
+            error: errorType,
+            error_description: errorMessage,
+          },
+        } = response;
+
+        if (status === 401) {
+          if (errorType === 'invalid_token' && errorMessage.includes('expired')) {
+            return this.requestToken(email, password)
+              .then((requestTokenResponse) => {
+                // Save new token to global
+                global.token = requestTokenResponse.body.access_token;
+                // Remake request with newly saved token
+                return request(global.token, ...args);
+              });
+          }
+        }
+        // Token not expired, resolve response normally
+        return response;
+      });
+  },
+
+  sendTrigger(projectId, topic, additionalInfo) {
+    const options = {
+      json: true,
+      body: {
+        data: {
+          projectId: projectId.toString(),
+          topic,
+          ...additionalInfo,
+        },
+      },
+    };
+    return http.request(TRIGGER_URL, '', options, 'post');
   },
 };

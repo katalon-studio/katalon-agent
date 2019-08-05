@@ -99,6 +99,7 @@ program
   .option('-p, --apikey <value>', 'API key')
   .option('-t, --teamid <value>', 'Team ID')
   .option('-a, --agent-name <value>', 'Agent name')
+  .option('-c, --config <value>', 'Configuration file path')
   .action((command) => {
     const options = {
       serverUrl: command.serverUrl,
@@ -106,6 +107,7 @@ program
       apikey: command.apikey,
       teamId: command.teamid,
       agentName: command.agentName,
+      configPath: command.config,
     };
     agent.start(options);
   });
