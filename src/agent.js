@@ -20,9 +20,11 @@ const properties = require('./properties');
 const reportUploader = require('./report-uploader');
 const utils = require('./utils');
 
-const configFile = utils.getPath('agentconfig');
-const requestInterval = 5 * 1000;
-const pingInterval = 30 * 1000;
+const NODE_ENV = process.env.NODE_ENV;
+
+const defaultConfigFile = utils.getPath('agentconfig');
+const requestInterval = NODE_ENV === 'debug' ? 5 * 1000 : 60 * 1000;
+const pingInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 1000;
 const sendLogWaitInterval = 10 * 1000;
 const tokenManager = new TokenManager();
 tokenManager.expiryExpectancy = 3 * requestInterval;
@@ -221,7 +223,7 @@ async function executeJob(token, jobInfo, keepFiles) {
   }
 }
 
-function validateField(configs, propertyName) {
+function validateField(configs, propertyName, configFile = defaultConfigFile) {
   if (!configs[propertyName]) {
     logger.error(`Please specify '${propertyName}' property in ${path.basename(configFile)}.`);
     return false;
@@ -242,16 +244,18 @@ const agent = {
     const hostName = os.getHostName();
     const osVersion = os.getVersion();
 
+    const configFile = commandLineConfigs.configPath || defaultConfigFile;
+    logger.info('Loading agent configs @', configFile, NODE_ENV);
     config.update(commandLineConfigs, configFile);
     const {
       email, teamId, apikey,
     } = config;
     setLogLevel(config.logLevel);
 
-    validateField(config, 'email');
-    validateField(config, 'apikey');
-    validateField(config, 'serverUrl');
-    validateField(config, 'teamId');
+    validateField(config, 'email', configFile);
+    validateField(config, 'apikey', configFile);
+    validateField(config, 'serverUrl', configFile);
+    validateField(config, 'teamId', configFile);
 
     tokenManager.email = email;
     tokenManager.password = apikey;
@@ -358,11 +362,11 @@ const agent = {
   },
 
   updateConfigs(options) {
-    config.update(options, configFile);
+    config.update(options, defaultConfigFile);
     if (!config.uuid) {
       config.uuid = uuidv4();
     }
-    config.write(configFile, config);
+    config.write(defaultConfigFile, config);
   },
 };
 
