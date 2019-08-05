@@ -172,13 +172,13 @@ async function executeJob(token, jobInfo, keepFiles) {
   try {
     // Upload log and add new transport to stream log content to s3
     // Everytime a new log entry is written to file
-    await uploadLog(token, jobInfo, logFilePath);
-    jLogger.add(new S3FileTransport({
-      filePath: logFilePath,
-      signedUrl: jobInfo.uploadUrl,
-      logger,
-      wait: sendLogWaitInterval,
-    }, projectId, topic));
+    // await uploadLog(token, jobInfo, logFilePath);
+    // jLogger.add(new S3FileTransport({
+    //   filePath: logFilePath,
+    //   signedUrl: jobInfo.uploadUrl,
+    //   logger,
+    //   wait: sendLogWaitInterval,
+    // }, projectId, topic));
 
     await file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, true, jLogger);
     let status;
@@ -214,7 +214,7 @@ async function executeJob(token, jobInfo, keepFiles) {
 
     await uploadLog(token, jobInfo, logFilePath);
     logger.info('Job execution log uploaded.');
-    katalonRequest.sendTrigger(projectId, topic);
+    // katalonRequest.sendTrigger(projectId, topic);
 
     // Remove temporary directory when `keepFiles` is false
     if (!keepFiles) {
