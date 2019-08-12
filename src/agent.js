@@ -231,6 +231,16 @@ function validateField(configs, propertyName, configFile = defaultConfigFile) {
   return true;
 }
 
+function updateCommand(command, ...options) {
+  return options.reduce((cmd, option) => {
+    const { flag, value } = option;
+    if (cmd.includes(flag)) {
+      return cmd;
+    }
+    return `${cmd} ${flag}="${value}"`;
+  }, command);
+}
+
 function setLogLevel(logLevel) {
   if (logLevel) {
     logger.level = logLevel;
@@ -245,7 +255,7 @@ const agent = {
     const osVersion = os.getVersion();
 
     const configFile = commandLineConfigs.configPath || defaultConfigFile;
-    logger.info('Loading agent configs @', configFile, NODE_ENV);
+    logger.info('Loading agent configs @', configFile);
     config.update(commandLineConfigs, configFile);
     const {
       email, teamId, apikey,
@@ -300,10 +310,12 @@ const agent = {
         const ksVer = parameter.ksVersion || ksVersion;
         const ksLoc = parameter.ksVersion ? parameter.ksLocation : (parameter.ksLocation || ksLocation);
 
+        const ksArgs = updateCommand(parameter.command, { flag: '-apiKey', value: apikey });
+
         const jobInfo = {
           ksVersionNumber: ksVer,
           ksLocation: ksLoc,
-          ksArgs: parameter.command,
+          ksArgs,
           x11Display,
           xvfbConfiguration: xvfbRun,
           downloadUrl: parameter.downloadUrl,
