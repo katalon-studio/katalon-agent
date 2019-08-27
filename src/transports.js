@@ -6,15 +6,14 @@ const katalonHttp = require('./http');
 const katalonRequest = require('./katalon-request');
 
 class S3FileTransport extends TransportStream {
-  constructor(options = {}, projectId, topic) {
+  constructor(options = {}, afterLog) {
     super(options);
     this.filePath = options.filePath;
     this.signedUrl = options.signedUrl;
     this.parentLogger = options.logger;
 
     this.wait = options.wait;
-    this.projectId = projectId;
-    this.topic = topic;
+    this.afterLog = afterLog;
 
     this.uploadToS3 = this.uploadToS3.bind(this);
     this.uploadToS3Throttled = _.throttle(this.uploadToS3, this.wait);
@@ -23,8 +22,8 @@ class S3FileTransport extends TransportStream {
   uploadToS3(info, callback) {
     try {
       return katalonHttp.uploadToS3(this.signedUrl, this.filePath)
-        .then(() => katalonRequest.sendTrigger(this.projectId, this.topic))
-        .catch(error => this._handleError(error));
+        .then(() => this.afterLog && this.afterLog())
+        .catch((error) => this._handleError(error));
     } catch (error) {
       this._handleError(error);
       return null;
@@ -64,7 +63,7 @@ class S3BufferTransport extends TransportStream {
     try {
       return katalonHttp.streamToS3(this.signedUrl, this.contentBuffer)
         .then(() => katalonRequest.sendTrigger(this.projectId, this.topic))
-        .catch(error => this._handleError(error));
+        .catch((error) => this._handleError(error));
     } catch (error) {
       this._handleError(error);
       return null;

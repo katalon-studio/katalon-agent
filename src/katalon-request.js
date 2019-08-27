@@ -74,7 +74,17 @@ module.exports = {
     return http.streamToS3(uploadUrl, content);
   },
 
-  uploadFileInfo(token, projectId, batch, folderName, fileName, uploadedPath, isEnd, reportType, opts = {}) {
+  uploadFileInfo(
+    token,
+    projectId,
+    batch,
+    folderName,
+    fileName,
+    uploadedPath,
+    isEnd,
+    reportType,
+    opts = {},
+  ) {
     let url = KATALON_TEST_REPORTS_URI;
     if (reportType === 'junit') {
       url = KATALON_JUNIT_TEST_REPORTS_URI;
@@ -155,31 +165,39 @@ module.exports = {
     return http.request(config.serverUrl, `${KATALON_JOB_URI + jobId}/get-log`, options, 'GET');
   },
 
-  requestWrapper(request, email, password, token, ...args) {
-    return request(token, ...args)
-      .then((response) => {
-        const {
-          status,
-          body: {
-            error: errorType,
-            error_description: errorMessage,
-          },
-        } = response;
+  notifyJob(token, jobInfo) {
+    const { projectId, jobId } = jobInfo;
+    const options = {
+      auth: {
+        bearer: token,
+      },
+      qs: {
+        projectId,
+      },
+    };
+    return http.request(config.serverUrl, `${KATALON_JOB_URI + jobId}/notify`, options, 'POST');
+  },
 
-        if (status === 401) {
-          if (errorType === 'invalid_token' && errorMessage.includes('expired')) {
-            return this.requestToken(email, password)
-              .then((requestTokenResponse) => {
-                // Save new token to global
-                global.token = requestTokenResponse.body.access_token;
-                // Remake request with newly saved token
-                return request(global.token, ...args);
-              });
-          }
+  requestWrapper(request, email, password, token, ...args) {
+    return request(token, ...args).then((response) => {
+      const {
+        status,
+        body: { error: errorType, error_description: errorMessage },
+      } = response;
+
+      if (status === 401) {
+        if (errorType === 'invalid_token' && errorMessage.includes('expired')) {
+          return this.requestToken(email, password).then((requestTokenResponse) => {
+            // Save new token to global
+            global.token = requestTokenResponse.body.access_token;
+            // Remake request with newly saved token
+            return request(global.token, ...args);
+          });
         }
-        // Token not expired, resolve response normally
-        return response;
-      });
+      }
+      // Token not expired, resolve response normally
+      return response;
+    });
   },
 
   sendTrigger(projectId, topic, additionalInfo) {

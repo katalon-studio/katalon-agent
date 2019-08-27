@@ -153,6 +153,11 @@ async function executeGenericCommand(token, jobInfo, tmpDirPath, jLogger) {
   return status;
 }
 
+function notifyJob(token, jobInfo) {
+  return katalonRequest.notifyJob(token, jobInfo)
+    .catch((error) => logger.warn('Unable to send job notification:', error));
+}
+
 async function executeJob(token, jobInfo, keepFiles) {
   // Create directory where temporary files are contained
   const tmpRoot = path.resolve(global.appRoot, 'tmp/');
@@ -166,19 +171,24 @@ async function executeJob(token, jobInfo, keepFiles) {
   // Create job logger
   const logFilePath = path.resolve(tmpDirPath, 'debug.log');
   const jLogger = jobLogger.getLogger(logFilePath);
-  const topic = `Job-${jobInfo.jobId}`;
-  const projectId = jobInfo.projectId;
+
+  const afterUpload = () => notifyJob(token, jobInfo);
 
   try {
     // Upload log and add new transport to stream log content to s3
     // Everytime a new log entry is written to file
     await uploadLog(token, jobInfo, logFilePath);
-    jLogger.add(new S3FileTransport({
-      filePath: logFilePath,
-      signedUrl: jobInfo.uploadUrl,
-      logger,
-      wait: sendLogWaitInterval,
-    }, projectId, topic));
+    jLogger.add(
+      new S3FileTransport(
+        {
+          filePath: logFilePath,
+          signedUrl: jobInfo.uploadUrl,
+          logger,
+          wait: sendLogWaitInterval,
+        },
+        afterUpload,
+      ),
+    );
 
     await file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, true, jLogger);
     let status;
@@ -214,7 +224,7 @@ async function executeJob(token, jobInfo, keepFiles) {
 
     await uploadLog(token, jobInfo, logFilePath);
     logger.info('Job execution log uploaded.');
-    katalonRequest.sendTrigger(projectId, topic);
+    notifyJob(token, jobInfo);
 
     // Remove temporary directory when `keepFiles` is false
     if (!keepFiles) {
