@@ -291,10 +291,6 @@ const agent = {
           config.write(configFile, configs);
         }
 
-        if (!configs.agentName) {
-          configs.agentName = hostName;
-        }
-
         const {
           uuid, ksLocation, keepFiles, logLevel, x11Display, xvfbRun,
         } = configs;
@@ -357,6 +353,10 @@ const agent = {
       const configs = config.read(configFile);
       if (!configs.uuid) {
         return;
+      }
+
+      if (!configs.agentName) {
+        configs.agentName = hostName;
       }
 
       const { uuid, agentName } = configs;
