@@ -46,7 +46,7 @@ function getKsLocation(ksVersionNumber, ksLocation) {
   return http.request(releasesList, '', {}, 'GET')
     .then(({ body }) => {
       const osVersion = os.getVersion();
-      const ksVersion = body.find(item => item.version === ksVersionNumber
+      const ksVersion = body.find((item) => item.version === ksVersionNumber
         && item.os === osVersion);
 
       const userhome = os.getUserHome();
@@ -73,7 +73,7 @@ module.exports = {
     return getKsLocation(ksVersionNumber, ksLocation)
       .then(({ ksLocationParentDir }) => {
         logger.info(`Katalon Folder: ${ksLocationParentDir}`);
-        let ksExecutable = find(ksLocationParentDir, /katalon$|katalon\.exe$/);
+        let ksExecutable = find(ksLocationParentDir, /katalonc$|katalonc\.exe$/);
         logger.info(`Katalon Executable File: ${ksExecutable}`);
 
         if (!os.getVersion().includes('Windows')) {

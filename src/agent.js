@@ -170,11 +170,12 @@ async function executeJob(token, jobInfo, keepFiles) {
 
   // Create job logger
   const logFilePath = path.resolve(tmpDirPath, 'debug.log');
-  const jLogger = jobLogger.getLogger(logFilePath);
 
   const afterUpload = () => notifyJob(token, jobInfo);
 
   try {
+    const jLogger = jobLogger.getLogger(logFilePath);
+
     // Upload log and add new transport to stream log content to s3
     // Everytime a new log entry is written to file
     await uploadLog(token, jobInfo, logFilePath);
@@ -198,6 +199,7 @@ async function executeJob(token, jobInfo, keepFiles) {
       status = await executeKatalonCommand(token, jobInfo, tmpDirPath, jLogger);
     }
 
+    jLogger.close();
     logger.info('Job execution finished.');
     logger.debug('JOB FINISHED WITH STATUS:', status);
 
@@ -220,7 +222,6 @@ async function executeJob(token, jobInfo, keepFiles) {
     await updateJob(token, jobOptions);
   } finally {
     agentState.executingJob = false;
-    jLogger.close();
 
     await uploadLog(token, jobInfo, logFilePath);
     logger.info('Job execution log uploaded.');
@@ -316,7 +317,11 @@ const agent = {
         const ksVer = parameter.ksVersion || ksVersion;
         const ksLoc = parameter.ksVersion ? parameter.ksLocation : (parameter.ksLocation || ksLocation);
 
-        const ksArgs = updateCommand(parameter.command, { flag: '-apiKey', value: apikey });
+        const ksArgs = updateCommand(
+          parameter.command,
+          { flag: '-apiKey', value: apikey },
+          { flag: '-serverUrl', value: config.serverUrl },
+        );
 
         const jobInfo = {
           ksVersionNumber: ksVer,
