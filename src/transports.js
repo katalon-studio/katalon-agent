@@ -16,7 +16,7 @@ class S3FileTransport extends TransportStream {
     this.afterLog = afterLog;
 
     this.uploadToS3 = this.uploadToS3.bind(this);
-    this.uploadToS3Throttled = _.throttle(this.uploadToS3, this.wait);
+    this.uploadToS3Throttled = _.throttle(this.uploadToS3, this.wait, { trailing: false });
   }
 
   uploadToS3(info, callback) {

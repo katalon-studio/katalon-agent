@@ -18,4 +18,8 @@ module.exports = {
     });
     return tmpDir;
   },
+
+  stringify(object) {
+    return object && Object.keys(object).length > 0 ? JSON.stringify(object, null, 2) : '';
+  },
 };
