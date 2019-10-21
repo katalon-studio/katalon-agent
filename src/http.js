@@ -3,7 +3,7 @@ const fs = require('fs');
 const request = require('request');
 const urljoin = require('url-join');
 
-const Readable = require('stream').Readable;
+const { Readable } = require('stream');
 const logger = require('./logger');
 const config = require('./config');
 
@@ -25,14 +25,17 @@ function buildOptions(url, headers, options) {
 }
 
 module.exports = {
-
   stream(url, filePath) {
     logger.info(`Downloading from ${url} to ${filePath}.`);
     const promise = new Promise((resolve) => {
       const method = 'GET';
-      const options = buildOptions(url, {}, {
-        method,
-      });
+      const options = buildOptions(
+        url,
+        {},
+        {
+          method,
+        },
+      );
       request(options)
         .pipe(fs.createWriteStream(filePath))
         .on('finish', () => {
@@ -86,15 +89,17 @@ module.exports = {
       json: true,
     });
     const promise = new Promise((resolve, reject) => {
-      fs.createReadStream(filePath).pipe(request(options, (error, response, body) => {
-        if (error) {
-          logger.error(error);
-          reject(error);
-        } else {
-          logger.info(`${method} ${response.request.href} ${response.statusCode}.`);
-          resolve({ status: response.statusCode, body });
-        }
-      }));
+      fs.createReadStream(filePath).pipe(
+        request(options, (error, response, body) => {
+          if (error) {
+            logger.error(error);
+            reject(error);
+          } else {
+            logger.info(`${method} ${response.request.href} ${response.statusCode}.`);
+            resolve({ status: response.statusCode, body });
+          }
+        }),
+      );
     });
     return promise;
   },
@@ -115,15 +120,17 @@ module.exports = {
     strStream.push(null);
 
     const promise = new Promise((resolve, reject) => {
-      strStream.pipe(request(options, (error, response, body) => {
-        if (error) {
-          logger.error(error);
-          reject(error);
-        } else {
-          logger.info(`${method} ${response.request.href} ${response.statusCode}.`);
-          resolve({ status: response.statusCode, body });
-        }
-      }));
+      strStream.pipe(
+        request(options, (error, response, body) => {
+          if (error) {
+            logger.error(error);
+            reject(error);
+          } else {
+            logger.info(`${method} ${response.request.href} ${response.statusCode}.`);
+            resolve({ status: response.statusCode, body });
+          }
+        }),
+      );
     });
     return promise;
   },
