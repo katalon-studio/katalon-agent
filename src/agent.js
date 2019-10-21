@@ -20,7 +20,7 @@ const properties = require('./properties');
 const reportUploader = require('./report-uploader');
 const utils = require('./utils');
 
-const NODE_ENV = process.env.NODE_ENV;
+const { NODE_ENV } = process.env;
 
 const defaultConfigFile = utils.getPath('agentconfig');
 const requestInterval = NODE_ENV === 'debug' ? 5 * 1000 : 60 * 1000;
@@ -42,7 +42,8 @@ const JOB_STATUS = Object.freeze({
 });
 
 function updateJob(token, jobOptions) {
-  return katalonRequest.updateJob(token, jobOptions)
+  return katalonRequest
+    .updateJob(token, jobOptions)
     .catch((err) => logger.error(`${updateJob.name}:`, err));
 }
 
@@ -110,11 +111,7 @@ async function uploadLog(token, jobInfo, filePath) {
 
 function testCopyJUnitReports(outputDir) {
   const sampleDir = 'C:/Projects/katalon-analytics/misc/sample-junit-reports';
-  const files = [
-    'casperjs.xml',
-    'sample-junit.xml',
-    'sample-junit-out.xml',
-  ];
+  const files = ['casperjs.xml', 'sample-junit.xml', 'sample-junit-out.xml'];
   files.forEach((file) => fs.copyFileSync(path.join(sampleDir, file), path.join(outputDir, file)));
 }
 
@@ -126,14 +123,26 @@ function executeKatalonCommand(token, jobInfo, tmpDirPath, jLogger) {
 
   // Manually configure integration settings for KS to upload execution report
   const ksProjectDir = path.dirname(jobInfo.ksProjectPath);
-  const testOpsPropertiesPath = path.resolve(ksProjectDir, 'settings', 'internal',
-    testOpsPropertiesFile);
-  properties.writeProperties(testOpsPropertiesPath,
-    buildTestOpsIntegrationProperties(token, jobInfo.teamId, jobInfo.projectId));
+  const testOpsPropertiesPath = path.resolve(
+    ksProjectDir,
+    'settings',
+    'internal',
+    testOpsPropertiesFile,
+  );
+  properties.writeProperties(
+    testOpsPropertiesPath,
+    buildTestOpsIntegrationProperties(token, jobInfo.teamId, jobInfo.projectId),
+  );
 
-  return ks.execute(jobInfo.ksVersionNumber, jobInfo.ksLocation,
-    jobInfo.ksProjectPath, jobInfo.ksArgs,
-    jobInfo.x11Display, jobInfo.xvfbConfiguration, jLogger);
+  return ks.execute(
+    jobInfo.ksVersionNumber,
+    jobInfo.ksLocation,
+    jobInfo.ksProjectPath,
+    jobInfo.ksArgs,
+    jobInfo.x11Display,
+    jobInfo.xvfbConfiguration,
+    jLogger,
+  );
 }
 
 async function executeGenericCommand(token, jobInfo, tmpDirPath, jLogger) {
@@ -154,7 +163,8 @@ async function executeGenericCommand(token, jobInfo, tmpDirPath, jLogger) {
 }
 
 function notifyJob(token, jobInfo) {
-  return katalonRequest.notifyJob(token, jobInfo)
+  return katalonRequest
+    .notifyJob(token, jobInfo)
     .catch((error) => logger.warn('Unable to send job notification:', error));
 }
 
@@ -204,7 +214,7 @@ async function executeJob(token, jobInfo, keepFiles) {
     logger.debug('JOB FINISHED WITH STATUS:', status);
 
     // Update job status after execution
-    const jobStatus = (status === 0) ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
+    const jobStatus = status === 0 ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
     const jobOptions = buildJobResponse(jobInfo, jobStatus);
 
     logger.debug(`Update job with status '${jobStatus}.'`);
@@ -268,9 +278,7 @@ const agent = {
     const configFile = commandLineConfigs.configPath || defaultConfigFile;
     logger.info('Loading agent configs @', configFile);
     config.update(commandLineConfigs, configFile);
-    const {
-      email, teamId, apikey,
-    } = config;
+    const { email, teamId, apikey } = config;
     setLogLevel(config.logLevel);
 
     validateField(config, 'email', configFile);
@@ -292,9 +300,7 @@ const agent = {
           config.write(configFile, configs);
         }
 
-        const {
-          uuid, ksLocation, keepFiles, logLevel, x11Display, xvfbRun,
-        } = configs;
+        const { uuid, ksLocation, keepFiles, logLevel, x11Display, xvfbRun } = configs;
         const ksVersion = configs.ksVersionNumber;
 
         setLogLevel(logLevel);
@@ -306,8 +312,12 @@ const agent = {
 
         // Agent is not executing job, request new job
         const requestJobResponse = await katalonRequest.requestJob(token, uuid, teamId);
-        if (!requestJobResponse || !requestJobResponse.body
-          || !requestJobResponse.body.parameter || !requestJobResponse.body.testProject) {
+        if (
+          !requestJobResponse ||
+          !requestJobResponse.body ||
+          !requestJobResponse.body.parameter ||
+          !requestJobResponse.body.testProject
+        ) {
           // There is no job to execute
           return;
         }
@@ -315,7 +325,9 @@ const agent = {
         const { parameter, testProject, runConfiguration } = jobBody;
 
         const ksVer = parameter.ksVersion || ksVersion;
-        const ksLoc = parameter.ksVersion ? parameter.ksLocation : (parameter.ksLocation || ksLocation);
+        const ksLoc = parameter.ksVersion
+          ? parameter.ksLocation
+          : parameter.ksLocation || ksLocation;
 
         const ksArgs = updateCommand(
           parameter.command,
@@ -379,7 +391,8 @@ const agent = {
       };
       logger.trace(requestBody);
 
-      katalonRequest.pingAgent(token, options)
+      katalonRequest
+        .pingAgent(token, options)
         .catch((err) => logger.error('Cannot send agent info to server:', err)); // async
     }, pingInterval);
   },
