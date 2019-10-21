@@ -50,25 +50,32 @@ const writeUploadInfo = (batch, files) => {
 };
 
 function uploadFile(token, projectId, batch, folderName, filePath, isEnd, reportType, opts = {}) {
-  return katalonRequest.getUploadInfo(token, projectId)
-    .then(({ body }) => {
-      const { uploadUrl } = body;
-      const uploadPath = body.path;
+  return katalonRequest.getUploadInfo(token, projectId).then(({ body }) => {
+    const { uploadUrl } = body;
+    const uploadPath = body.path;
 
-      return katalonRequest.uploadFile(uploadUrl, filePath)
-        .then(() => {
-          const fileName = path.basename(filePath);
-          return katalonRequest.uploadFileInfo(token, projectId,
-            batch, folderName, fileName, uploadPath, isEnd, reportType, opts);
-        });
+    return katalonRequest.uploadFile(uploadUrl, filePath).then(() => {
+      const fileName = path.basename(filePath);
+      return katalonRequest.uploadFileInfo(
+        token,
+        projectId,
+        batch,
+        folderName,
+        fileName,
+        uploadPath,
+        isEnd,
+        reportType,
+        opts,
+      );
     });
+  });
 }
 
 module.exports = {
   uploadReports(token, projectId, folderPath, reportType, reportPattern, opts = {}) {
     const pathPattern = path.resolve(folderPath, reportPattern);
     const reports = glob.sync(pathPattern, { nodir: true });
-    const dirNames = reports.map(report => path.dirname(path.relative(folderPath, report)));
+    const dirNames = reports.map((report) => path.dirname(path.relative(folderPath, report)));
 
     const [first, ...rest] = reports;
     const [firstDirName, ...restDirNames] = dirNames;
@@ -79,10 +86,12 @@ module.exports = {
     const batch = `${new Date().getTime()}-${uuidv4()}`;
 
     const uploadPromises = rest.map((report, idx) =>
-      uploadFile(token, projectId, batch, restDirNames[idx], report, false, reportType, opts));
+      uploadFile(token, projectId, batch, restDirNames[idx], report, false, reportType, opts),
+    );
 
-    return Promise.all(uploadPromises)
-      .then(() => uploadFile(token, projectId, batch, firstDirName, first, true, reportType, opts));
+    return Promise.all(uploadPromises).then(() =>
+      uploadFile(token, projectId, batch, firstDirName, first, true, reportType, opts),
+    );
   },
 
   upload(folderPath) {
@@ -110,13 +119,45 @@ module.exports = {
 
     const uploadPromises = [];
 
-    katalonRequest.requestToken(email, password)
-      .then((response) => {
-        const token = response.body.access_token;
+    katalonRequest.requestToken(email, password).then((response) => {
+      const token = response.body.access_token;
 
-        for (let i = 0; i < logFiles.length - 1; i += 1) {
-          const filePath = logFiles[i];
-          const promise = katalonRequest.getUploadInfo(token, projectId).then(({ body }) => {
+      for (let i = 0; i < logFiles.length - 1; i += 1) {
+        const filePath = logFiles[i];
+        const promise = katalonRequest.getUploadInfo(token, projectId).then(({ body }) => {
+          const { uploadUrl } = body;
+          const uploadPath = body.path;
+          const fileName = path.basename(filePath);
+          const folderPath = path.dirname(filePath);
+          let parent;
+          if (path.extname(fileName) === '.zip') {
+            parent = path.resolve(filePath, '../../../..');
+          } else {
+            parent = path.resolve(filePath, '../../..');
+          }
+          const rel = path.relative(parent, folderPath);
+          return katalonRequest
+            .uploadFile(uploadUrl, filePath)
+            .then(() =>
+              katalonRequest.uploadFileInfo(
+                token,
+                projectId,
+                batch,
+                rel,
+                fileName,
+                uploadPath,
+                false,
+              ),
+            );
+        });
+        uploadPromises.push(promise);
+      }
+
+      Promise.all(uploadPromises).then(() => {
+        const filePath = logFiles[logFiles.length - 1];
+        katalonRequest.requestToken(email, password).then((response) => {
+          const token = response.body.access_token;
+          return katalonRequest.getUploadInfo(token, projectId).then(({ body }) => {
             const { uploadUrl } = body;
             const uploadPath = body.path;
             const fileName = path.basename(filePath);
@@ -128,38 +169,24 @@ module.exports = {
               parent = path.resolve(filePath, '../../..');
             }
             const rel = path.relative(parent, folderPath);
-            return katalonRequest.uploadFile(uploadUrl, filePath)
-              .then(() => katalonRequest.uploadFileInfo(token, projectId, batch,
-                rel, fileName, uploadPath, false));
+            return katalonRequest
+              .uploadFile(uploadUrl, filePath)
+              .then(() =>
+                katalonRequest.uploadFileInfo(
+                  token,
+                  projectId,
+                  batch,
+                  rel,
+                  fileName,
+                  uploadPath,
+                  true,
+                ),
+              );
           });
-          uploadPromises.push(promise);
-        }
-
-        Promise.all(uploadPromises).then(() => {
-          const filePath = logFiles[logFiles.length - 1];
-          katalonRequest.requestToken(email, password)
-            .then((response) => {
-              const token = response.body.access_token;
-              return katalonRequest.getUploadInfo(token, projectId).then(({ body }) => {
-                const { uploadUrl } = body;
-                const uploadPath = body.path;
-                const fileName = path.basename(filePath);
-                const folderPath = path.dirname(filePath);
-                let parent;
-                if (path.extname(fileName) === '.zip') {
-                  parent = path.resolve(filePath, '../../../..');
-                } else {
-                  parent = path.resolve(filePath, '../../..');
-                }
-                const rel = path.relative(parent, folderPath);
-                return katalonRequest.uploadFile(uploadUrl, filePath)
-                  .then(() => katalonRequest.uploadFileInfo(token, projectId, batch,
-                    rel, fileName, uploadPath, true));
-              });
-            });
         });
-
-        writeUploadInfo(batch, logFiles);
       });
+
+      writeUploadInfo(batch, logFiles);
+    });
   },
 };
