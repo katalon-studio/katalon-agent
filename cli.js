@@ -3,13 +3,12 @@ if (process.isPackaged) {
   process.argv.unshift('');
 }
 
-const _ = require('lodash');
 const program = require('commander');
 const path = require('path');
 
-if (_.includes(process.argv, '--service')) {
+if (process.argv.includes('--service')) {
   global.appRoot = path.resolve(path.dirname(process.execPath));
-  _.pull(process.argv, '--service');
+  process.argv = process.argv.filter((arg) => arg !== '--service');
 } else {
   global.appRoot = path.resolve('.');
 }
