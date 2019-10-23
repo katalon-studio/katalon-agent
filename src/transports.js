@@ -16,12 +16,13 @@ class S3FileTransport extends TransportStream {
     this.afterLog = afterLog;
 
     this.uploadToS3 = this.uploadToS3.bind(this);
-    this.uploadToS3Throttled = _.throttle(this.uploadToS3, this.wait);
+    this.uploadToS3Throttled = _.throttle(this.uploadToS3, this.wait, { trailing: false });
   }
 
   uploadToS3(info, callback) {
     try {
-      return katalonHttp.uploadToS3(this.signedUrl, this.filePath)
+      return katalonHttp
+        .uploadToS3(this.signedUrl, this.filePath)
         .then(() => this.afterLog && this.afterLog())
         .catch((error) => this._handleError(error));
     } catch (error) {
@@ -61,7 +62,8 @@ class S3BufferTransport extends TransportStream {
   streamToS3(info, callback) {
     this.contentBuffer += `${info[MESSAGE]}\n`;
     try {
-      return katalonHttp.streamToS3(this.signedUrl, this.contentBuffer)
+      return katalonHttp
+        .streamToS3(this.signedUrl, this.contentBuffer)
         .then(() => katalonRequest.sendTrigger(this.projectId, this.topic))
         .catch((error) => this._handleError(error));
     } catch (error) {

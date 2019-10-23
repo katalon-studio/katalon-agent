@@ -5,7 +5,6 @@ const tmp = require('tmp');
 const defaultLogger = require('./logger');
 
 module.exports = {
-
   getUserHome() {
     return os.homedir();
   },
@@ -17,6 +16,8 @@ module.exports = {
   getVersion() {
     let version = '';
     const type = os.type();
+    const arch = os.arch();
+
     switch (type) {
       case 'Linux':
         version += 'Linux';
@@ -26,7 +27,6 @@ module.exports = {
         break;
       case 'Windows_NT':
         version += 'Windows';
-        const arch = os.arch();
         switch (arch) {
           case 'x32':
             version += ' 32';
@@ -35,11 +35,11 @@ module.exports = {
             version += ' 64';
             break;
           default:
-            throw `Unsupported architecture: ${arch}`;
+            throw new Error(`Unsupported architecture: ${arch}`);
         }
         break;
       default:
-        throw `Unsupported OS: ${type}`;
+        throw new Error(`Unsupported OS: ${type}`);
     }
     return version;
   },

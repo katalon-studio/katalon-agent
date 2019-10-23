@@ -1,4 +1,3 @@
-const _ = require('lodash');
 const fse = require('fs-extra');
 const path = require('path');
 const config = require('./config');
@@ -8,7 +7,7 @@ function writeGherkin(issue, fieldIds) {
   const { outputDir } = config;
   const { key, fields } = issue;
   const name = fields.summary;
-  _.each(fieldIds, (fieldId, index) => {
+  fieldIds.forEach((fieldId, index) => {
     const content = fields[fieldId];
     if (content) {
       let number = '';
@@ -24,52 +23,59 @@ function writeGherkin(issue, fieldIds) {
 module.exports = {
   getFeatures() {
     const { jiraUrl } = config;
-    http.request(
-      jiraUrl,
-      '/rest/api/2/field',
-      {
-        auth: {
-          username: config.username,
-          password: config.password,
-        },
-      },
-      'get',
-    ).then((response) => {
-      const fields = response.body;
-      const gherkinFields = _.flatMap(fields, (field) => {
-        if (field.custom
-          && field.schema
-          && field.schema.type === 'string'
-          && field.schema.custom === 'com.atlassian.jira.plugin.system.customfieldtypes:textarea'
-          && field.name === 'Katalon BDD') {
-          return field.id;
-        }
-        return [];
-      });
-      const body = {
-        jql: config.jql,
-        fields: _.concat(gherkinFields, ['summary']),
-        maxResults: 10000,
-        startAt: 0,
-      };
-      return http.request(
+    http
+      .request(
         jiraUrl,
-        '/rest/api/2/search',
+        '/rest/api/2/field',
         {
-          body,
           auth: {
             username: config.username,
             password: config.password,
           },
         },
-        'post',
-      ).then((response) => {
-        const result = response.body;
-        const { issues } = result;
-        _.each(issues, (issue) => {
-          writeGherkin(issue, gherkinFields);
-        });
+        'get',
+      )
+      .then((response) => {
+        const fields = response.body;
+        const gherkinFields = fields
+          .filter((field) => {
+            const condition =
+              field.custom &&
+              field.schema &&
+              field.schema.type === 'string' &&
+              field.schema.custom ===
+                'com.atlassian.jira.plugin.system.customfieldtypes:textarea' &&
+              field.name === 'Katalon BDD';
+            return condition;
+          })
+          .map((field) => field.id);
+
+        const body = {
+          jql: config.jql,
+          fields: [...gherkinFields, 'summary'],
+          maxResults: 10000,
+          startAt: 0,
+        };
+        return http
+          .request(
+            jiraUrl,
+            '/rest/api/2/search',
+            {
+              body,
+              auth: {
+                username: config.username,
+                password: config.password,
+              },
+            },
+            'post',
+          )
+          .then((response) => {
+            const result = response.body;
+            const { issues } = result;
+            issues.forEach((issue) => {
+              writeGherkin(issue, gherkinFields);
+            });
+          });
       });
-    });
   },
 };

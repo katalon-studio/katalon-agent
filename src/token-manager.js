@@ -37,13 +37,11 @@ class TokenManager {
   }
 
   requestAccessToken() {
-    return katalonRequest.requestToken(this.email, this.password)
-      .then(this.setToken);
+    return katalonRequest.requestToken(this.email, this.password).then(this.setToken);
   }
 
   refreshAccessToken() {
-    return katalonRequest.refreshToken(this.refreshToken)
-      .then(this.setToken);
+    return katalonRequest.refreshToken(this.refreshToken).then(this.setToken);
   }
 
   tokenWillExpired() {
