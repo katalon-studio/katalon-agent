@@ -88,7 +88,16 @@ module.exports = {
         ksExecutable = `"${ksExecutable}"`;
       }
 
-      let ksCommand = `${ksExecutable} -noSplash -runMode=console`;
+      let ksCommand = `${ksExecutable}`;
+
+      if (ksArgs.indexOf('-noSplash') < 0) {
+        ksCommand = `${ksCommand} -noSplash`;
+      }
+
+      if (ksArgs.indexOf('-runMode=console') < 0) {
+        ksCommand = `${ksCommand} -runMode=console`;
+      }
+
       if (ksArgs.indexOf('-projectPath') < 0) {
         ksCommand = `${ksCommand} -projectPath="${ksProjectPath}"`;
       }
