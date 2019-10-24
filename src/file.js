@@ -18,13 +18,14 @@ module.exports = {
     });
   },
 
-  downloadAndExtract(url, targetDir, haveFilter, logger = defaultLogger) {
+  downloadAndExtract(url, targetDir, haveFilter = false, token = null, logger = defaultLogger) {
     logger.info(`Downloading from ${url}. It may take a few minutes.`);
     const file = tmp.fileSync();
     const filePath = file.name;
     logger.debug(`Download into temporary directory: ${filePath}`);
+    const options = token ? { auth: { bearer: token } } : {};
     return http
-      .stream(url, filePath)
+      .stream(url, filePath, options)
       .then(() => this.extract(filePath, targetDir, haveFilter, logger));
   },
 };

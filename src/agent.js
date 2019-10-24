@@ -201,7 +201,7 @@ async function executeJob(token, jobInfo, keepFiles) {
       ),
     );
 
-    await file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, true, jLogger);
+    await file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, true, token, jLogger);
     let status;
     if (jobInfo.configType === 'GENERIC_COMMAND') {
       status = await executeGenericCommand(token, jobInfo, tmpDirPath, jLogger);
@@ -250,16 +250,6 @@ function validateField(configs, propertyName, configFile = defaultConfigFile) {
     return false;
   }
   return true;
-}
-
-function updateCommand(command, ...options) {
-  return options.reduce((cmd, option) => {
-    const { flag, value } = option;
-    if (cmd.includes(flag)) {
-      return cmd;
-    }
-    return `${cmd} ${flag}="${value}"`;
-  }, command);
 }
 
 function setLogLevel(logLevel) {
@@ -329,7 +319,7 @@ const agent = {
           ? parameter.ksLocation
           : parameter.ksLocation || ksLocation;
 
-        const ksArgs = updateCommand(
+        const ksArgs = utils.updateCommand(
           parameter.command,
           { flag: '-apiKey', value: apikey },
           { flag: '-serverUrl', value: config.serverUrl },
