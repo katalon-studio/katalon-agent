@@ -55,13 +55,13 @@ function getKsLocation(ksVersionNumber, ksLocation) {
     const katalonDoneFilePath = path.join(ksLocationParentDir, '.katalon.done');
 
     if (fs.existsSync(katalonDoneFilePath)) {
-      return Promise.resolve({ ksLocationParentDir });
+      return { ksLocationParentDir };
     }
 
     defaultLogger.info(`Download Katalon Studio ${ksVersionNumber} to ${ksLocationParentDir}.`);
     return file.downloadAndExtract(ksVersion.url, ksLocationParentDir, false).then(() => {
       fs.writeFileSync(katalonDoneFilePath, '');
-      return Promise.resolve({ ksLocationParentDir });
+      return { ksLocationParentDir };
     });
   });
 }
@@ -78,7 +78,10 @@ module.exports = {
   ) {
     return getKsLocation(ksVersionNumber, ksLocation).then(({ ksLocationParentDir }) => {
       logger.info(`Katalon Folder: ${ksLocationParentDir}`);
-      let ksExecutable = find(ksLocationParentDir, /katalonc$|katalonc\.exe$/);
+      let ksExecutable = find(
+        ksLocationParentDir,
+        /katalonc$|katalonc\.exe$|katalon$|katalon\.exe$/,
+      );
       logger.info(`Katalon Executable File: ${ksExecutable}`);
 
       if (!os.getVersion().includes('Windows')) {
