@@ -306,8 +306,6 @@ const agent = {
     let token;
     setInterval(async () => {
       try {
-        const buildInfo = await katalonRequest.getBuildInfo();
-        logger.error(buildInfo.body.profiles.active);
         token = await tokenManager.ensureToken();
 
         const configs = config.read(configFile);
