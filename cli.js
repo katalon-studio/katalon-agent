@@ -111,4 +111,6 @@ program
     agent.start(options);
   });
 
+program.version(version);
+
 program.parse(process.argv);

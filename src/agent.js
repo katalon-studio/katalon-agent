@@ -21,6 +21,7 @@ const reportUploader = require('./report-uploader');
 const utils = require('./utils');
 
 const { NODE_ENV } = process.env;
+const agentVersion = require('../package.json').version;
 
 const defaultConfigFile = utils.getPath('agentconfig');
 const requestInterval = NODE_ENV === 'debug' ? 5 * 1000 : 60 * 1000;
@@ -107,6 +108,24 @@ async function uploadLog(token, jobInfo, filePath) {
 
   // Update job's upload file
   return katalonRequest.saveJobLog(token, jobInfo, batch, fileName);
+}
+
+async function getProfiles() {
+  logger.info('Getting server profiles...');
+  const response = await katalonRequest.getBuildInfo();
+  if (!response || !response.body) {
+    return null;
+  }
+
+  const { body: { profiles } } = response;
+  return profiles;
+}
+
+function isOnPremiseProfile(profiles) {
+  if (profiles && profiles.length) {
+    return profiles.includes('on-premise');
+  }
+  return false;
 }
 
 function testCopyJUnitReports(outputDir) {
@@ -261,6 +280,7 @@ function setLogLevel(logLevel) {
 const agent = {
   start(commandLineConfigs = {}) {
     logger.info(`Agent started @ ${new Date()}`);
+    logger.info('Agent version:', agentVersion);
     const hostAddress = ip.address();
     const hostName = os.getHostName();
     const osVersion = os.getVersion();
@@ -279,9 +299,15 @@ const agent = {
     tokenManager.email = email;
     tokenManager.password = apikey;
 
+    getProfiles().then((profiles) => {
+      global.isOnPremise = isOnPremiseProfile(profiles);
+    });
+
     let token;
     setInterval(async () => {
       try {
+        const buildInfo = await katalonRequest.getBuildInfo();
+        logger.error(buildInfo.body.profiles.active);
         token = await tokenManager.ensureToken();
 
         const configs = config.read(configFile);
