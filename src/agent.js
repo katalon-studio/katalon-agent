@@ -117,8 +117,9 @@ async function getProfiles() {
     return null;
   }
 
-  const { body: { profiles } } = response;
-  return profiles;
+  const { body: { profiles = {} } } = response;
+
+  return profiles.active;
 }
 
 function isOnPremiseProfile(profiles) {
