@@ -1,6 +1,7 @@
 const decompress = require('decompress');
 const tmp = require('tmp');
 
+const config = require('./config');
 const http = require('./http');
 const defaultLogger = require('./logger');
 
@@ -23,7 +24,7 @@ module.exports = {
     const file = tmp.fileSync();
     const filePath = file.name;
     logger.debug(`Download into temporary directory: ${filePath}`);
-    const options = global.isOnPremise && token ? { auth: { bearer: token } } : {};
+    const options = config.isOnPremise && token ? { auth: { bearer: token } } : {};
     return http
       .stream(url, filePath, options)
       .then(() => this.extract(filePath, targetDir, haveFilter, logger));

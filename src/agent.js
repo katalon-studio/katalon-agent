@@ -21,7 +21,6 @@ const reportUploader = require('./report-uploader');
 const utils = require('./utils');
 
 const { NODE_ENV } = process.env;
-const agentVersion = require('../package.json').version;
 
 const defaultConfigFile = utils.getPath('agentconfig');
 const requestInterval = NODE_ENV === 'debug' ? 5 * 1000 : 60 * 1000;
@@ -221,6 +220,10 @@ async function executeJob(token, jobInfo, keepFiles) {
       ),
     );
 
+    jLogger.info(`Triggered by Katalon Agent ${config.version}.`);
+    jLogger.info(`Agent server: ${config.serverUrl}${config.isOnPremise && ' (OnPremise)'}`);
+    jLogger.info(`Agent user: ${config.email}`);
+
     await file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, true, token, jLogger);
     let status;
     if (jobInfo.configType === 'GENERIC_COMMAND') {
@@ -280,8 +283,7 @@ function setLogLevel(logLevel) {
 
 const agent = {
   start(commandLineConfigs = {}) {
-    logger.info(`Agent started @ ${new Date()}`);
-    logger.info('Agent version:', agentVersion);
+    logger.info(`Agent ${config.version} started @ ${new Date()}`);
     const hostAddress = ip.address();
     const hostName = os.getHostName();
     const osVersion = os.getVersion();
@@ -301,7 +303,7 @@ const agent = {
     tokenManager.password = apikey;
 
     getProfiles().then((profiles) => {
-      global.isOnPremise = isOnPremiseProfile(profiles);
+      config.isOnPremise = isOnPremiseProfile(profiles);
     });
 
     let token;
@@ -413,7 +415,7 @@ const agent = {
   },
 
   stop() {
-    logger.info(`Agent stopped @ ${new Date()}`);
+    logger.info(`Agent ${config.version} stopped @ ${new Date()}`);
   },
 
   updateConfigs(options) {

@@ -5,6 +5,7 @@ if (process.isPackaged) {
 
 const program = require('commander');
 const path = require('path');
+const readline = require('readline');
 
 if (process.argv.includes('--service')) {
   global.appRoot = path.resolve(path.dirname(process.execPath));
@@ -20,6 +21,7 @@ const packageJson = require('./package.json');
 const reportUploader = require('./src/report-uploader');
 
 const version = `Version: ${packageJson.version}`;
+config.version = packageJson.version;
 
 // program options and arguments
 program
@@ -108,6 +110,22 @@ program
       agentName: command.agentName,
       configPath: command.config,
     };
+    if (process.platform === 'win32') {
+      readline
+        .createInterface({
+          input: process.stdin,
+          output: process.stdout,
+        })
+        .on('SIGINT', () => {
+          process.emit('SIGINT');
+        });
+    }
+
+    process.on('SIGINT', () => {
+      agent.stop();
+      // graceful shutdown
+      process.exit();
+    });
     agent.start(options);
   });
 
