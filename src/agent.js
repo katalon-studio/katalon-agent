@@ -116,7 +116,9 @@ async function getProfiles() {
     return null;
   }
 
-  const { body: { profiles = {} } } = response;
+  const {
+    body: { profiles = {} },
+  } = response;
 
   return profiles.active;
 }
@@ -302,14 +304,21 @@ const agent = {
     tokenManager.email = email;
     tokenManager.password = apikey;
 
-    getProfiles().then((profiles) => {
-      config.isOnPremise = isOnPremiseProfile(profiles);
-    });
-
     let token;
     setInterval(async () => {
       try {
+        if (!config.isOnPremise) {
+          const profiles = await getProfiles();
+          config.isOnPremise = isOnPremiseProfile(profiles);
+        }
+        if (!config.isOnPremise) {
+          return;
+        }
+
         token = await tokenManager.ensureToken();
+        if (!token) {
+          return;
+        }
 
         const configs = config.read(configFile);
         if (!configs.uuid) {
