@@ -78,10 +78,14 @@ module.exports = {
   ) {
     return getKsLocation(ksVersionNumber, ksLocation).then(({ ksLocationParentDir }) => {
       logger.info(`Katalon Folder: ${ksLocationParentDir}`);
-      let ksExecutable = find(
-        ksLocationParentDir,
-        /katalonc$|katalonc\.exe$|katalon$|katalon\.exe$/,
-      );
+
+      let ksExecutable =
+        find(ksLocationParentDir, /katalonc$|katalonc\.exe$/) ||
+        find(ksLocationParentDir, /katalon$|katalon\.exe$/);
+      if (!ksExecutable) {
+        throw Error(`Unable to find Katalon Studio executable in ${ksLocationParentDir}`);
+      }
+
       logger.info(`Katalon Executable File: ${ksExecutable}`);
 
       if (!os.getVersion().includes('Windows')) {
