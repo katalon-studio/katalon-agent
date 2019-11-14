@@ -127,7 +127,7 @@ function isOnPremiseProfile(profiles) {
   if (profiles && profiles.length) {
     return profiles.includes('on-premise');
   }
-  return false;
+  return null;
 }
 
 function testCopyJUnitReports(outputDir) {
@@ -223,7 +223,7 @@ async function executeJob(token, jobInfo, keepFiles) {
     );
 
     jLogger.info(`Triggered by Katalon Agent ${config.version}.`);
-    jLogger.info(`Agent server: ${config.serverUrl}${config.isOnPremise && ' (OnPremise)'}`);
+    jLogger.info(`Agent server: ${config.serverUrl}${config.isOnPremise ? ' (OnPremise)' : ''}`);
     jLogger.info(`Agent user: ${config.email}`);
 
     await file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, true, token, jLogger);
@@ -307,11 +307,11 @@ const agent = {
     let token;
     setInterval(async () => {
       try {
-        if (!config.isOnPremise) {
+        if (config.isOnPremise === undefined || config.isOnPremise === null) {
           const profiles = await getProfiles();
           config.isOnPremise = isOnPremiseProfile(profiles);
         }
-        if (!config.isOnPremise) {
+        if (config.isOnPremise === undefined || config.isOnPremise === null) {
           return;
         }
 

@@ -24,11 +24,18 @@ class TokenManager {
       throw new Error(`Unable to request access token to ${config.serverUrl}`);
     }
 
+    const { status } = response;
     const {
       access_token: accessToken,
       refresh_token: refreshToken,
       expires_in: expiresIn,
+      error_description: errorDescription,
     } = response.body;
+
+    if (status === 400 && errorDescription) {
+      throw new Error(errorDescription);
+    }
+
     this.accessToken = accessToken;
     this.refreshToken = refreshToken;
     this.expiry = moment().add({ seconds: expiresIn });
