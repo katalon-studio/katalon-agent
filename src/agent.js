@@ -65,19 +65,27 @@ function buildJobResponse(jobInfo, jobStatus) {
 }
 
 function buildTestOpsIntegrationProperties(token, teamId, projectId) {
-  return {
-    'analytics.authentication.token': token,
-    'analytics.integration.enable': true,
+  const deprecatedProperties = {
     'analytics.server.endpoint': config.serverUrl,
     'analytics.authentication.email': config.email,
     'analytics.authentication.password': config.apikey,
     'analytics.authentication.encryptionEnabled': false,
-    'analytics.team': JSON.stringify({ id: teamId.toString() }),
-    'analytics.project': JSON.stringify({ id: projectId.toString() }),
     'analytics.testresult.autosubmit': true,
     'analytics.testresult.attach.screenshot': true,
     'analytics.testresult.attach.log': true,
     'analytics.testresult.attach.capturedvideos': false,
+  };
+  const onPremiseProperties = {
+    'analytics.onpremise.enable': config.isOnPremise,
+    'analytics.onpremise.server': config.serverUrl,
+  };
+  return {
+    ...deprecatedProperties,
+    'analytics.integration.enable': true,
+    'analytics.authentication.token': token,
+    'analytics.team': JSON.stringify({ id: teamId.toString() }),
+    'analytics.project': JSON.stringify({ id: projectId.toString() }),
+    ...onPremiseProperties,
   };
 }
 
@@ -355,11 +363,19 @@ const agent = {
           ? parameter.ksLocation
           : parameter.ksLocation || ksLocation;
 
-        const ksArgs = utils.updateCommand(
-          parameter.command,
-          { flag: '-apiKey', value: apikey },
-          { flag: '-serverUrl', value: config.serverUrl },
-        );
+        let ksArgs;
+        if (config.isOnPremise) {
+          ksArgs = utils.updateCommand(
+            parameter.command,
+            { flag: '-apiKeyOnPremise', value: apikey },
+          );
+        } else {
+          ksArgs = utils.updateCommand(
+            parameter.command,
+            { flag: '-apiKey', value: apikey },
+            { flag: '-serverUrl', value: config.serverUrl },
+          );
+        }
 
         const jobInfo = {
           ksVersionNumber: ksVer,
