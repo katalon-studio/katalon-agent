@@ -6,6 +6,7 @@ const file = require('./file');
 const http = require('./http');
 const defaultLogger = require('./logger');
 const os = require('./os');
+const utils = require('./utils');
 
 const releasesList =
   'https://raw.githubusercontent.com/katalon-studio/katalon-studio/master/releases.json';
@@ -77,10 +78,14 @@ module.exports = {
   ) {
     return getKsLocation(ksVersionNumber, ksLocation).then(({ ksLocationParentDir }) => {
       logger.info(`Katalon Folder: ${ksLocationParentDir}`);
-      let ksExecutable = find(
-        ksLocationParentDir,
-        /katalonc$|katalonc\.exe$|katalon$|katalon\.exe$/,
-      );
+
+      let ksExecutable =
+        find(ksLocationParentDir, /katalonc$|katalonc\.exe$/) ||
+        find(ksLocationParentDir, /katalon$|katalon\.exe$/);
+      if (!ksExecutable) {
+        throw Error(`Unable to find Katalon Studio executable in ${ksLocationParentDir}`);
+      }
+
       logger.info(`Katalon Executable File: ${ksExecutable}`);
 
       if (!os.getVersion().includes('Windows')) {
@@ -91,19 +96,13 @@ module.exports = {
         ksExecutable = `"${ksExecutable}"`;
       }
 
-      let ksCommand = `${ksExecutable}`;
+      let ksCommand = utils.updateCommand(
+        ksExecutable,
+        { flag: '-noSplash' },
+        { flag: '-runMode', value: 'console' },
+        { flag: '-projectPath', value: ksProjectPath },
+      );
 
-      if (ksArgs.indexOf('-noSplash') < 0) {
-        ksCommand = `${ksCommand} -noSplash`;
-      }
-
-      if (ksArgs.indexOf('-runMode=console') < 0) {
-        ksCommand = `${ksCommand} -runMode=console`;
-      }
-
-      if (ksArgs.indexOf('-projectPath') < 0) {
-        ksCommand = `${ksCommand} -projectPath="${ksProjectPath}"`;
-      }
       ksCommand = `${ksCommand} ${ksArgs}`;
 
       logger.info(`Execute Katalon Studio: ${ksCommand}`);

@@ -213,4 +213,9 @@ module.exports = {
     };
     return http.request(TRIGGER_URL, '', options, 'post');
   },
+
+  getBuildInfo() {
+    const options = {};
+    return http.request(config.serverUrl, '/info', options, 'GET');
+  },
 };

@@ -65,19 +65,27 @@ function buildJobResponse(jobInfo, jobStatus) {
 }
 
 function buildTestOpsIntegrationProperties(token, teamId, projectId) {
-  return {
-    'analytics.authentication.token': token,
-    'analytics.integration.enable': true,
+  const deprecatedProperties = {
     'analytics.server.endpoint': config.serverUrl,
     'analytics.authentication.email': config.email,
     'analytics.authentication.password': config.apikey,
     'analytics.authentication.encryptionEnabled': false,
-    'analytics.team': JSON.stringify({ id: teamId.toString() }),
-    'analytics.project': JSON.stringify({ id: projectId.toString() }),
     'analytics.testresult.autosubmit': true,
     'analytics.testresult.attach.screenshot': true,
     'analytics.testresult.attach.log': true,
     'analytics.testresult.attach.capturedvideos': false,
+  };
+  const onPremiseProperties = {
+    'analytics.onpremise.enable': config.isOnPremise,
+    'analytics.onpremise.server': config.serverUrl,
+  };
+  return {
+    ...deprecatedProperties,
+    'analytics.integration.enable': true,
+    'analytics.authentication.token': token,
+    'analytics.team': JSON.stringify({ id: teamId.toString() }),
+    'analytics.project': JSON.stringify({ id: projectId.toString() }),
+    ...onPremiseProperties,
   };
 }
 
@@ -107,6 +115,27 @@ async function uploadLog(token, jobInfo, filePath) {
 
   // Update job's upload file
   return katalonRequest.saveJobLog(token, jobInfo, batch, fileName);
+}
+
+async function getProfiles() {
+  logger.info('Getting server profiles...');
+  const response = await katalonRequest.getBuildInfo();
+  if (!response || !response.body) {
+    return null;
+  }
+
+  const {
+    body: { profiles = {} },
+  } = response;
+
+  return profiles.active;
+}
+
+function isOnPremiseProfile(profiles) {
+  if (profiles && profiles.length) {
+    return profiles.includes('on-premise');
+  }
+  return null;
 }
 
 function testCopyJUnitReports(outputDir) {
@@ -201,7 +230,11 @@ async function executeJob(token, jobInfo, keepFiles) {
       ),
     );
 
-    await file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, true, jLogger);
+    jLogger.info(`Triggered by Katalon Agent ${config.version}.`);
+    jLogger.info(`Agent server: ${config.serverUrl}${config.isOnPremise ? ' (OnPremise)' : ''}`);
+    jLogger.info(`Agent user: ${config.email}`);
+
+    await file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, true, token, jLogger);
     let status;
     if (jobInfo.configType === 'GENERIC_COMMAND') {
       status = await executeGenericCommand(token, jobInfo, tmpDirPath, jLogger);
@@ -252,16 +285,6 @@ function validateField(configs, propertyName, configFile = defaultConfigFile) {
   return true;
 }
 
-function updateCommand(command, ...options) {
-  return options.reduce((cmd, option) => {
-    const { flag, value } = option;
-    if (cmd.includes(flag)) {
-      return cmd;
-    }
-    return `${cmd} ${flag}="${value}"`;
-  }, command);
-}
-
 function setLogLevel(logLevel) {
   if (logLevel) {
     logger.level = logLevel;
@@ -270,7 +293,7 @@ function setLogLevel(logLevel) {
 
 const agent = {
   start(commandLineConfigs = {}) {
-    logger.info(`Agent started @ ${new Date()}`);
+    logger.info(`Agent ${config.version} started @ ${new Date()}`);
     const hostAddress = ip.address();
     const hostName = os.getHostName();
     const osVersion = os.getVersion();
@@ -292,7 +315,18 @@ const agent = {
     let token;
     setInterval(async () => {
       try {
+        if (config.isOnPremise === undefined || config.isOnPremise === null) {
+          const profiles = await getProfiles();
+          config.isOnPremise = isOnPremiseProfile(profiles);
+        }
+        if (config.isOnPremise === undefined || config.isOnPremise === null) {
+          return;
+        }
+
         token = await tokenManager.ensureToken();
+        if (!token) {
+          return;
+        }
 
         const configs = config.read(configFile);
         if (!configs.uuid) {
@@ -329,11 +363,19 @@ const agent = {
           ? parameter.ksLocation
           : parameter.ksLocation || ksLocation;
 
-        const ksArgs = updateCommand(
-          parameter.command,
-          { flag: '-apiKey', value: apikey },
-          { flag: '-serverUrl', value: config.serverUrl },
-        );
+        let ksArgs;
+        if (config.isOnPremise) {
+          ksArgs = utils.updateCommand(
+            parameter.command,
+            { flag: '-apiKeyOnPremise', value: apikey },
+          );
+        } else {
+          ksArgs = utils.updateCommand(
+            parameter.command,
+            { flag: '-apiKey', value: apikey },
+            { flag: '-serverUrl', value: config.serverUrl },
+          );
+        }
 
         const jobInfo = {
           ksVersionNumber: ksVer,
@@ -398,7 +440,7 @@ const agent = {
   },
 
   stop() {
-    logger.info(`Agent stopped @ ${new Date()}`);
+    logger.info(`Agent ${config.version} stopped @ ${new Date()}`);
   },
 
   updateConfigs(options) {

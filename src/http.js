@@ -25,7 +25,7 @@ function buildOptions(url, headers, options) {
 }
 
 module.exports = {
-  stream(url, filePath) {
+  stream(url, filePath, opts = {}) {
     logger.info(`Downloading from ${url} to ${filePath}.`);
     const promise = new Promise((resolve) => {
       const method = 'GET';
@@ -33,6 +33,7 @@ module.exports = {
         url,
         {},
         {
+          ...opts,
           method,
         },
       );
