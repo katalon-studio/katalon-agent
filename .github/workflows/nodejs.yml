@@ -1,4 +1,4 @@
-name: Build
+name: Katalon Agent
 
 on:
   push:
@@ -19,7 +19,8 @@ jobs:
           - 10.x
 
     steps:
-    - uses: actions/checkout@v1
+    - name: Checkout code
+      uses: actions/checkout@v1
 
     - name: Setup Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v1
@@ -44,7 +45,7 @@ jobs:
       uses: actions/upload-artifact@v1
       if: success()
       with:
-        name: Katalon Agent ${{ env.BUILD_VERSION }}
+        name: katalon-agent-${{ env.BUILD_VERSION }}
         path: bin
 
     - name: Draft new release
