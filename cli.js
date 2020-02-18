@@ -101,6 +101,7 @@ program
   .option('-t, --teamid <value>', 'Team ID')
   .option('-a, --agent-name <value>', 'Agent name')
   .option('-c, --config <value>', 'Configuration file path')
+  .option('-x, --proxy <value>', 'HTTTP/HTTPS Proxy')
   .action((command) => {
     const options = {
       serverUrl: command.serverUrl,
@@ -109,6 +110,7 @@ program
       teamId: command.teamid,
       agentName: command.agentName,
       configPath: command.config,
+      proxy: command.proxy,
     };
     if (process.platform === 'win32') {
       readline
