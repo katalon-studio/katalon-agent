@@ -1,4 +1,6 @@
 const decompress = require('decompress');
+const nodegit = require('nodegit');
+const path = require('path');
 const tmp = require('tmp');
 
 const config = require('./config');
@@ -28,5 +30,30 @@ module.exports = {
     return http
       .stream(url, filePath, options)
       .then(() => this.extract(filePath, targetDir, haveFilter, logger));
+  },
+
+  clone(gitRepository, targetDir, cloneOpts = {}, logger = defaultLogger) {
+    const {
+      repository: url,
+      branch: checkoutBranch,
+      username,
+      password,
+    } = gitRepository || {};
+    const dirName = url.split('/').pop();
+    const gitTargetDir = path.join(targetDir, dirName);
+    logger.info(`Cloning from ${url} (${checkoutBranch}) into ${gitTargetDir}. It may take a few minutes.`);
+
+    const cloneOptions = {
+      fetchOpts: {
+        callbacks: {
+          certificateCheck: () => 0,
+          credentials: () =>
+            nodegit.Cred.userpassPlaintextNew(username, password),
+        },
+      },
+      checkoutBranch: checkoutBranch.split('/').pop(),
+      ...cloneOpts,
+    };
+    return nodegit.Clone(url, gitTargetDir, cloneOptions);
   },
 };
