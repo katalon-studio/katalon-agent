@@ -9,10 +9,11 @@
     "build": "npm run build:pkg && npm run afterbuild",
     "build:serv": "npm run beforebuild && npm run build:pkg && npm run afterbuild",
     "build:pkg": "pkg --targets node10-linux-x64,node10-linux-x86,node10-macos-x64,node10-win-x64,node10-win-x86 --out-path bin cli.js",
-    "afterbuild": "npm run copyConfig && npm run copyService && npm run copyStart",
+    "afterbuild": "npm run copyConfig && npm run copyService && npm run copyStart && npm run copyDependency",
     "copyConfig": "cpy agentconfig_template bin --rename agentconfig",
     "copyService": "cpy nssm.exe service.bat service.sh bin",
     "copyStart": "cpy start.bat start.sh bin",
+    "copyDependency": "cpy node_modules/nodegit bin/nodegit",
     "release": "release-it --ci"
   },
   "dependencies": {
@@ -22,13 +23,13 @@
     "decompress": "^4.2.0",
     "find": "^0.3.0",
     "fs-extra": "^8.1.0",
-    "glob": "^7.1.4",
+    "glob": "^7.1.6",
     "ini": "^1.3.4",
     "ip": "^1.1.5",
     "lodash": "^4.17.15",
     "log4js": "^5.0.0",
     "moment": "^2.24.0",
-    "nodegit": "^0.26.4",
+    "nodegit": "^0.26.5",
     "properties": "^1.2.1",
     "request": "^2.72.0",
     "tmp": "^0.1.0",
@@ -41,9 +42,9 @@
   "author": "katalon",
   "license": "ISC",
   "devDependencies": {
-    "eslint": "^6.1.0",
+    "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.0.0",
-    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-import": "^2.20.1",
     "pkg": "4.3.8",
     "release-it": "^12.3.5"
   }
