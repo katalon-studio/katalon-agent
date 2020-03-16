@@ -9,11 +9,10 @@
     "build": "npm run build:pkg && npm run afterbuild",
     "build:serv": "npm run beforebuild && npm run build:pkg && npm run afterbuild",
     "build:pkg": "pkg --targets node10-linux-x64,node10-linux-x86,node10-macos-x64,node10-win-x64,node10-win-x86 --out-path bin cli.js",
-    "afterbuild": "npm run copyConfig && npm run copyService && npm run copyStart && npm run copyDependency",
+    "afterbuild": "npm run copyConfig && npm run copyService && npm run copyStart",
     "copyConfig": "cpy agentconfig_template bin --rename agentconfig",
     "copyService": "cpy nssm.exe service.bat service.sh bin",
     "copyStart": "cpy start.bat start.sh bin",
-    "copyDependency": "cpy node_modules/nodegit bin/nodegit",
     "release": "release-it --ci"
   },
   "dependencies": {
