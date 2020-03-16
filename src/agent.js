@@ -380,7 +380,7 @@ const agent = {
         }
 
         const downloader = parameter.type === 'GIT'
-          ? new GitDownloader(logger, parameter.gitRepository)
+          ? new GitDownloader(logger, parameter.gitRepositoryResource)
           : new KatalonTestProjectDownloader(logger, parameter.downloadUrl);
 
         const jobInfo = {

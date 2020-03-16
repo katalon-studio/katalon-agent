@@ -1,6 +1,6 @@
 const decompress = require('decompress');
-const nodegit = require('nodegit');
 const path = require('path');
+const simpleGit = require('simple-git/promise')();
 const tmp = require('tmp');
 
 const config = require('./config');
@@ -34,26 +34,35 @@ module.exports = {
 
   clone(gitRepository, targetDir, cloneOpts = {}, logger = defaultLogger) {
     const {
-      repository: url,
-      branch: checkoutBranch,
+      repository,
+      branch,
       username,
       password,
     } = gitRepository || {};
+
+    const repoURL = new URL(repository);
+    repoURL.username = username;
+    repoURL.password = password;
+    const url = repoURL.href;
+
     const dirName = url.split('/').pop();
     const gitTargetDir = path.join(targetDir, dirName);
-    logger.info(`Cloning from ${url} (${checkoutBranch}) into ${gitTargetDir}. It may take a few minutes.`);
+    logger.info(`Cloning from ${url} (${branch}) into ${gitTargetDir}. It may take a few minutes.`);
 
-    const cloneOptions = {
-      fetchOpts: {
-        callbacks: {
-          certificateCheck: () => 0,
-          credentials: () =>
-            nodegit.Cred.userpassPlaintextNew(username, password),
-        },
-      },
-      checkoutBranch: checkoutBranch.split('/').pop(),
-      ...cloneOpts,
-    };
-    return nodegit.Clone(url, gitTargetDir, cloneOptions);
+    const overrideOpts = Object.entries(cloneOpts).reduce((opts, [k, v]) => {
+      opts.push(k);
+      if (v) {
+        opts.push(v);
+      }
+      return opts;
+    }, []);
+
+    return simpleGit.clone(url, gitTargetDir, [
+      '--depth',
+      '1',
+      '--branch',
+      branch.split('/').pop(),
+      ...overrideOpts,
+    ]);
   },
 };
