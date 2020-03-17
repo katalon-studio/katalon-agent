@@ -381,7 +381,7 @@ const agent = {
 
         const downloader = parameter.type === 'GIT'
           ? new GitDownloader(logger, parameter.gitRepositoryResource)
-          : new KatalonTestProjectDownloader(logger, parameter.downloadUrl);
+          : new KatalonTestProjectDownloader(logger, parameter.downloadUrl, token);
 
         const jobInfo = {
           ksVersionNumber: ksVer,
