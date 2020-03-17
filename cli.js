@@ -102,6 +102,7 @@ program
   .option('-a, --agent-name <value>', 'Agent name')
   .option('-c, --config <value>', 'Configuration file path')
   .option('-x, --proxy <value>', 'HTTTP/HTTPS Proxy')
+  .option('--ci', 'CI mode')
   .action((command) => {
     const options = {
       serverUrl: command.serverUrl,
@@ -128,7 +129,12 @@ program
       // graceful shutdown
       process.exit();
     });
-    agent.start(options);
+
+    if (command.ci) {
+      agent.startCI(options).then(() => process.emit('SIGINT'));
+    } else {
+      agent.start(options);
+    }
   });
 
 program.version(version);

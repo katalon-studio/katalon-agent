@@ -445,6 +445,89 @@ const agent = {
     }, pingInterval);
   },
 
+  async startCI(commandLineConfigs = {}) {
+    logger.info(`Agent (CI mode) ${config.version} started @ ${new Date()}`);
+
+    const configFile = commandLineConfigs.configPath || defaultConfigFile;
+    logger.info('Loading agent configs @', configFile);
+    config.update(commandLineConfigs, configFile);
+    const { email, teamId, apikey } = config;
+    setLogLevel(config.logLevel);
+
+    tokenManager.email = email;
+    tokenManager.password = apikey;
+
+    try {
+      if (config.isOnPremise === undefined || config.isOnPremise === null) {
+        const profiles = await getProfiles();
+        config.isOnPremise = isOnPremiseProfile(profiles);
+      }
+      if (config.isOnPremise === undefined || config.isOnPremise === null) {
+        return;
+      }
+
+      const token = await tokenManager.ensureToken();
+
+      const configs = config.read(configFile);
+
+      const { ksLocation, keepFiles, logLevel, x11Display, xvfbRun } = configs;
+      const ksVersion = configs.ksVersionNumber;
+
+      setLogLevel(logLevel);
+
+      // Read job configuration from file
+      const jobBody = fs.readJsonSync('job.json', { encoding: 'utf-8' });
+      const { parameter, testProject, runConfiguration } = jobBody;
+
+      const ksVer = parameter.ksVersion || ksVersion;
+      const ksLoc = parameter.ksVersion
+        ? parameter.ksLocation
+        : parameter.ksLocation || ksLocation;
+
+      let ksArgs;
+      if (config.isOnPremise) {
+        ksArgs = utils.updateCommand(parameter.command, {
+          flag: '-apiKeyOnPremise',
+          value: apikey,
+        });
+      } else {
+        ksArgs = utils.updateCommand(
+          parameter.command,
+          { flag: '-apiKey', value: apikey },
+          { flag: '-serverUrl', value: config.serverUrl },
+        );
+      }
+
+      const downloader =
+        parameter.type === 'GIT'
+          ? new GitDownloader(logger, parameter.gitRepositoryResource)
+          : new KatalonTestProjectDownloader(logger, parameter.downloadUrl, token);
+
+      const jobInfo = {
+        ksVersionNumber: ksVer,
+        ksLocation: ksLoc,
+        ksArgs,
+        x11Display,
+        xvfbConfiguration: xvfbRun,
+        downloader,
+        jobId: jobBody.id,
+        projectId: testProject.projectId,
+        teamId,
+        configType: parameter.configType || runConfiguration.configType,
+        commands: parameter.command,
+        sessionId: parameter.sessionId,
+      };
+
+      // Update job status to running
+      const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.RUNNING);
+      await updateJob(token, jobOptions);
+
+      await executeJob(token, jobInfo, keepFiles);
+    } catch (err) {
+      logger.error(err);
+    }
+  },
+
   stop() {
     logger.info(`Agent ${config.version} stopped @ ${new Date()}`);
   },
