@@ -47,7 +47,7 @@ module.exports = {
 
     const dirName = url.split('/').pop();
     const gitTargetDir = path.join(targetDir, dirName);
-    logger.info(`Cloning from ${url} (${branch}) into ${gitTargetDir}. It may take a few minutes.`);
+    logger.info(`Cloning from ${repository} (${branch}) into ${gitTargetDir}. It may take a few minutes.`);
 
     const overrideOpts = Object.entries(cloneOpts).reduce((opts, [k, v]) => {
       opts.push(k);
