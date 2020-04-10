@@ -9,7 +9,6 @@ const { S3FileTransport } = require('./transports');
 
 const agentState = require('./agent-state');
 const config = require('./config');
-const file = require('./file');
 const genericCommand = require('./generic-command');
 const jobLogger = require('./job-logger');
 const katalonRequest = require('./katalon-request');
@@ -17,6 +16,7 @@ const ks = require('./katalon-studio');
 const logger = require('./logger');
 const os = require('./os');
 const properties = require('./properties');
+const { KatalonTestProjectDownloader, GitDownloader } = require('./remote-downloader');
 const reportUploader = require('./report-uploader');
 const utils = require('./utils');
 
@@ -234,7 +234,9 @@ async function executeJob(token, jobInfo, keepFiles) {
     jLogger.info(`Agent server: ${config.serverUrl}${config.isOnPremise ? ' (OnPremise)' : ''}`);
     jLogger.info(`Agent user: ${config.email}`);
 
-    await file.downloadAndExtract(jobInfo.downloadUrl, tmpDirPath, true, token, jLogger);
+    const { downloader } = jobInfo;
+    downloader.logger = jLogger;
+    await downloader.download(tmpDirPath);
     let status;
     if (jobInfo.configType === 'GENERIC_COMMAND') {
       status = await executeGenericCommand(token, jobInfo, tmpDirPath, jLogger);
@@ -377,13 +379,17 @@ const agent = {
           );
         }
 
+        const downloader = parameter.type === 'GIT'
+          ? new GitDownloader(logger, parameter.gitRepositoryResource)
+          : new KatalonTestProjectDownloader(logger, parameter.downloadUrl, token);
+
         const jobInfo = {
           ksVersionNumber: ksVer,
           ksLocation: ksLoc,
           ksArgs,
           x11Display,
           xvfbConfiguration: xvfbRun,
-          downloadUrl: parameter.downloadUrl,
+          downloader,
           jobId: jobBody.id,
           projectId: testProject.projectId,
           teamId,

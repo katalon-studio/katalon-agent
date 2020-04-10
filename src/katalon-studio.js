@@ -2,10 +2,10 @@ const _ = require('lodash');
 const fs = require('fs');
 const path = require('path');
 
-const file = require('./file');
 const http = require('./http');
 const defaultLogger = require('./logger');
 const os = require('./os');
+const { KatalonStudioDownloader } = require('./remote-downloader');
 const utils = require('./utils');
 
 const releasesList =
@@ -59,7 +59,8 @@ function getKsLocation(ksVersionNumber, ksLocation) {
     }
 
     defaultLogger.info(`Download Katalon Studio ${ksVersionNumber} to ${ksLocationParentDir}.`);
-    return file.downloadAndExtract(ksVersion.url, ksLocationParentDir, false).then(() => {
+    const downloader = new KatalonStudioDownloader(defaultLogger, ksVersion.url);
+    return downloader.download(ksLocationParentDir).then(() => {
       fs.writeFileSync(katalonDoneFilePath, '');
       return { ksLocationParentDir };
     });
