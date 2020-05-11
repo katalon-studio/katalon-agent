@@ -39,6 +39,7 @@ jobs:
       run: |
         npm install
         npm run build --if-present
+        echo "::set-env name=BUILD_VERSION::$(node -p "require('./package').version")"
 
     - name: Prepare artifacts
       working-directory: bin
@@ -75,3 +76,4 @@ jobs:
     - name: Deploy to s3
       run: |
         ls -laR
+        aws s3 cp katalon-agent-linux-x64-*/cli-linux-x64 s3://${{ secrets.AWS_S3_BUCKET }}
