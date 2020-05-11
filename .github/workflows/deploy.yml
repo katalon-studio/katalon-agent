@@ -13,6 +13,50 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        node-version:
+          - 10.x
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2.1.0
+
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1.4.2
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Cache
+      uses: actions/cache@v1.1.2
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
+
+    - name: Install packages and build with Node.js ${{ matrix.node-version }}
+      env:
+        CI: true
+      run: |
+        npm install
+        npm run build --if-present
+
+    - name: Prepare artifacts
+      working-directory: bin
+      run: |
+        mkdir -p linux-x64
+        cp cli-linux-x64 *.sh linux-x64
+
+    - name: Upload Linux x64 artifact
+      uses: actions/upload-artifact@v2
+      if: success()
+      with:
+        name: katalon-agent-linux-x64-${{ env.BUILD_VERSION }}
+        path: bin/linux-x64/*
+
+  deploy:
+
+    runs-on: ubuntu-latest
+
     steps:
     - name: Download artifacts
       uses: actions/download-artifact@v2
