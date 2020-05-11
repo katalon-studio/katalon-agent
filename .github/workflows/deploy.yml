@@ -1,0 +1,29 @@
+name: Deploy cloud agent
+
+on:
+  release:
+    types:
+      - published
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v2
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_API_KEY }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+        aws-region: us-east-1
+
+    - name: Deploy to s3
+      run: |
+        ls -laR
