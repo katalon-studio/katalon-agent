@@ -23,12 +23,7 @@ module.exports = {
     releaseName: `Release ${version} 🚧${buildInfo}`,
     draft: true,
     assets: [
-      "bin/agentconfig",
-      "bin/*x64*",
-      "bin/*x86*",
-      "service.*",
-      "start.*",
-      "nssm.exe"
+      "packages/*.zip",
     ]
   },
   npm: false,
