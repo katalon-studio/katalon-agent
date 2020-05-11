@@ -4,9 +4,6 @@ on:
   release:
     types:
       - published
-  pull_request:
-    branches:
-      - master
 
 jobs:
   build:
@@ -54,6 +51,8 @@ jobs:
         path: bin/linux-x64/*
 
   deploy:
+
+    needs: build
 
     runs-on: ubuntu-latest
 
