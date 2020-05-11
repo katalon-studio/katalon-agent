@@ -1,9 +1,12 @@
-name: Deploy cloud agent
+name: Deploy Cloud Agent
 
 on:
   release:
     types:
       - published
+  pull_request:
+    branches:
+      - master
 
 jobs:
   build:
