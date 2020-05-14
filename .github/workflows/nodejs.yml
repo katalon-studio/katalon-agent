@@ -7,9 +7,14 @@ on:
   pull_request:
     branches:
       - master
+  release:
+    types:
+      - published
 
 jobs:
+  ### BUILD ###
   build:
+    name: Build and draft new release
 
     runs-on: ubuntu-latest
 
@@ -20,35 +25,116 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2.1.0
 
     - name: Setup Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v1.4.2
       with:
         node-version: ${{ matrix.node-version }}
 
     - name: Cache
-      uses: actions/cache@v1.0.3
+      id: cache-packages
+      uses: actions/cache@v1.1.2
       with:
         path: node_modules
         key: ${{ runner.os }}-node${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
+        
+    - name: Install packages
+      if: steps.cache-packages.outputs.cache-hit != 'true'
+      run: npm install
 
-    - name: Install packages and build with Node.js ${{ matrix.node-version }}
+    - name: Build with Node.js ${{ matrix.node-version }}
       env:
         CI: true
       run: |
-        npm install
         npm run build --if-present
         echo "::set-env name=BUILD_VERSION::$(node -p "require('./package').version")"
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v1
+    - name: Prepare artifacts
+      working-directory: bin
+      run: |
+        mkdir -p win-x64 win-x86 linux-x64 linux-x86 macos-x64
+        cp cli-win-x64.exe nssm.exe *.bat win-x64
+        cp cli-win-x86.exe nssm.exe *.bat win-x86
+        cp cli-linux-x64 *.sh linux-x64
+        cp cli-linux-x86 *.sh linux-x86
+        cp cli-macos-x64 *.sh macos-x64
+
+    - name: Upload Windows x64 artifact
+      uses: actions/upload-artifact@v2
       if: success()
       with:
-        name: katalon-agent-${{ env.BUILD_VERSION }}
-        path: bin
+        name: katalon-agent-win-x64-${{ env.BUILD_VERSION }}
+        path: bin/win-x64/*
+
+    - name: Upload Windows x86 artifact
+      uses: actions/upload-artifact@v2
+      if: success()
+      with:
+        name: katalon-agent-win-x86-${{ env.BUILD_VERSION }}
+        path: bin/win-x86/*
+
+    - name: Upload Linux x64 artifact
+      uses: actions/upload-artifact@v2
+      if: success()
+      with:
+        name: katalon-agent-linux-x64-${{ env.BUILD_VERSION }}
+        path: bin/linux-x64/*
+
+    - name: Upload Linux x86 artifact
+      uses: actions/upload-artifact@v2
+      if: success()
+      with:
+        name: katalon-agent-linux-x86-${{ env.BUILD_VERSION }}
+        path: bin/linux-x86/*
+
+    - name: Upload MacOS x64 artifact
+      uses: actions/upload-artifact@v2
+      if: success()
+      with:
+        name: katalon-agent-macos-x64-${{ env.BUILD_VERSION }}
+        path: bin/macos-x64/*
+
+    - name: Package artifacts for release
+      if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+      run: |
+        mkdir -p packages
+        zip -9 -j packages/katalon-agent-win-x64-$BUILD_VERSION.zip bin/win-x64/*
+        zip -9 -j packages/katalon-agent-win-x86-$BUILD_VERSION.zip bin/win-x86/*
+        zip -9 -j packages/katalon-agent-linux-x64-$BUILD_VERSION.zip bin/linux-x64/*
+        zip -9 -j packages/katalon-agent-linux-x86-$BUILD_VERSION.zip bin/linux-x86/*
+        zip -9 -j packages/katalon-agent-macos-x64-$BUILD_VERSION.zip bin/macos-x64/*
 
     - name: Draft new release
+      if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: npm run release
+
+  ### DEPLOY ###
+  deploy:
+    name: Deploy cloud agent
+
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    if: ${{ github.event_name == 'release' }}
+
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v2
+      with:
+        path: .
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_API_KEY }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+        aws-region: us-east-1
+
+    - name: Deploy to s3
+      run: |
+        ls -laR
+        aws s3 cp katalon-agent-linux-x64-*/cli-linux-x64 s3://${{ secrets.AWS_S3_BUCKET }}
