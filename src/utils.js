@@ -1,6 +1,7 @@
 const moment = require('moment');
 const path = require('path');
 const tmp = require('tmp');
+const pckg = require('./../package.json');
 
 module.exports = {
   getPath(relativePath) {
@@ -34,5 +35,9 @@ module.exports = {
       }
       return `${cmd} ${flag}`;
     }, command);
+  },
+
+  getVersion() {
+    return pckg.version;
   },
 };

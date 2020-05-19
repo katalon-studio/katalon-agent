@@ -31,6 +31,8 @@ const JOB_STATUS = Object.freeze({
   FAILED: 'FAILED',
 });
 
+const agentVersion = utils.getVersion();
+
 function updateJob(token, jobOptions) {
   return katalonRequest
     .updateJob(token, jobOptions);
@@ -355,7 +357,7 @@ const agent = {
         configs.agentName = hostName;
       }
 
-      const { uuid, agentName } = configs;
+      const { uuid, agentName, threshold } = configs;
 
       const requestBody = {
         uuid,
@@ -364,6 +366,9 @@ const agent = {
         hostname: hostName,
         ip: hostAddress,
         os: osVersion,
+        threshold: threshold || 1,
+        numExecutingJobs: agentState.numExecutingJobs,
+        agentVersion,
       };
       const options = {
         body: requestBody,
