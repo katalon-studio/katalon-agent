@@ -1,3 +1,3 @@
 module.exports = {
-  executingJob: false,
+  numExecutingJobs: 0,
 };

@@ -173,7 +173,7 @@ async function executeJob(token, jobInfo, keepFiles) {
     logger.debug(`Error caught during job execution! Update job with status '${jobStatus}'`);
     await updateJob(token, jobOptions);
   } finally {
-    agentState.executingJob = false;
+    agentState.numExecutingJobs -= 1;
 
     await uploadLog(token, jobInfo, logFilePath);
     logger.info('Job execution log uploaded.');
@@ -253,17 +253,20 @@ const agent = {
 
     let token;
     setInterval(async () => {
+      agentState.numExecutingJobs += 1;
       try {
         if (config.isOnPremise === undefined || config.isOnPremise === null) {
           const profiles = await getProfiles();
           config.isOnPremise = isOnPremiseProfile(profiles);
         }
         if (config.isOnPremise === undefined || config.isOnPremise === null) {
+          agentState.numExecutingJobs -= 1;
           return;
         }
 
         token = await tokenManager.ensureToken();
         if (!token) {
+          agentState.numExecutingJobs -= 1;
           return;
         }
 
@@ -273,12 +276,13 @@ const agent = {
           config.write(configFile, configs);
         }
 
-        const { uuid, keepFiles, logLevel, x11Display, xvfbRun } = configs;
+        const { uuid, keepFiles, logLevel, x11Display, xvfbRun, threshold } = configs;
 
         setLogLevel(logLevel);
 
-        if (agentState.executingJob) {
-          // Agent is executing a job, do nothing
+        const maxJobs = Number(threshold) + 1 || 2;
+        if (agentState.numExecutingJobs >= maxJobs) {
+          agentState.numExecutingJobs -= 1;
           return;
         }
 
@@ -291,6 +295,7 @@ const agent = {
           !requestJobResponse.body.testProject
         ) {
           // There is no job to execute
+          agentState.numExecutingJobs -= 1;
           return;
         }
         const jobBody = requestJobResponse.body;
@@ -328,11 +333,10 @@ const agent = {
         // Update job status to running
         const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.RUNNING);
         await updateJob(token, jobOptions);
-        agentState.executingJob = true;
 
         await executeJob(token, jobInfo, keepFiles);
       } catch (err) {
-        agentState.executingJob = false;
+        agentState.numExecutingJobs -= 1;
         logger.error(err);
       }
     }, requestInterval);

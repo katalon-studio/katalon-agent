@@ -6,3 +6,4 @@ serverUrl=
 teamId=
 keepFiles=false
 logLevel=INFO
+threshold=1
