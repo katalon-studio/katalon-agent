@@ -7,6 +7,8 @@ const { Readable } = require('stream');
 const logger = require('./logger');
 const config = require('./config');
 
+const FILTERED_ERROR_CODE = new Set([400, 401, 403, 404, 500, 502, 503, 504]);
+
 function buildOptions(url, headers, options) {
   let defaultOptions = {
     url,
@@ -66,7 +68,13 @@ module.exports = {
           reject(error);
         } else {
           logger.info(`${method} ${response.request.href} ${response.statusCode}.`);
-          resolve({ status: response.statusCode, body });
+
+          const res = { status: response.statusCode, body };
+          if ((body && body.error) || FILTERED_ERROR_CODE.has(res.status)) {
+            logger.error(res);
+            reject(res);
+          }
+          resolve(res);
         }
       });
     }).then((response) => {
