@@ -175,7 +175,7 @@ async function executeJob(token, jobInfo, keepFiles) {
     logger.debug(`Error caught during job execution! Update job with status '${jobStatus}'`);
     await updateJob(token, jobOptions);
   } finally {
-    agentState.numExecutingJobs -= 1;
+    agentState.subtractExecutingJobs();
 
     await uploadLog(token, jobInfo, logFilePath);
     logger.info('Job execution log uploaded.');
@@ -255,20 +255,26 @@ const agent = {
 
     let token;
     setInterval(async () => {
-      agentState.numExecutingJobs += 1;
+      agentState.addExecutingJobs();
       try {
+        const maxJobs = agentState.threshold + 1;
+        if (agentState.numExecutingJobs >= maxJobs) {
+          agentState.subtractExecutingJobs();
+          return;
+        }
+
         if (config.isOnPremise === undefined || config.isOnPremise === null) {
           const profiles = await getProfiles();
           config.isOnPremise = isOnPremiseProfile(profiles);
         }
         if (config.isOnPremise === undefined || config.isOnPremise === null) {
-          agentState.numExecutingJobs -= 1;
+          agentState.subtractExecutingJobs();
           return;
         }
 
         token = await tokenManager.ensureToken();
         if (!token) {
-          agentState.numExecutingJobs -= 1;
+          agentState.subtractExecutingJobs();
           return;
         }
 
@@ -278,15 +284,9 @@ const agent = {
           config.write(configFile, configs);
         }
 
-        const { uuid, keepFiles, logLevel, x11Display, xvfbRun, threshold } = configs;
+        const { uuid, keepFiles, logLevel, x11Display, xvfbRun } = configs;
 
         setLogLevel(logLevel);
-
-        const maxJobs = Number(threshold) + 1 || 2;
-        if (agentState.numExecutingJobs >= maxJobs) {
-          agentState.numExecutingJobs -= 1;
-          return;
-        }
 
         // Agent is not executing job, request new job
         const requestJobResponse = await katalonRequest.requestJob(token, uuid, teamId);
@@ -297,7 +297,7 @@ const agent = {
           !requestJobResponse.body.testProject
         ) {
           // There is no job to execute
-          agentState.numExecutingJobs -= 1;
+          agentState.subtractExecutingJobs();
           return;
         }
         const jobBody = requestJobResponse.body;
@@ -338,7 +338,7 @@ const agent = {
 
         await executeJob(token, jobInfo, keepFiles);
       } catch (err) {
-        agentState.numExecutingJobs -= 1;
+        agentState.subtractExecutingJobs();
         logger.error(err);
       }
     }, requestInterval);
@@ -357,7 +357,7 @@ const agent = {
         configs.agentName = hostName;
       }
 
-      const { uuid, agentName, threshold } = configs;
+      const { uuid, agentName } = configs;
 
       const requestBody = {
         uuid,
@@ -366,7 +366,6 @@ const agent = {
         hostname: hostName,
         ip: hostAddress,
         os: osVersion,
-        threshold: threshold || 1,
         numExecutingJobs: agentState.numExecutingJobs,
         agentVersion,
       };
@@ -377,6 +376,11 @@ const agent = {
 
       katalonRequest
         .pingAgent(token, options)
+        .then((response) => {
+          if (response && response.body && response.body.threshold) {
+            agentState.threshold = response.body.threshold;
+          }
+        })
         .catch((err) => logger.error('Cannot send agent info to server:', err)); // async
     }, pingInterval);
   },
