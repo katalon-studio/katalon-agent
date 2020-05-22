@@ -5,9 +5,8 @@
   "main": "cli.js",
   "scripts": {
     "start": "node cli.js start-agent",
-    "beforebuild": "rm -r ~/pkg-cache/",
-    "build": "npm run build:pkg && npm run afterbuild",
-    "build:serv": "npm run beforebuild && npm run build:pkg && npm run afterbuild",
+    "beforebuild": "pkg-fetch node10 linux x64",
+    "build": "npm run beforebuild && npm run build:pkg && npm run afterbuild",
     "build:pkg": "pkg --targets node10-linux-x64,node10-macos-x64,node10-win-x64,node10-win-x86 --out-path bin cli.js",
     "afterbuild": "npm run copyService && npm run copyStart",
     "copyConfig": "cpy agentconfig_template bin --rename agentconfig",
