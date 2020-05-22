@@ -5,7 +5,7 @@
   "main": "cli.js",
   "scripts": {
     "start": "node cli.js start-agent",
-    "beforebuild": "",
+    "beforebuild": "pkg-fetch node10 linux x64",
     "build": "npm run build:pkg && npm run afterbuild",
     "build:serv": "npm run beforebuild && npm run build:pkg && npm run afterbuild",
     "build:pkg": "pkg --targets node10-linux-x64,node10-macos-x64,node10-win-x64,node10-win-x86 --out-path bin cli.js",
@@ -28,7 +28,6 @@
     "lodash": "^4.17.15",
     "log4js": "^6.2.1",
     "moment": "^2.26.0",
-    "pkg-fetch": "^2.6.8",
     "properties": "^1.2.1",
     "request": "^2.72.0",
     "simple-git": "^2.5.0",
@@ -46,6 +45,7 @@
     "eslint-config-airbnb-base": "^14.1.0",
     "eslint-plugin-import": "^2.20.2",
     "pkg": "^4.4.8",
+    "pkg-fetch": "^2.6.8",
     "release-it": "^12.3.5"
   }
 }
