@@ -1,7 +1,7 @@
 const moment = require('moment');
 const path = require('path');
 const tmp = require('tmp');
-const pckg = require('./../package.json');
+const packageJson = require('../package.json');
 
 module.exports = {
   getPath(relativePath) {
@@ -13,7 +13,7 @@ module.exports = {
     const tmpDir = tmp.dirSync({
       unsafeCleanup: true,
       keep: true,
-      dir: tmpRoot,
+      tmpdir: tmpRoot,
       prefix: tmpPrefix,
       ...options,
     });
@@ -38,6 +38,6 @@ module.exports = {
   },
 
   getVersion() {
-    return pckg.version;
+    return packageJson.version;
   },
 };

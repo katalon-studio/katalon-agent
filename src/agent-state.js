@@ -2,11 +2,11 @@ module.exports = {
   numExecutingJobs: 0,
   threshold: 1,
 
-  addExecutingJobs() {
+  incrementExecutingJobs() {
     this.numExecutingJobs += 1;
   },
 
-  subtractExecutingJobs() {
+  decrementExecutingJobs() {
     this.numExecutingJobs -= 1;
   },
 };

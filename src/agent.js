@@ -1,7 +1,7 @@
 const fs = require('fs-extra');
 const ip = require('ip');
 const path = require('path');
-const uuidv4 = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 
 const TokenManager = require('./token-manager');
 const { S3FileTransport } = require('./transports');
@@ -38,10 +38,10 @@ function updateJob(token, jobOptions) {
     .updateJob(token, jobOptions);
 }
 
-function buildJobResponse(jobInfo, jobStatus) {
+function buildJobResponse(jobId, jobStatus) {
   const jobOptions = {
     body: {
-      id: jobInfo.jobId,
+      id: jobId,
       status: jobStatus,
     },
   };
@@ -53,6 +53,11 @@ function buildJobResponse(jobInfo, jobStatus) {
   }
 
   return jobOptions;
+}
+
+function updateJobStatus(token, jobId, jobStatus) {
+  const jobOptions = buildJobResponse(jobId, jobStatus);
+  return updateJob(token, jobOptions);
 }
 
 async function uploadLog(token, jobInfo, filePath) {
@@ -111,6 +116,13 @@ function notifyJob(token, jobInfo) {
 }
 
 async function executeJob(token, jobInfo, keepFiles) {
+  const { jobId } = jobInfo;
+
+  // Update job status to running
+  // Take the job even if the subsequent setup steps fail
+  // Prevent the job to be queued forever
+  await updateJobStatus(token, jobId, JOB_STATUS.RUNNING);
+
   // Create directory where temporary files are contained
   const tmpRoot = path.resolve(global.appRoot, 'tmp/');
   fs.ensureDir(tmpRoot);
@@ -126,6 +138,7 @@ async function executeJob(token, jobInfo, keepFiles) {
   const afterUpload = () => notifyJob(token, jobInfo);
 
   try {
+    // Create logger for job
     const jLogger = jobLogger.getLogger(logFilePath);
 
     // Upload log and add new transport to stream log content to s3
@@ -159,10 +172,9 @@ async function executeJob(token, jobInfo, keepFiles) {
 
     // Update job status after execution
     const jobStatus = status === 0 ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
-    const jobOptions = buildJobResponse(jobInfo, jobStatus);
 
     logger.debug(`Update job with status '${jobStatus}.'`);
-    await updateJob(token, jobOptions);
+    await updateJobStatus(token, jobId, jobStatus);
     logger.info('Job execution has been completed.');
   } catch (err) {
     logger.error(`${executeJob.name}:`, err);
@@ -171,11 +183,10 @@ async function executeJob(token, jobInfo, keepFiles) {
     // NOTE: Job status is set FAILED might not be because of a failed execution
     // but because of other reasons such as cannot remove tmp directory or cannot upload log
     const jobStatus = JOB_STATUS.FAILED;
-    const jobOptions = buildJobResponse(jobInfo, jobStatus);
     logger.debug(`Error caught during job execution! Update job with status '${jobStatus}'`);
-    await updateJob(token, jobOptions);
+    await updateJobStatus(token, jobId, jobStatus);
   } finally {
-    agentState.subtractExecutingJobs();
+    agentState.decrementExecutingJobs();
 
     await uploadLog(token, jobInfo, logFilePath);
     logger.info('Job execution log uploaded.');
@@ -255,11 +266,11 @@ const agent = {
 
     let token;
     setInterval(async () => {
-      agentState.addExecutingJobs();
+      agentState.incrementExecutingJobs();
       try {
         const maxJobs = agentState.threshold + 1;
         if (agentState.numExecutingJobs >= maxJobs) {
-          agentState.subtractExecutingJobs();
+          agentState.decrementExecutingJobs();
           return;
         }
 
@@ -268,13 +279,13 @@ const agent = {
           config.isOnPremise = isOnPremiseProfile(profiles);
         }
         if (config.isOnPremise === undefined || config.isOnPremise === null) {
-          agentState.subtractExecutingJobs();
+          agentState.decrementExecutingJobs();
           return;
         }
 
         token = await tokenManager.ensureToken();
         if (!token) {
-          agentState.subtractExecutingJobs();
+          agentState.decrementExecutingJobs();
           return;
         }
 
@@ -297,7 +308,7 @@ const agent = {
           !requestJobResponse.body.testProject
         ) {
           // There is no job to execute
-          agentState.subtractExecutingJobs();
+          agentState.decrementExecutingJobs();
           return;
         }
         const jobBody = requestJobResponse.body;
@@ -332,13 +343,9 @@ const agent = {
           teamId,
         };
 
-        // Update job status to running
-        const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.RUNNING);
-        await updateJob(token, jobOptions);
-
         await executeJob(token, jobInfo, keepFiles);
       } catch (err) {
-        agentState.subtractExecutingJobs();
+        agentState.decrementExecutingJobs();
         logger.error(err);
       }
     }, requestInterval);
@@ -454,10 +461,6 @@ const agent = {
         projectId,
         teamId,
       };
-
-      // Update job status to running
-      const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.RUNNING);
-      await updateJob(token, jobOptions);
 
       await executeJob(token, jobInfo, keepFiles);
     } catch (err) {
