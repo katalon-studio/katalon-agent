@@ -5,9 +5,10 @@
   "main": "cli.js",
   "scripts": {
     "start": "node cli.js start-agent",
-    "beforebuild": "rm -r ~/.pkg-cache/",
-    "build": "npm run beforebuild && npm run build:pkg && npm run afterbuild",
-    "build:pkg": "pkg --targets node10-linux-x64,node10-macos-x64,node10-win-x64,node10-win-x86 --out-path bin cli.js",
+    "beforebuild": "",
+    "build": "npm run build:pkg && npm run afterbuild",
+    "build:serv": "npm run beforebuild && npm run build:pkg && npm run afterbuild",
+    "build:pkg": "pkg --targets node10-linux-x64,node10-linux-x86,node10-macos-x64,node10-win-x64,node10-win-x86 --out-path bin cli.js",
     "afterbuild": "npm run copyService && npm run copyStart",
     "copyConfig": "cpy agentconfig_template bin --rename agentconfig",
     "copyService": "cpy nssm.exe service.bat service.sh bin",
@@ -43,8 +44,7 @@
     "eslint": "^7.0.0",
     "eslint-config-airbnb-base": "^14.1.0",
     "eslint-plugin-import": "^2.20.2",
-    "pkg": "^4.4.8",
-    "pkg-fetch": "^2.6.8",
+    "pkg": "^4.3.8",
     "release-it": "^12.3.5"
   }
 }

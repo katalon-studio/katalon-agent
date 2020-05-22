@@ -57,6 +57,7 @@ jobs:
         cp cli-win-x64.exe nssm.exe *.bat win-x64
         cp cli-win-x86.exe nssm.exe *.bat win-x86
         cp cli-linux-x64 *.sh linux-x64
+        cp cli-linux-x86 *.sh linux-x86
         cp cli-macos-x64 *.sh macos-x64
 
     - name: Upload Windows x64 artifact
@@ -80,6 +81,13 @@ jobs:
         name: katalon-agent-linux-x64-${{ env.BUILD_VERSION }}
         path: bin/linux-x64/*
 
+    - name: Upload Linux x86 artifact
+      uses: actions/upload-artifact@v2
+      if: success()
+      with:
+        name: katalon-agent-linux-x86-${{ env.BUILD_VERSION }}
+        path: bin/linux-x86/*
+
     - name: Upload MacOS x64 artifact
       uses: actions/upload-artifact@v2
       if: success()
@@ -94,6 +102,7 @@ jobs:
         zip -9 -j packages/katalon-agent-win-x64-$BUILD_VERSION.zip bin/win-x64/*
         zip -9 -j packages/katalon-agent-win-x86-$BUILD_VERSION.zip bin/win-x86/*
         zip -9 -j packages/katalon-agent-linux-x64-$BUILD_VERSION.zip bin/linux-x64/*
+        zip -9 -j packages/katalon-agent-linux-x86-$BUILD_VERSION.zip bin/linux-x86/*
         zip -9 -j packages/katalon-agent-macos-x64-$BUILD_VERSION.zip bin/macos-x64/*
 
     - name: Draft new release
