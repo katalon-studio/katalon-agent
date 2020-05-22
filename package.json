@@ -5,7 +5,7 @@
   "main": "cli.js",
   "scripts": {
     "start": "node cli.js start-agent",
-    "beforebuild": "pkg-fetch node10 linux x64",
+    "beforebuild": "rm -r ~/pkg-cache/",
     "build": "npm run beforebuild && npm run build:pkg && npm run afterbuild",
     "build:pkg": "pkg --targets node10-linux-x64,node10-macos-x64,node10-win-x64,node10-win-x86 --out-path bin cli.js",
     "afterbuild": "npm run copyService && npm run copyStart",
