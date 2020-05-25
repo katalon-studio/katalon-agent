@@ -26,6 +26,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2.1.0
+
+    - name: Git log
       run: git log
 
     - name: Setup Node.js ${{ matrix.node-version }}
