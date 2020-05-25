@@ -24,7 +24,8 @@ module.exports = {
     draft: true,
     assets: [
       "packages/*.zip",
-    ]
+    ],
+    isUpdate: false,
   },
   npm: false,
   increment: false
