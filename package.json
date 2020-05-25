@@ -44,7 +44,7 @@
     "eslint": "^7.1.0",
     "eslint-config-airbnb-base": "^14.1.0",
     "eslint-plugin-import": "^2.20.2",
-    "pkg": "^4.4.8",
+    "pkg": "4.3.8",
     "release-it": "^12.3.5"
   }
 }
