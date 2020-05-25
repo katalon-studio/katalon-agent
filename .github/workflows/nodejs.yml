@@ -27,9 +27,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2.1.0
 
-    - name: Git log
-      run: git log
-
     - name: Setup Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v1.4.2
       with:
