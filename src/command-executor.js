@@ -44,11 +44,8 @@ function testCopyJUnitReports(outputDir) {
   files.forEach((file) => fs.copyFileSync(path.join(sampleDir, file), path.join(outputDir, file)));
 }
 
-class KatalonCommandExecutor {
-  constructor(token, info) {
-    this.token = token;
-    this.teamId = info.teamId;
-    this.projectId = info.projectId;
+class BaseKatalonCommandExecutor {
+  constructor(info) {
     this.ksVersionNumber = info.ksVersionNumber;
     this.ksLocation = info.ksLocation;
     this.ksArgs = info.ksArgs;
@@ -73,7 +70,33 @@ class KatalonCommandExecutor {
 
     const [ksProjectPath] = ksProjectPaths;
 
+    if (this.preExecuteHook && typeof this.preExecuteHook === 'function') {
+      this.preExecuteHook(logger, ksProjectPath);
+    }
+
+    return ks.execute(
+      this.ksVersionNumber,
+      this.ksLocation,
+      ksProjectPath,
+      this.ksArgs,
+      this.x11Display,
+      this.xvfbConfiguration,
+      logger,
+    );
+  }
+}
+
+class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
+  constructor(token, info) {
+    super(info);
+    this.token = token;
+    this.teamId = info.teamId;
+    this.projectId = info.projectId;
+  }
+
+  preExecuteHook(logger, ksProjectPath) {
     // Manually configure integration settings for KS to upload execution report
+    logger.debug('Configure Katalon TestOps integration.');
     const ksProjectDir = path.dirname(ksProjectPath);
     const testOpsPropertiesPath = path.resolve(
       ksProjectDir,
@@ -84,16 +107,6 @@ class KatalonCommandExecutor {
     properties.writeProperties(
       testOpsPropertiesPath,
       buildTestOpsIntegrationProperties(this.token, this.teamId, this.projectId),
-    );
-
-    return ks.execute(
-      this.ksVersionNumber,
-      this.ksLocation,
-      ksProjectPath,
-      this.ksArgs,
-      this.x11Display,
-      this.xvfbConfiguration,
-      logger,
     );
   }
 }
