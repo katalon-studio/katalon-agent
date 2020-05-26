@@ -5,6 +5,9 @@ const packageJson = require('../package.json');
 
 module.exports = {
   getPath(relativePath) {
+    if (!global.appRoot) {
+      global.appRoot = path.resolve('.');
+    }
     return path.join(global.appRoot, relativePath);
   },
 
