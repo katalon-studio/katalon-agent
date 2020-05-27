@@ -34,8 +34,7 @@ const JOB_STATUS = Object.freeze({
 const agentVersion = utils.getVersion();
 
 function updateJob(token, jobOptions) {
-  return katalonRequest
-    .updateJob(token, jobOptions);
+  return katalonRequest.updateJob(token, jobOptions);
 }
 
 function buildJobResponse(jobId, jobStatus) {
@@ -221,7 +220,15 @@ function createDownloader(token, parameter) {
   return new KatalonTestProjectDownloader(logger, parameter.downloadUrl, token);
 }
 
-function createCommandExecutor(token, projectId, teamId, ksArgs, x11Display, xvfbConfiguration, parameter) {
+function createCommandExecutor(
+  token,
+  projectId,
+  teamId,
+  ksArgs,
+  x11Display,
+  xvfbConfiguration,
+  parameter,
+) {
   if (parameter.configType === 'GENERIC_COMMAND') {
     const info = {
       commands: parameter.command,
@@ -245,13 +252,13 @@ function createCommandExecutor(token, projectId, teamId, ksArgs, x11Display, xvf
 
 const agent = {
   start(commandLineConfigs = {}) {
-    logger.info(`Agent ${config.version} started @ ${new Date()}`);
+    logger.info(`Katalon Agent ${config.version} started @ ${new Date()}`);
     const hostAddress = ip.address();
     const hostName = os.getHostName();
     const osVersion = os.getVersion();
 
     const configFile = commandLineConfigs.configPath || defaultConfigFile;
-    logger.info('Loading agent configs @', configFile);
+    logger.info('Loading configs @', configFile);
     config.update(commandLineConfigs, configFile);
     const { email, teamId, apikey } = config;
     setLogLevel(config.logLevel);
@@ -291,7 +298,7 @@ const agent = {
 
         const configs = config.read(configFile);
         if (!configs.uuid) {
-          configs.uuid = `${new Date().getTime()}-${uuidv4()}`;
+          configs.uuid = this.generateUuid();
           config.write(configFile, configs);
         }
 
@@ -333,7 +340,15 @@ const agent = {
         }
 
         const downloader = createDownloader(token, parameter);
-        const executor = createCommandExecutor(token, projectId, teamId, ksArgs, x11Display, xvfbRun, parameter);
+        const executor = createCommandExecutor(
+          token,
+          projectId,
+          teamId,
+          ksArgs,
+          x11Display,
+          xvfbRun,
+          parameter,
+        );
 
         const jobInfo = {
           downloader,
@@ -469,15 +484,21 @@ const agent = {
   },
 
   stop() {
-    logger.info(`Agent ${config.version} stopped @ ${new Date()}`);
+    logger.info(`Katalon Agent ${config.version} stopped @ ${new Date()}`);
+  },
+
+  generateUuid() {
+    return `${new Date().getTime()}-${uuidv4()}`;
   },
 
   updateConfigs(options) {
-    config.update(options, defaultConfigFile);
+    const { version, configPath: configFile = defaultConfigFile, ...opts } = options;
+    config.update(opts, configFile);
     if (!config.uuid) {
-      config.uuid = uuidv4();
+      config.uuid = this.generateUuid();
     }
-    config.write(defaultConfigFile, config);
+    config.write(configFile, config);
+    logger.info(`Updated configs @ ${configFile}.`);
   },
 };
 

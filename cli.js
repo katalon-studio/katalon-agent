@@ -77,8 +77,13 @@ program
   .option('-p, --apikey <value>', 'API key')
   .option('-t, --teamid <value>', 'Team ID')
   .option('-a, --agent-name <value>', 'Agent name')
-  .option('-k, --ks-version <value>', 'Katalon Studio version number')
-  .option('-d, --ks-dir <value>', 'Katalon Studio directory')
+  .option('-c, --config <value>', 'Configuration file path')
+  .option('-x, --proxy <value>', 'HTTTP/HTTPS Proxy')
+  .option('--log-level <value>', 'Log level (ALL < TRACE < DEBUG < INFO < WARN < ERROR < FATAL < MARK < OFF)')
+  .option('--xvfb-run <value>', 'xvfb-run options')
+  .option('--x11-display <value>', 'x11 DISPLAY environment variable')
+  .option('--keep-files', 'Keep test project temporary files')
+  .option('--no-keep-files', 'Remove test project temporary files (default behavior)')
   .action((command) => {
     const options = {
       serverUrl: command.serverUrl,
@@ -86,8 +91,12 @@ program
       apikey: command.apikey,
       teamId: command.teamid,
       agentName: command.agentName,
-      ksVersionNumber: command.ksVersion,
-      ksLocation: command.ksDir,
+      configPath: command.config,
+      proxy: command.proxy,
+      logLevel: command.logLevel,
+      xvfbRun: command.xvfbRun,
+      x11Display: command.x11Display,
+      keepFiles: command.keepFiles,
     };
     agent.updateConfigs(options);
   });
