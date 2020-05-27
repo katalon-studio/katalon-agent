@@ -1,5 +1,7 @@
 const _ = require('lodash');
 const fs = require('fs');
+const path = require('path');
+const ProgressBar = require('progress');
 const request = require('request');
 const urljoin = require('url-join');
 
@@ -8,6 +10,7 @@ const logger = require('./logger');
 const config = require('./config');
 
 const FILTERED_ERROR_CODE = new Set([400, 401, 403, 404, 500, 502, 503, 504]);
+const PROGRESS_RENDER_THROTTLE = 5000;
 
 function buildOptions(url, headers, options) {
   let defaultOptions = {
@@ -26,6 +29,24 @@ function buildOptions(url, headers, options) {
   return options;
 }
 
+function requestProgress(req, format, options) {
+  req.on('response', (res) => {
+    const total = parseInt(res.headers['content-length'], 10) || 1;
+
+    const opts = {
+      ...options,
+      total,
+    };
+
+    const bar = new ProgressBar(format, opts);
+
+    res.on('data', (chunk) => {
+      bar.tick(chunk.length);
+    });
+  });
+  return req;
+}
+
 module.exports = {
   stream(url, filePath, opts = {}) {
     logger.info(`Downloading from ${url} to ${filePath}.`);
@@ -39,7 +60,17 @@ module.exports = {
           method,
         },
       );
-      request(options)
+
+      const fileName = path.basename(filePath);
+      const format = `\t ${fileName}\t :percent[:bar]\t :currentB (:rateB/s) | Elapsed: :elapseds | ETA: :etas`;
+      const progressOpts = {
+        complete: '=',
+        incomplete: ' ',
+        width: 20,
+        renderThrottle: PROGRESS_RENDER_THROTTLE,
+      };
+
+      requestProgress(request(options), format, progressOpts)
         .pipe(fs.createWriteStream(filePath))
         .on('finish', () => {
           logger.info('Finished downloading.');

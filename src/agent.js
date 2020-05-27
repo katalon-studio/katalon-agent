@@ -272,7 +272,7 @@ const agent = {
     tokenManager.password = apikey;
 
     let token;
-    setInterval(async () => {
+    const requestAndExecuteJob = async () => {
       agentState.incrementExecutingJobs();
       try {
         const maxJobs = agentState.threshold + 1;
@@ -363,9 +363,9 @@ const agent = {
         agentState.decrementExecutingJobs();
         logger.error(err);
       }
-    }, requestInterval);
+    };
 
-    setInterval(() => {
+    const syncInfo = () => {
       if (!token) {
         return;
       }
@@ -404,7 +404,11 @@ const agent = {
           }
         })
         .catch((err) => logger.error('Cannot send agent info to server:', err)); // async
-    }, pingInterval);
+    };
+
+    requestAndExecuteJob();
+    setInterval(requestAndExecuteJob, requestInterval);
+    setInterval(syncInfo, pingInterval);
   },
 
   async startCI(commandLineConfigs = {}) {

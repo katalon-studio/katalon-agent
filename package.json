@@ -28,6 +28,7 @@
     "lodash": "^4.17.15",
     "log4js": "^6.3.0",
     "moment": "^2.26.0",
+    "progress": "^2.0.3",
     "properties": "^1.2.1",
     "request": "^2.72.0",
     "simple-git": "^2.5.0",
