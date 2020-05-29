@@ -152,6 +152,8 @@ jobs:
       if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
       run: |
         mkdir -p packages
+        ls -la
+        ls -laR katalon-agent-win-x64-$BUILD_VERSION
         zip -9 -j packages/katalon-agent-win-x64-$BUILD_VERSION.zip katalon-agent-win-x64-$BUILD_VERSION/*
         zip -9 -j packages/katalon-agent-win-x86-$BUILD_VERSION.zip katalon-agent-win-x86-$BUILD_VERSION/*
         zip -9 -j packages/katalon-agent-linux-x64-$BUILD_VERSION.zip katalon-agent-linux-x64-$BUILD_VERSION/*
