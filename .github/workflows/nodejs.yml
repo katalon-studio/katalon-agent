@@ -19,7 +19,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         os:
           - ubuntu-latest
@@ -149,16 +149,18 @@ jobs:
       run: echo "::set-env name=BUILD_VERSION::$(node -p "require('./package').version")"
 
     - name: Package artifacts for release
+      env:
+        GZIP: -9
       if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
       run: |
         mkdir -p packages
         ls -la
-        ls -laR katalon-agent-win-x64-$BUILD_VERSION
         zip -9 -j packages/katalon-agent-win-x64-$BUILD_VERSION.zip katalon-agent-win-x64-$BUILD_VERSION/*
         zip -9 -j packages/katalon-agent-win-x86-$BUILD_VERSION.zip katalon-agent-win-x86-$BUILD_VERSION/*
         zip -9 -j packages/katalon-agent-linux-x64-$BUILD_VERSION.zip katalon-agent-linux-x64-$BUILD_VERSION/*
-        zip -9 -j packages/katalon-agent-linux-x86-$BUILD_VERSION.zip katalon-agent-linux-x86-$BUILD_VERSION/*
         zip -9 -j packages/katalon-agent-macos-x64-$BUILD_VERSION.zip katalon-agent-macos-x64-$BUILD_VERSION/*
+        cd katalon-agent-linux-x64-$BUILD_VERSION
+        tar cvzf ../packages/katalon-agent-linux-x64-$BUILD_VERSION.tar.gz *
 
     - name: Draft new release
       if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
