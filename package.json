@@ -9,7 +9,7 @@
     "build": "npm run build:pkg && npm run build:pkgWin && npm run afterbuild",
     "build:serv": "npm run beforebuild && npm run build:pkg && npm run afterbuild",
     "build:pkg": "pkg --targets node10-linux-x64,node10-macos-x64 --out-path bin cli.js",
-    "build:pkgWin": "pkg --targets node10-win-x64,node10-win-x86 --out-path bin cli.js",
+    "build:pkgWin": "pkg --targets node10-win-x86 --out-path bin cli.js",
     "afterbuild": "npm run copyService && npm run copyStart",
     "copyConfig": "cpy agentconfig_template bin --rename agentconfig",
     "copyService": "cpy nssm.exe service.bat service.sh bin",
