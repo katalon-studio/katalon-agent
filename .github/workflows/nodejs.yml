@@ -20,6 +20,10 @@ jobs:
 
     strategy:
       matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
         node-version:
           - 10.x
 
@@ -43,12 +47,26 @@ jobs:
       if: steps.cache-packages.outputs.cache-hit != 'true'
       run: npm ci
 
-    - name: Build with Node.js ${{ matrix.node-version }}
+    - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
       env:
         CI: true
-      run: |
-        npm run build --if-present
-        echo "::set-env name=BUILD_VERSION::$(node -p "require('./package').version")"
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: npm run buildLinux --if-present
+
+    - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
+      env:
+        CI: true
+      if: ${{ matrix.os == 'macos-latest' }}
+      run: npm run buildMacos --if-present
+
+    - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
+      env:
+        CI: true
+      if: ${{ matrix.os == 'windows-latest' }}
+      run: npm run buildWin --if-present
+
+    - name: Set BUILD_VERSION environment variable
+      run: echo "::set-env name=BUILD_VERSION::$(node -p "require('./package').version")"
 
     - name: Prepare artifacts
       working-directory: bin
