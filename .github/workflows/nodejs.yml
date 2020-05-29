@@ -16,7 +16,7 @@ jobs:
   build:
     name: Build and draft new release
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
