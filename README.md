@@ -83,6 +83,7 @@ Note: On Linux and MacOS, you might need to add execute permission (`chmode u+x 
   - Command: Select `start`
   - Node interpreter: Select your Node.js location
   - Package manager: Select your npm location
+  - Environment: Input `NODE_ENV=debug`
 - Click OK
 - Choose the configuration and start debugging
 
