@@ -61,7 +61,7 @@ Note: On Linux and MacOS, you might need to add execute permission (`chmode u+x 
 
 ## Generate the configuration file
 - The `agentconfig` file can be generated or updated by running `config` command with additional arguments.
-- E.g. `node cli.js config --server-url https://analytics.katalon.com --username <email> --apikey <api_key> --agent-name my-agent`
+- E.g. `node cli.js config --server-url https://analytics.katalon.com --username <email> --apikey <api_key> --teamid <team_id> --agent-name my-agent`
 - If an `agentconfig` has been created, the existing configuration will be overridden with the new value.
 - Show the usage of the `config` command with `-h` option. E.g. `node cli.js config -h`.
 
