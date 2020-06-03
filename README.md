@@ -74,9 +74,9 @@ Note: On Linux and MacOS, you might need to add execute permission (`chmode u+x 
 - Open your CLI and execute the script.
 
 ## Develop the Katalon Agent
-### Debug with IntelliJ
+### Debug with IntelliJ IDEA
 - Checkout the code
-- Open the Katalon Agent's directory with Intellij
+- Open the Katalon Agent's directory with Intellij IDEA
 - `Run --> Edit Configurations... -> + (Add New Configuration) --> 'npm'`
 - Set the following values:
   - package.json: The location of the package.json in Katalon Agent's directory
@@ -93,7 +93,7 @@ Note: On Linux and MacOS, you might need to add execute permission (`chmode u+x 
 - Select the Run icon in the Activity Bar on the side of VS Code
 - Configure the `launch.json` file following the [guide](https://code.visualstudio.com/docs/editor/debugging#_start-debugging)
 - Add the following configuration to the `launch.json` file:
-```json
+```yaml
 {
   "type": "node",
   "request": "launch",
