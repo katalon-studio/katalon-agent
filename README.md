@@ -93,7 +93,7 @@ Note: On Linux and MacOS, you might need to add execute permission (`chmode u+x 
 - Select the Run icon in the Activity Bar on the side of VS Code
 - Configure the `launch.json` file following the [guide](https://code.visualstudio.com/docs/editor/debugging#_start-debugging)
 - Add the following configuration to the `launch.json` file:
-```yaml
+```json
 {
   "type": "node",
   "request": "launch",
