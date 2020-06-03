@@ -95,20 +95,28 @@ Note: On Linux and MacOS, you might need to add execute permission (`chmode u+x 
 - Add the following configuration to the `launch.json` file:
 ```json
 {
-  "type": "node",
-  "request": "launch",
-  "name": "Start Agent",
-  "skipFiles": [
-    "<node_internals>/**"
-  ],
-  "program": "${workspaceFolder}\\cli.js",
-  "args": [
-    "start-agent"
-  ],
-  "env": {
-    "NODE_ENV": "debug"
-  },
-  "console": "integratedTerminal"
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Start Agent",
+            "skipFiles": [
+              "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}\\cli.js",
+            "args": [
+              "start-agent"
+            ],
+            "env": {
+              "NODE_ENV": "debug"
+            },
+            "console": "integratedTerminal"
+        }
+    ]
 }
 ```
 - In Run view, select `Start Agent` launch configuration and start debugging
