@@ -1,23 +1,19 @@
 const fs = require('fs-extra');
-const glob = require('glob');
 const ip = require('ip');
 const path = require('path');
-const uuidv4 = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 
 const TokenManager = require('./token-manager');
 const { S3FileTransport } = require('./transports');
 
 const agentState = require('./agent-state');
+const { KatalonCommandExecutor, GenericCommandExecutor } = require('./command-executor');
 const config = require('./config');
-const genericCommand = require('./generic-command');
 const jobLogger = require('./job-logger');
 const katalonRequest = require('./katalon-request');
-const ks = require('./katalon-studio');
 const logger = require('./logger');
 const os = require('./os');
-const properties = require('./properties');
 const { KatalonTestProjectDownloader, GitDownloader } = require('./remote-downloader');
-const reportUploader = require('./report-uploader');
 const utils = require('./utils');
 
 const { NODE_ENV } = process.env;
@@ -29,28 +25,22 @@ const sendLogWaitInterval = 10 * 1000;
 const tokenManager = new TokenManager();
 tokenManager.expiryExpectancy = 3 * requestInterval;
 
-const projectFilePattern = '**/*.prj';
-const junitFilePattern = '**/*.xml';
-
-const testOpsPropertiesFile = 'com.kms.katalon.integration.analytics.properties';
-const genericCommandOutputDir = 'katalon-agent-output';
-
 const JOB_STATUS = Object.freeze({
   RUNNING: 'RUNNING',
   SUCCESS: 'SUCCESS',
   FAILED: 'FAILED',
 });
 
+const agentVersion = utils.getVersion();
+
 function updateJob(token, jobOptions) {
-  return katalonRequest
-    .updateJob(token, jobOptions)
-    .catch((err) => logger.error(`${updateJob.name}:`, err));
+  return katalonRequest.updateJob(token, jobOptions);
 }
 
-function buildJobResponse(jobInfo, jobStatus) {
+function buildJobResponse(jobId, jobStatus) {
   const jobOptions = {
     body: {
-      id: jobInfo.jobId,
+      id: jobId,
       status: jobStatus,
     },
   };
@@ -64,29 +54,9 @@ function buildJobResponse(jobInfo, jobStatus) {
   return jobOptions;
 }
 
-function buildTestOpsIntegrationProperties(token, teamId, projectId) {
-  const deprecatedProperties = {
-    'analytics.server.endpoint': config.serverUrl,
-    'analytics.authentication.email': config.email,
-    'analytics.authentication.password': config.apikey,
-    'analytics.authentication.encryptionEnabled': false,
-    'analytics.testresult.autosubmit': true,
-    'analytics.testresult.attach.screenshot': true,
-    'analytics.testresult.attach.log': true,
-    'analytics.testresult.attach.capturedvideos': false,
-  };
-  const onPremiseProperties = {
-    'analytics.onpremise.enable': config.isOnPremise,
-    'analytics.onpremise.server': config.serverUrl,
-  };
-  return {
-    ...deprecatedProperties,
-    'analytics.integration.enable': true,
-    'analytics.authentication.token': token,
-    'analytics.team': JSON.stringify({ id: teamId.toString() }),
-    'analytics.project': JSON.stringify({ id: projectId.toString() }),
-    ...onPremiseProperties,
-  };
+function updateJobStatus(token, jobId, jobStatus) {
+  const jobOptions = buildJobResponse(jobId, jobStatus);
+  return updateJob(token, jobOptions);
 }
 
 async function uploadLog(token, jobInfo, filePath) {
@@ -138,59 +108,6 @@ function isOnPremiseProfile(profiles) {
   return null;
 }
 
-function testCopyJUnitReports(outputDir) {
-  const sampleDir = 'C:/Projects/katalon-analytics/misc/sample-junit-reports';
-  const files = ['casperjs.xml', 'sample-junit.xml', 'sample-junit-out.xml'];
-  files.forEach((file) => fs.copyFileSync(path.join(sampleDir, file), path.join(outputDir, file)));
-}
-
-function executeKatalonCommand(token, jobInfo, tmpDirPath, jLogger) {
-  logger.info('Executing job...');
-  // Find project file inside project directory
-  const projectPathPattern = path.resolve(tmpDirPath, projectFilePattern);
-  [jobInfo.ksProjectPath] = glob.sync(projectPathPattern, { nodir: true });
-
-  // Manually configure integration settings for KS to upload execution report
-  const ksProjectDir = path.dirname(jobInfo.ksProjectPath);
-  const testOpsPropertiesPath = path.resolve(
-    ksProjectDir,
-    'settings',
-    'internal',
-    testOpsPropertiesFile,
-  );
-  properties.writeProperties(
-    testOpsPropertiesPath,
-    buildTestOpsIntegrationProperties(token, jobInfo.teamId, jobInfo.projectId),
-  );
-
-  return ks.execute(
-    jobInfo.ksVersionNumber,
-    jobInfo.ksLocation,
-    jobInfo.ksProjectPath,
-    jobInfo.ksArgs,
-    jobInfo.x11Display,
-    jobInfo.xvfbConfiguration,
-    jLogger,
-  );
-}
-
-async function executeGenericCommand(token, jobInfo, tmpDirPath, jLogger) {
-  const { commands, projectId } = jobInfo;
-  const outputDir = path.join(tmpDirPath, genericCommandOutputDir);
-  fs.ensureDir(outputDir);
-
-  const status = await genericCommand.executeCommands(commands, tmpDirPath, outputDir, jLogger);
-  // testCopyJUnitReports(outputDir);
-
-  const opts = {
-    sessionId: jobInfo.sessionId,
-  };
-
-  // Collect all junit xml files and upload to TestOps
-  await reportUploader.uploadReports(token, projectId, outputDir, 'junit', junitFilePattern, opts);
-  return status;
-}
-
 function notifyJob(token, jobInfo) {
   return katalonRequest
     .notifyJob(token, jobInfo)
@@ -198,6 +115,13 @@ function notifyJob(token, jobInfo) {
 }
 
 async function executeJob(token, jobInfo, keepFiles) {
+  const { jobId } = jobInfo;
+
+  // Update job status to running
+  // Take the job even if the subsequent setup steps fail
+  // Prevent the job to be queued forever
+  await updateJobStatus(token, jobId, JOB_STATUS.RUNNING);
+
   // Create directory where temporary files are contained
   const tmpRoot = path.resolve(global.appRoot, 'tmp/');
   fs.ensureDir(tmpRoot);
@@ -213,6 +137,7 @@ async function executeJob(token, jobInfo, keepFiles) {
   const afterUpload = () => notifyJob(token, jobInfo);
 
   try {
+    // Create logger for job
     const jLogger = jobLogger.getLogger(logFilePath);
 
     // Upload log and add new transport to stream log content to s3
@@ -234,15 +159,11 @@ async function executeJob(token, jobInfo, keepFiles) {
     jLogger.info(`Agent server: ${config.serverUrl}${config.isOnPremise ? ' (OnPremise)' : ''}`);
     jLogger.info(`Agent user: ${config.email}`);
 
-    const { downloader } = jobInfo;
+    logger.info('Downloading test project...');
+    const { downloader, executor } = jobInfo;
     downloader.logger = jLogger;
     await downloader.download(tmpDirPath);
-    let status;
-    if (jobInfo.configType === 'GENERIC_COMMAND') {
-      status = await executeGenericCommand(token, jobInfo, tmpDirPath, jLogger);
-    } else {
-      status = await executeKatalonCommand(token, jobInfo, tmpDirPath, jLogger);
-    }
+    const status = await executor.execute(jLogger, tmpDirPath);
 
     jLogger.close();
     logger.info('Job execution finished.');
@@ -250,10 +171,9 @@ async function executeJob(token, jobInfo, keepFiles) {
 
     // Update job status after execution
     const jobStatus = status === 0 ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
-    const jobOptions = buildJobResponse(jobInfo, jobStatus);
 
     logger.debug(`Update job with status '${jobStatus}.'`);
-    await updateJob(token, jobOptions);
+    await updateJobStatus(token, jobId, jobStatus);
     logger.info('Job execution has been completed.');
   } catch (err) {
     logger.error(`${executeJob.name}:`, err);
@@ -262,11 +182,10 @@ async function executeJob(token, jobInfo, keepFiles) {
     // NOTE: Job status is set FAILED might not be because of a failed execution
     // but because of other reasons such as cannot remove tmp directory or cannot upload log
     const jobStatus = JOB_STATUS.FAILED;
-    const jobOptions = buildJobResponse(jobInfo, jobStatus);
     logger.debug(`Error caught during job execution! Update job with status '${jobStatus}'`);
-    await updateJob(token, jobOptions);
+    await updateJobStatus(token, jobId, jobStatus);
   } finally {
-    agentState.executingJob = false;
+    agentState.decrementExecutingJobs();
 
     await uploadLog(token, jobInfo, logFilePath);
     logger.info('Job execution log uploaded.');
@@ -293,15 +212,53 @@ function setLogLevel(logLevel) {
   }
 }
 
+function createDownloader(token, parameter) {
+  if (parameter.type === 'GIT') {
+    return new GitDownloader(logger, parameter.gitRepositoryResource);
+  }
+
+  return new KatalonTestProjectDownloader(logger, parameter.downloadUrl, token);
+}
+
+function createCommandExecutor(
+  token,
+  projectId,
+  teamId,
+  ksArgs,
+  x11Display,
+  xvfbConfiguration,
+  parameter,
+) {
+  if (parameter.configType === 'GENERIC_COMMAND') {
+    const info = {
+      commands: parameter.command,
+      projectId,
+      sessionId: parameter.sessionId,
+    };
+    return new GenericCommandExecutor(token, info);
+  }
+
+  const info = {
+    teamId,
+    projectId,
+    ksVersionNumber: parameter.ksVersion,
+    ksLocation: parameter.ksLocation,
+    ksArgs,
+    x11Display,
+    xvfbConfiguration,
+  };
+  return new KatalonCommandExecutor(token, info);
+}
+
 const agent = {
   start(commandLineConfigs = {}) {
-    logger.info(`Agent ${config.version} started @ ${new Date()}`);
+    logger.info(`Katalon Agent ${config.version} started @ ${new Date()}`);
     const hostAddress = ip.address();
     const hostName = os.getHostName();
     const osVersion = os.getVersion();
 
     const configFile = commandLineConfigs.configPath || defaultConfigFile;
-    logger.info('Loading agent configs @', configFile);
+    logger.info('Loading configs @', configFile);
     config.update(commandLineConfigs, configFile);
     const { email, teamId, apikey } = config;
     setLogLevel(config.logLevel);
@@ -315,36 +272,39 @@ const agent = {
     tokenManager.password = apikey;
 
     let token;
-    setInterval(async () => {
+    const requestAndExecuteJob = async () => {
+      agentState.incrementExecutingJobs();
       try {
+        const maxJobs = agentState.threshold + 1;
+        if (agentState.numExecutingJobs >= maxJobs) {
+          agentState.decrementExecutingJobs();
+          return;
+        }
+
         if (config.isOnPremise === undefined || config.isOnPremise === null) {
           const profiles = await getProfiles();
           config.isOnPremise = isOnPremiseProfile(profiles);
         }
         if (config.isOnPremise === undefined || config.isOnPremise === null) {
+          agentState.decrementExecutingJobs();
           return;
         }
 
         token = await tokenManager.ensureToken();
         if (!token) {
+          agentState.decrementExecutingJobs();
           return;
         }
 
         const configs = config.read(configFile);
         if (!configs.uuid) {
-          configs.uuid = `${new Date().getTime()}-${uuidv4()}`;
+          configs.uuid = this.generateUuid();
           config.write(configFile, configs);
         }
 
-        const { uuid, ksLocation, keepFiles, logLevel, x11Display, xvfbRun } = configs;
-        const ksVersion = configs.ksVersionNumber;
+        const { uuid, keepFiles, logLevel, x11Display, xvfbRun } = configs;
 
         setLogLevel(logLevel);
-
-        if (agentState.executingJob) {
-          // Agent is executing a job, do nothing
-          return;
-        }
 
         // Agent is not executing job, request new job
         const requestJobResponse = await katalonRequest.requestJob(token, uuid, teamId);
@@ -355,15 +315,15 @@ const agent = {
           !requestJobResponse.body.testProject
         ) {
           // There is no job to execute
+          agentState.decrementExecutingJobs();
           return;
         }
         const jobBody = requestJobResponse.body;
-        const { parameter, testProject, runConfiguration } = jobBody;
-
-        const ksVer = parameter.ksVersion || ksVersion;
-        const ksLoc = parameter.ksVersion
-          ? parameter.ksLocation
-          : parameter.ksLocation || ksLocation;
+        const {
+          id: jobId,
+          parameter,
+          testProject: { projectId },
+        } = jobBody;
 
         let ksArgs;
         if (config.isOnPremise) {
@@ -379,38 +339,33 @@ const agent = {
           );
         }
 
-        const downloader = parameter.type === 'GIT'
-          ? new GitDownloader(logger, parameter.gitRepositoryResource)
-          : new KatalonTestProjectDownloader(logger, parameter.downloadUrl, token);
-
-        const jobInfo = {
-          ksVersionNumber: ksVer,
-          ksLocation: ksLoc,
+        const downloader = createDownloader(token, parameter);
+        const executor = createCommandExecutor(
+          token,
+          projectId,
+          teamId,
           ksArgs,
           x11Display,
-          xvfbConfiguration: xvfbRun,
-          downloader,
-          jobId: jobBody.id,
-          projectId: testProject.projectId,
-          teamId,
-          configType: parameter.configType || runConfiguration.configType,
-          commands: parameter.command,
-          sessionId: parameter.sessionId,
-        };
+          xvfbRun,
+          parameter,
+        );
 
-        // Update job status to running
-        const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.RUNNING);
-        await updateJob(token, jobOptions);
-        agentState.executingJob = true;
+        const jobInfo = {
+          downloader,
+          executor,
+          jobId,
+          projectId,
+          teamId,
+        };
 
         await executeJob(token, jobInfo, keepFiles);
       } catch (err) {
-        agentState.executingJob = false;
+        agentState.decrementExecutingJobs();
         logger.error(err);
       }
-    }, requestInterval);
+    };
 
-    setInterval(() => {
+    const syncInfo = () => {
       if (!token) {
         return;
       }
@@ -433,6 +388,8 @@ const agent = {
         hostname: hostName,
         ip: hostAddress,
         os: osVersion,
+        numExecutingJobs: agentState.numExecutingJobs,
+        agentVersion,
       };
       const options = {
         body: requestBody,
@@ -441,8 +398,17 @@ const agent = {
 
       katalonRequest
         .pingAgent(token, options)
+        .then((response) => {
+          if (response && response.body && response.body.threshold) {
+            agentState.threshold = response.body.threshold;
+          }
+        })
         .catch((err) => logger.error('Cannot send agent info to server:', err)); // async
-    }, pingInterval);
+    };
+
+    requestAndExecuteJob();
+    setInterval(requestAndExecuteJob, requestInterval);
+    setInterval(syncInfo, pingInterval);
   },
 
   async startCI(commandLineConfigs = {}) {
@@ -470,19 +436,17 @@ const agent = {
 
       const configs = config.read(configFile);
 
-      const { ksLocation, keepFiles, logLevel, x11Display, xvfbRun } = configs;
-      const ksVersion = configs.ksVersionNumber;
+      const { keepFiles, logLevel, x11Display, xvfbRun } = configs;
 
       setLogLevel(logLevel);
 
       // Read job configuration from file
       const jobBody = fs.readJsonSync('job.json', { encoding: 'utf-8' });
-      const { parameter, testProject, runConfiguration } = jobBody;
-
-      const ksVer = parameter.ksVersion || ksVersion;
-      const ksLoc = parameter.ksVersion
-        ? parameter.ksLocation
-        : parameter.ksLocation || ksLocation;
+      const {
+        id: jobId,
+        parameter,
+        testProject: { projectId },
+      } = jobBody;
 
       let ksArgs;
       if (config.isOnPremise) {
@@ -498,29 +462,24 @@ const agent = {
         );
       }
 
-      const downloader =
-        parameter.type === 'GIT'
-          ? new GitDownloader(logger, parameter.gitRepositoryResource)
-          : new KatalonTestProjectDownloader(logger, parameter.downloadUrl, token);
-
-      const jobInfo = {
-        ksVersionNumber: ksVer,
-        ksLocation: ksLoc,
+      const downloader = createDownloader(token, parameter);
+      const executor = createCommandExecutor(
+        token,
+        projectId,
+        teamId,
         ksArgs,
         x11Display,
-        xvfbConfiguration: xvfbRun,
-        downloader,
-        jobId: jobBody.id,
-        projectId: testProject.projectId,
-        teamId,
-        configType: parameter.configType || runConfiguration.configType,
-        commands: parameter.command,
-        sessionId: parameter.sessionId,
-      };
+        xvfbRun,
+        parameter,
+      );
 
-      // Update job status to running
-      const jobOptions = buildJobResponse(jobInfo, JOB_STATUS.RUNNING);
-      await updateJob(token, jobOptions);
+      const jobInfo = {
+        downloader,
+        executor,
+        jobId,
+        projectId,
+        teamId,
+      };
 
       await executeJob(token, jobInfo, keepFiles);
     } catch (err) {
@@ -529,15 +488,21 @@ const agent = {
   },
 
   stop() {
-    logger.info(`Agent ${config.version} stopped @ ${new Date()}`);
+    logger.info(`Katalon Agent ${config.version} stopped @ ${new Date()}`);
+  },
+
+  generateUuid() {
+    return `${new Date().getTime()}-${uuidv4()}`;
   },
 
   updateConfigs(options) {
-    config.update(options, defaultConfigFile);
+    const { version, configPath: configFile = defaultConfigFile, ...opts } = options;
+    config.update(opts, configFile);
     if (!config.uuid) {
-      config.uuid = uuidv4();
+      config.uuid = this.generateUuid();
     }
-    config.write(defaultConfigFile, config);
+    config.write(configFile, config);
+    logger.info(`Updated configs @ ${configFile}.`);
   },
 };
 

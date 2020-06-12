@@ -84,7 +84,7 @@ module.exports = {
         find(ksLocationParentDir, /katalonc$|katalonc\.exe$/) ||
         find(ksLocationParentDir, /katalon$|katalon\.exe$/);
       if (!ksExecutable) {
-        throw Error(`Unable to find Katalon Studio executable in ${ksLocationParentDir}`);
+        throw new Error(`Unable to find Katalon Studio executable in ${ksLocationParentDir}`);
       }
 
       logger.info(`Katalon Executable File: ${ksExecutable}`);

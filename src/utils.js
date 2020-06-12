@@ -1,9 +1,13 @@
 const moment = require('moment');
 const path = require('path');
 const tmp = require('tmp');
+const packageJson = require('../package.json');
 
 module.exports = {
   getPath(relativePath) {
+    if (!global.appRoot) {
+      global.appRoot = path.resolve('.');
+    }
     return path.join(global.appRoot, relativePath);
   },
 
@@ -12,7 +16,7 @@ module.exports = {
     const tmpDir = tmp.dirSync({
       unsafeCleanup: true,
       keep: true,
-      dir: tmpRoot,
+      tmpdir: tmpRoot,
       prefix: tmpPrefix,
       ...options,
     });
@@ -34,5 +38,9 @@ module.exports = {
       }
       return `${cmd} ${flag}`;
     }, command);
+  },
+
+  getVersion() {
+    return packageJson.version;
   },
 };
