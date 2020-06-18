@@ -276,9 +276,9 @@ const agent = {
         agentState.incrementExecutingJobs();
 
         const maxJobs = agentState.threshold + 1;
-        if (agentState.numExecutingJobs >= maxJobs) {
-          return;
-        }
+        // if (agentState.numExecutingJobs >= maxJobs) {
+        //   return;
+        // }
 
         if (config.isOnPremise === undefined || config.isOnPremise === null) {
           const profiles = await getProfiles();
