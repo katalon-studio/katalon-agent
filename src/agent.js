@@ -185,7 +185,6 @@ async function executeJob(token, jobInfo, keepFiles) {
     logger.debug(`Error caught during job execution! Update job with status '${jobStatus}'`);
     await updateJobStatus(token, jobId, jobStatus);
   } finally {
-    agentState.decrementExecutingJobs();
 
     await uploadLog(token, jobInfo, logFilePath);
     logger.info('Job execution log uploaded.');
@@ -273,11 +272,11 @@ const agent = {
 
     let token;
     const requestAndExecuteJob = async () => {
-      agentState.incrementExecutingJobs();
       try {
+        agentState.incrementExecutingJobs();
+
         const maxJobs = agentState.threshold + 1;
         if (agentState.numExecutingJobs >= maxJobs) {
-          agentState.decrementExecutingJobs();
           return;
         }
 
@@ -286,13 +285,11 @@ const agent = {
           config.isOnPremise = isOnPremiseProfile(profiles);
         }
         if (config.isOnPremise === undefined || config.isOnPremise === null) {
-          agentState.decrementExecutingJobs();
           return;
         }
 
         token = await tokenManager.ensureToken();
         if (!token) {
-          agentState.decrementExecutingJobs();
           return;
         }
 
@@ -315,7 +312,6 @@ const agent = {
           !requestJobResponse.body.testProject
         ) {
           // There is no job to execute
-          agentState.decrementExecutingJobs();
           return;
         }
         const jobBody = requestJobResponse.body;
@@ -360,8 +356,9 @@ const agent = {
 
         await executeJob(token, jobInfo, keepFiles);
       } catch (err) {
-        agentState.decrementExecutingJobs();
         logger.error(err);
+      } finally {
+        agentState.decrementExecutingJobs();
       }
     };
 
