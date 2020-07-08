@@ -21,6 +21,7 @@ const { NODE_ENV } = process.env;
 const defaultConfigFile = utils.getPath('agentconfig');
 const requestInterval = NODE_ENV === 'debug' ? 5 * 1000 : 60 * 1000;
 const pingInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 1000;
+const keepJobAliveInterval = NODE_ENV === 'debug' ? 20 * 1000 : 60 * 1000;
 const sendLogWaitInterval = 10 * 1000;
 const tokenManager = new TokenManager();
 tokenManager.expiryExpectancy = 3 * requestInterval;
@@ -114,6 +115,10 @@ function notifyJob(token, jobInfo) {
     .catch((error) => logger.warn('Unable to send job notification:', error));
 }
 
+function keepJobAlive(token, jobId) {
+  return setInterval(() => katalonRequest.pingJob(token, jobId), keepJobAliveInterval);
+}
+
 async function executeJob(token, jobInfo, keepFiles) {
   const { jobId } = jobInfo;
 
@@ -121,6 +126,7 @@ async function executeJob(token, jobInfo, keepFiles) {
   // Take the job even if the subsequent setup steps fail
   // Prevent the job to be queued forever
   await updateJobStatus(token, jobId, JOB_STATUS.RUNNING);
+  const keepJobAliveIntervalID = keepJobAlive(token, jobId);
 
   // Create directory where temporary files are contained
   const tmpRoot = path.resolve(global.appRoot, 'tmp/');
@@ -185,10 +191,10 @@ async function executeJob(token, jobInfo, keepFiles) {
     logger.debug(`Error caught during job execution! Update job with status '${jobStatus}'`);
     await updateJobStatus(token, jobId, jobStatus);
   } finally {
-
     await uploadLog(token, jobInfo, logFilePath);
     logger.info('Job execution log uploaded.');
     notifyJob(token, jobInfo);
+    clearInterval(keepJobAliveIntervalID);
 
     // Remove temporary directory when `keepFiles` is false
     if (!keepFiles) {

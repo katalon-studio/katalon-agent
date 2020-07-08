@@ -116,6 +116,15 @@ module.exports = {
     return http.request(config.serverUrl, KATALON_AGENT_URI, options, 'POST');
   },
 
+  pingJob(token, jobId) {
+    const options = {
+      auth: {
+        bearer: token,
+      },
+    };
+    return http.request(config.serverUrl, `${KATALON_JOB_URI}${jobId}`, options, 'PATCH');
+  },
+
   requestJob(token, uuid, teamId) {
     const options = {
       auth: {
