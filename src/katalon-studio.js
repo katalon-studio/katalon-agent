@@ -76,6 +76,7 @@ module.exports = {
     x11Display,
     xvfbConfiguration,
     logger = defaultLogger,
+    callback,
   ) {
     return getKsLocation(ksVersionNumber, ksLocation).then(({ ksLocationParentDir }) => {
       logger.info(`Katalon Folder: ${ksLocationParentDir}`);
@@ -111,7 +112,7 @@ module.exports = {
         defaultLogger.debug(`Execute Katalon Studio command: ${ksCommand}`);
       }
 
-      return os.runCommand(ksCommand, x11Display, xvfbConfiguration, logger);
+      return os.runCommand(ksCommand, x11Display, xvfbConfiguration, logger, '', callback);
     });
   },
 

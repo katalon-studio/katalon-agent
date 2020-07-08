@@ -53,7 +53,7 @@ class BaseKatalonCommandExecutor {
     this.xvfbConfiguration = info.xvfbConfiguration;
   }
 
-  async execute(logger, execDirPath) {
+  async execute(logger, execDirPath, callback) {
     // Find project file inside project directory
     const projectPathPattern = path.resolve(execDirPath, PROJECT_FILE_PATTERN);
     const ksProjectPaths = glob.sync(projectPathPattern, { nodir: true });
@@ -82,6 +82,7 @@ class BaseKatalonCommandExecutor {
       this.x11Display,
       this.xvfbConfiguration,
       logger,
+      callback,
     );
   }
 }
@@ -119,7 +120,7 @@ class GenericCommandExecutor {
     this.sessionId = info.sessionId;
   }
 
-  async execute(logger, execDirPath) {
+  async execute(logger, execDirPath, callback) {
     const outputDir = path.join(execDirPath, GENERIC_COMMAND_OUTPUT_DIR);
     fs.ensureDir(outputDir);
 
@@ -128,6 +129,7 @@ class GenericCommandExecutor {
       execDirPath,
       outputDir,
       logger,
+      callback,
     );
     // testCopyJUnitReports(outputDir);
 

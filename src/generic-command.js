@@ -4,7 +4,7 @@ const path = require('path');
 const logger = require('./logger');
 const os = require('./os');
 
-function executeCommands(commands, tmpDirPath, outputDir, jLogger) {
+function executeCommands(commands, tmpDirPath, outputDir, jLogger, callback) {
   const osVersion = os.getVersion();
   let scriptExtension;
 
@@ -22,7 +22,7 @@ function executeCommands(commands, tmpDirPath, outputDir, jLogger) {
 
   logger.info('Executing commands inside', scriptPath);
   logger.debug('Executing following command(s)\n', commands);
-  return os.runCommand(scriptPath, null, null, jLogger, tmpDirPath);
+  return os.runCommand(scriptPath, null, null, jLogger, tmpDirPath, callback);
 }
 
 module.exports = {

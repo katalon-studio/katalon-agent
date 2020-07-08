@@ -15,12 +15,14 @@ const logger = require('./logger');
 const os = require('./os');
 const { KatalonTestProjectDownloader, GitDownloader } = require('./remote-downloader');
 const utils = require('./utils');
+const thresholdController = require('./threshold-controler');
 
 const { NODE_ENV } = process.env;
 
 const defaultConfigFile = utils.getPath('agentconfig');
 const requestInterval = NODE_ENV === 'debug' ? 5 * 1000 : 60 * 1000;
 const pingInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 1000;
+const scanThreshold = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 5 * 1000;
 const keepJobAliveInterval = NODE_ENV === 'debug' ? 20 * 1000 : 60 * 1000;
 const sendLogWaitInterval = 10 * 1000;
 const tokenManager = new TokenManager();
@@ -38,11 +40,12 @@ function updateJob(token, jobOptions) {
   return katalonRequest.updateJob(token, jobOptions);
 }
 
-function buildJobResponse(jobId, jobStatus) {
+function buildJobResponse(jobId, jobStatus, processId) {
   const jobOptions = {
     body: {
       id: jobId,
       status: jobStatus,
+      processId,
     },
   };
   const time = new Date();
@@ -55,8 +58,8 @@ function buildJobResponse(jobId, jobStatus) {
   return jobOptions;
 }
 
-function updateJobStatus(token, jobId, jobStatus) {
-  const jobOptions = buildJobResponse(jobId, jobStatus);
+function updateJobStatus(token, jobId, jobStatus, processId = null) {
+  const jobOptions = buildJobResponse(jobId, jobStatus, processId);
   return updateJob(token, jobOptions);
 }
 
@@ -169,7 +172,14 @@ async function executeJob(token, jobInfo, keepFiles) {
     const { downloader, executor } = jobInfo;
     downloader.logger = jLogger;
     await downloader.download(tmpDirPath);
-    const status = await executor.execute(jLogger, tmpDirPath);
+
+    logger.info(`Create controller for job ID: ${jobInfo.jobId}`);
+    let processId = null;
+    const status = await executor.execute(jLogger, tmpDirPath, (pid) => {
+      processId = pid;
+      thresholdController.createController(pid, jobId);
+      updateJobStatus(token, jobId, JOB_STATUS.RUNNING, processId);
+    });
 
     jLogger.close();
     logger.info('Job execution finished.');
@@ -179,7 +189,7 @@ async function executeJob(token, jobInfo, keepFiles) {
     const jobStatus = status === 0 ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
 
     logger.debug(`Update job with status '${jobStatus}.'`);
-    await updateJobStatus(token, jobId, jobStatus);
+    await updateJobStatus(token, jobId, jobStatus, processId);
     logger.info('Job execution has been completed.');
   } catch (err) {
     logger.error(`${executeJob.name}:`, err);
@@ -196,6 +206,7 @@ async function executeJob(token, jobInfo, keepFiles) {
     notifyJob(token, jobInfo);
     clearInterval(keepJobAliveIntervalID);
 
+    thresholdController.killProcessFromJobId(jobId);
     // Remove temporary directory when `keepFiles` is false
     if (!keepFiles) {
       tmpDir.removeCallback();
@@ -279,13 +290,6 @@ const agent = {
     let token;
     const requestAndExecuteJob = async () => {
       try {
-        agentState.incrementExecutingJobs();
-
-        const maxJobs = agentState.threshold + 1;
-        // if (agentState.numExecutingJobs >= maxJobs) {
-        //   return;
-        // }
-
         if (config.isOnPremise === undefined || config.isOnPremise === null) {
           const profiles = await getProfiles();
           config.isOnPremise = isOnPremiseProfile(profiles);
@@ -364,7 +368,7 @@ const agent = {
       } catch (err) {
         logger.error(err);
       } finally {
-        agentState.decrementExecutingJobs();
+        // agentState.decrementExecutingJobs();
       }
     };
 
@@ -409,9 +413,14 @@ const agent = {
         .catch((err) => logger.error('Cannot send agent info to server:', err)); // async
     };
 
+    const controller = () => {
+      thresholdController.checkProcess();
+    };
+
     requestAndExecuteJob();
     setInterval(requestAndExecuteJob, requestInterval);
     setInterval(syncInfo, pingInterval);
+    setInterval(controller, scanThreshold);
   },
 
   async startCI(commandLineConfigs = {}) {
