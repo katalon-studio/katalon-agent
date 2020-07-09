@@ -6,7 +6,6 @@ const { v4: uuidv4 } = require('uuid');
 const TokenManager = require('./token-manager');
 const { S3FileTransport } = require('./transports');
 
-const agentState = require('./agent-state');
 const { KatalonCommandExecutor, GenericCommandExecutor } = require('./command-executor');
 const config = require('./config');
 const jobLogger = require('./job-logger');
@@ -22,9 +21,10 @@ const { NODE_ENV } = process.env;
 const defaultConfigFile = utils.getPath('agentconfig');
 const requestInterval = NODE_ENV === 'debug' ? 5 * 1000 : 60 * 1000;
 const pingInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 1000;
-const scanThreshold = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 5 * 1000;
+const checkProcessInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 5 * 1000;
 const keepJobAliveInterval = NODE_ENV === 'debug' ? 20 * 1000 : 60 * 1000;
 const sendLogWaitInterval = 10 * 1000;
+
 const tokenManager = new TokenManager();
 tokenManager.expiryExpectancy = 3 * requestInterval;
 
@@ -367,8 +367,6 @@ const agent = {
         await executeJob(token, jobInfo, keepFiles);
       } catch (err) {
         logger.error(err);
-      } finally {
-        // agentState.decrementExecutingJobs();
       }
     };
 
@@ -395,7 +393,6 @@ const agent = {
         hostname: hostName,
         ip: hostAddress,
         os: osVersion,
-        numExecutingJobs: agentState.numExecutingJobs,
         agentVersion,
       };
       const options = {
@@ -405,22 +402,13 @@ const agent = {
 
       katalonRequest
         .pingAgent(token, options)
-        .then((response) => {
-          if (response && response.body && response.body.threshold) {
-            agentState.threshold = response.body.threshold;
-          }
-        })
         .catch((err) => logger.error('Cannot send agent info to server:', err)); // async
-    };
-
-    const controller = () => {
-      thresholdController.checkProcess();
     };
 
     requestAndExecuteJob();
     setInterval(requestAndExecuteJob, requestInterval);
     setInterval(syncInfo, pingInterval);
-    setInterval(controller, scanThreshold);
+    setInterval(thresholdController.checkProcess, checkProcessInterval);
   },
 
   async startCI(commandLineConfigs = {}) {
