@@ -15,7 +15,7 @@ const logger = require('./logger');
 const os = require('./os');
 const { KatalonTestProjectDownloader, GitDownloader } = require('./remote-downloader');
 const utils = require('./utils');
-const thresholdController = require('./threshold-controler');
+const thresholdController = require('./threshold-controller');
 
 const { NODE_ENV } = process.env;
 
