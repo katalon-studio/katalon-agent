@@ -4,7 +4,7 @@ const fse = require('fs-extra');
 const glob = require('glob');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const config = require('./config');
+const config = require('../core/config');
 
 const katalonRequest = require('./katalon-request');
 

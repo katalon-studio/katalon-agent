@@ -1,4 +1,4 @@
-const file = require('./file');
+const file = require('../core/file');
 
 class KatalonStudioDownloader {
   constructor(logger, downloadUrl) {

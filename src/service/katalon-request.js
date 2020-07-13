@@ -1,5 +1,5 @@
-const http = require('./http');
-const config = require('./config');
+const http = require('../core/http');
+const config = require('../core/config');
 
 const TOKEN_URI = '/oauth/token';
 const UPLOAD_URL_URI = '/api/v1/files/upload-url';

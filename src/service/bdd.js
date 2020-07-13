@@ -1,7 +1,7 @@
 const fse = require('fs-extra');
 const path = require('path');
-const config = require('./config');
-const http = require('./http');
+const config = require('../core/config');
+const http = require('../core/http');
 
 function writeGherkin(issue, fieldIds) {
   const { outputDir } = config;

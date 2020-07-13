@@ -2,10 +2,10 @@ const fs = require('fs-extra');
 const glob = require('glob');
 const path = require('path');
 
-const config = require('./config');
+const config = require('../core/config');
 const genericCommand = require('./generic-command');
 const ks = require('./katalon-studio');
-const properties = require('./properties');
+const properties = require('../core/properties');
 const reportUploader = require('./report-uploader');
 
 const PROJECT_FILE_PATTERN = '**/*.prj';

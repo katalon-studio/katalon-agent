@@ -3,18 +3,18 @@ const ip = require('ip');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
-const TokenManager = require('./token-manager');
-const { S3FileTransport } = require('./transports');
+const TokenManager = require('./service/token-manager');
+const { S3FileTransport } = require('./config/transports');
 
-const { KatalonCommandExecutor, GenericCommandExecutor } = require('./command-executor');
-const config = require('./config');
-const jobLogger = require('./job-logger');
-const katalonRequest = require('./katalon-request');
-const logger = require('./logger');
-const os = require('./os');
-const processController = require('./process-controller');
-const { KatalonTestProjectDownloader, GitDownloader } = require('./remote-downloader');
-const utils = require('./utils');
+const { KatalonCommandExecutor, GenericCommandExecutor } = require('./service/command-executor');
+const config = require('./core/config');
+const jobLogger = require('./config/job-logger');
+const katalonRequest = require('./service/katalon-request');
+const logger = require('./config/logger');
+const os = require('./core/os');
+const processController = require('./service/process-controller');
+const { KatalonTestProjectDownloader, GitDownloader } = require('./service/remote-downloader');
+const utils = require('./core/utils');
 
 const { NODE_ENV } = process.env;
 

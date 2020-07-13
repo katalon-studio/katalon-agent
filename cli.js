@@ -15,10 +15,10 @@ if (process.argv.includes('--service')) {
 }
 
 const agent = require('./src/agent');
-const bdd = require('./src/bdd');
-const config = require('./src/config');
+const bdd = require('./src/service/bdd');
+const config = require('./src/core/config');
 const packageJson = require('./package.json');
-const reportUploader = require('./src/report-uploader');
+const reportUploader = require('./src/service/report-uploader');
 
 const version = `Version: ${packageJson.version}`;
 config.version = packageJson.version;

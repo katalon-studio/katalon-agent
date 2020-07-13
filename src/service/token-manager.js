@@ -1,8 +1,8 @@
 const moment = require('moment');
 
-const config = require('./config');
+const config = require('../core/config');
 const katalonRequest = require('./katalon-request');
-const logger = require('./logger');
+const logger = require('../config/logger');
 
 class TokenManager {
   constructor(email, password, expiryExpectancy) {

@@ -2,7 +2,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const glob = require('glob');
 
-const logger = require('./logger');
+const logger = require('../config/logger');
 
 const procDir = path.join(global.appRoot, 'proc');
 fs.ensureDirSync(procDir);

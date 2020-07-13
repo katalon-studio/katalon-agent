@@ -2,7 +2,7 @@ const childProcess = require('child_process');
 const os = require('os');
 const tmp = require('tmp');
 
-const defaultLogger = require('./logger');
+const defaultLogger = require('../config/logger');
 
 module.exports = {
   getUserHome() {

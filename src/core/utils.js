@@ -1,7 +1,7 @@
 const moment = require('moment');
 const path = require('path');
 const tmp = require('tmp');
-const packageJson = require('../package.json');
+const packageJson = require('../../package.json');
 
 module.exports = {
   getPath(relativePath) {

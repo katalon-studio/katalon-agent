@@ -6,7 +6,7 @@ const request = require('request');
 const urljoin = require('url-join');
 
 const { Readable } = require('stream');
-const logger = require('./logger');
+const logger = require('../config/logger');
 const config = require('./config');
 
 const FILTERED_ERROR_CODE = new Set([400, 401, 403, 404, 500, 502, 503, 504]);

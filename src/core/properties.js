@@ -1,6 +1,6 @@
 const fse = require('fs-extra');
 const properties = require('properties');
-const logger = require('./logger');
+const logger = require('../config/logger');
 
 function writeProperties(propertiesFile, prop) {
   fse.ensureFileSync(propertiesFile);

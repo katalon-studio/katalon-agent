@@ -2,8 +2,8 @@ const _ = require('lodash');
 const TransportStream = require('winston-transport');
 const { MESSAGE } = require('triple-beam');
 
-const katalonHttp = require('./http');
-const katalonRequest = require('./katalon-request');
+const katalonHttp = require('../core/http');
+const katalonRequest = require('../service/katalon-request');
 
 class S3FileTransport extends TransportStream {
   constructor(options = {}, afterLog) {

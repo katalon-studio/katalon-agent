@@ -2,11 +2,11 @@ const _ = require('lodash');
 const fs = require('fs');
 const path = require('path');
 
-const http = require('./http');
-const defaultLogger = require('./logger');
-const os = require('./os');
+const http = require('../core/http');
+const defaultLogger = require('../config/logger');
+const os = require('../core/os');
 const { KatalonStudioDownloader } = require('./remote-downloader');
-const utils = require('./utils');
+const utils = require('../core/utils');
 
 const releasesList =
   'https://raw.githubusercontent.com/katalon-studio/katalon-studio/master/releases.json';
