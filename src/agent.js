@@ -12,9 +12,9 @@ const jobLogger = require('./job-logger');
 const katalonRequest = require('./katalon-request');
 const logger = require('./logger');
 const os = require('./os');
+const processController = require('./process-controller');
 const { KatalonTestProjectDownloader, GitDownloader } = require('./remote-downloader');
 const utils = require('./utils');
-const thresholdController = require('./threshold-controller');
 
 const { NODE_ENV } = process.env;
 
@@ -136,7 +136,7 @@ async function executeJob(token, jobInfo, keepFiles) {
   fs.ensureDir(tmpRoot);
 
   // Create temporary directory to keep extracted project
-  const tmpDir = utils.createTempDir(tmpRoot);
+  const tmpDir = utils.createTempDir(tmpRoot, { postfix: jobId });
   const tmpDirPath = tmpDir.name;
   logger.info('Download test project to temp directory:', tmpDirPath);
 
@@ -173,11 +173,11 @@ async function executeJob(token, jobInfo, keepFiles) {
     downloader.logger = jLogger;
     await downloader.download(tmpDirPath);
 
-    logger.info(`Create controller for job ID: ${jobInfo.jobId}`);
+    logger.info(`Create controller for job ID: ${jobId}`);
     let processId = null;
     const status = await executor.execute(jLogger, tmpDirPath, (pid) => {
       processId = pid;
-      thresholdController.createController(pid, jobId);
+      processController.createController(pid, jobId);
       updateJobStatus(token, jobId, JOB_STATUS.RUNNING, processId);
     });
 
@@ -206,7 +206,7 @@ async function executeJob(token, jobInfo, keepFiles) {
     notifyJob(token, jobInfo);
     clearInterval(keepJobAliveIntervalID);
 
-    thresholdController.killProcessFromJobId(jobId);
+    processController.killProcessFromJobId(jobId);
     // Remove temporary directory when `keepFiles` is false
     if (!keepFiles) {
       tmpDir.removeCallback();
@@ -408,7 +408,7 @@ const agent = {
     requestAndExecuteJob();
     setInterval(requestAndExecuteJob, requestInterval);
     setInterval(syncInfo, pingInterval);
-    setInterval(thresholdController.checkProcess, checkProcessInterval);
+    setInterval(processController.removeInactiveControllers, checkProcessInterval);
   },
 
   async startCI(commandLineConfigs = {}) {
