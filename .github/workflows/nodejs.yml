@@ -52,13 +52,19 @@ jobs:
       env:
         CI: true
       if: ${{ matrix.os == 'ubuntu-latest' }}
-      run: npm run buildLinux --if-present
+      run: |
+        npm run buildLinux --if-present
+        chmod +x bin/cli-linux-x64 *.sh
+        ls -l bin
 
     - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
       env:
         CI: true
       if: ${{ matrix.os == 'macos-latest' }}
-      run: npm run buildMacos --if-present
+      run: |
+        npm run buildMacos --if-present
+        chmod +x bin/cli-macos-x64 *.sh
+        ls -l bin
 
     - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
       env:
@@ -144,6 +150,9 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         path: .
+        
+    - name: Add execute permission to downloaded artifacts
+      run: chmod +x katalon-agent-linux-*/* katalon-agent-macos-*/*
 
     - name: Set BUILD_VERSION environment variable
       run: echo "::set-env name=BUILD_VERSION::$(node -p "require('./package').version")"

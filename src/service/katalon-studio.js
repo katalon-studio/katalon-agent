@@ -60,7 +60,10 @@ function getKsLocation(ksVersionNumber, ksLocation) {
 
     defaultLogger.info(`Download Katalon Studio ${ksVersionNumber} to ${ksLocationParentDir}.`);
     const downloader = new KatalonStudioDownloader(defaultLogger, ksVersion.url);
-    return downloader.download(ksLocationParentDir).then(() => {
+    return downloader.download(ksLocationParentDir).then((extractedFiles) => {
+      if (!extractedFiles || extractedFiles.length <= 0) {
+        throw new Error(`Unable to download Katalon Studio ${ksVersionNumber}`);
+      }
       fs.writeFileSync(katalonDoneFilePath, '');
       return { ksLocationParentDir };
     });
