@@ -52,13 +52,17 @@ jobs:
       env:
         CI: true
       if: ${{ matrix.os == 'ubuntu-latest' }}
-      run: npm run buildLinux --if-present
+      run: |
+        npm run buildLinux --if-present
+        chmod +x bin/cli-linux-x64 start.sh
 
     - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
       env:
         CI: true
       if: ${{ matrix.os == 'macos-latest' }}
-      run: npm run buildMacos --if-present
+      run: |
+        npm run buildMacos --if-present
+        chmod +x bin/cli-macos-x64 start.sh
 
     - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
       env:
