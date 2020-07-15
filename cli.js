@@ -14,7 +14,7 @@ if (process.argv.includes('--service')) {
   global.appRoot = path.resolve('.');
 }
 
-const agent = require('./src/agent');
+const { Agent, updateConfigs } = require('./src/service/agent');
 const bdd = require('./src/service/bdd');
 const config = require('./src/core/config');
 const packageJson = require('./package.json');
@@ -98,7 +98,7 @@ program
       x11Display: command.x11Display,
       keepFiles: command.keepFiles,
     };
-    agent.updateConfigs(options);
+    updateConfigs(options);
   });
 
 program
@@ -133,6 +133,8 @@ program
         });
     }
 
+    const agent = new Agent(options);
+
     process.on('SIGINT', () => {
       agent.stop();
       // graceful shutdown
@@ -140,9 +142,9 @@ program
     });
 
     if (command.ci) {
-      agent.startCI(options).then(() => process.emit('SIGINT'));
+      agent.startCI().then(() => process.emit('SIGINT'));
     } else {
-      agent.start(options);
+      agent.start();
     }
   });
 

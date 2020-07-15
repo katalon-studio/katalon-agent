@@ -6,7 +6,7 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const config = require('../core/config');
 
-const katalonRequest = require('./katalon-request');
+const katalonRequest = require('../helper/katalon-request');
 
 const logExtension = /^[^.]+$|\.(?!(zip|har)$)([^.]+$)/;
 const harExtension = /.*\.(har)$/;

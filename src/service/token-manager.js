@@ -1,13 +1,11 @@
 const moment = require('moment');
 
 const config = require('../core/config');
-const katalonRequest = require('./katalon-request');
+const katalonRequest = require('../helper/katalon-request');
 const logger = require('../config/logger');
 
 class TokenManager {
-  constructor(email, password, expiryExpectancy) {
-    this.email = email || 'no-email';
-    this.password = password || 'no-apikey';
+  constructor(expiryExpectancy) {
     this.expiryExpectancy = expiryExpectancy || 0;
 
     this.accessToken = '';
@@ -44,7 +42,7 @@ class TokenManager {
   }
 
   requestAccessToken() {
-    return katalonRequest.requestToken(this.email, this.password).then(this.setToken);
+    return katalonRequest.requestToken(config.email, config.apikey).then(this.setToken);
   }
 
   refreshAccessToken() {
@@ -68,6 +66,14 @@ class TokenManager {
     // This will not take care of the scenario where
     // token is accidentally removed due to internal error or being revoked
     return Promise.resolve(this.accessToken);
+  }
+
+  get token() {
+    return this.ensureToken();
+  }
+
+  get tokenSync() {
+    return this.accessToken;
   }
 }
 

@@ -109,9 +109,12 @@ module.exports = {
     return http.request(config.serverUrl, url, options, 'post');
   },
 
-  pingAgent(token, options) {
-    options.auth = {
-      bearer: token,
+  pingAgent(token, body) {
+    const options = {
+      auth: {
+        bearer: token,
+      },
+      body,
     };
     return http.request(config.serverUrl, KATALON_AGENT_URI, options, 'POST');
   },
@@ -138,9 +141,12 @@ module.exports = {
     return http.request(config.serverUrl, `${KATALON_JOB_URI}get-job`, options, 'GET');
   },
 
-  updateJob(token, options) {
-    options.auth = {
-      bearer: token,
+  updateJob(token, body) {
+    const options = {
+      auth: {
+        bearer: token,
+      },
+      body,
     };
     return http.request(config.serverUrl, `${KATALON_JOB_URI}update-job`, options, 'POST');
   },
@@ -174,8 +180,7 @@ module.exports = {
     return http.request(config.serverUrl, `${KATALON_JOB_URI + jobId}/get-log`, options, 'GET');
   },
 
-  notifyJob(token, jobInfo) {
-    const { projectId, jobId } = jobInfo;
+  notifyJob(token, jobId, projectId) {
     const options = {
       auth: {
         bearer: token,
