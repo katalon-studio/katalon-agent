@@ -6,13 +6,13 @@ const { v4: uuidv4 } = require('uuid');
 const TokenManager = require('./token-manager');
 const { S3FileTransport } = require('./transports');
 
-const agentState = require('./agent-state');
 const { KatalonCommandExecutor, GenericCommandExecutor } = require('./command-executor');
 const config = require('./config');
 const jobLogger = require('./job-logger');
 const katalonRequest = require('./katalon-request');
 const logger = require('./logger');
 const os = require('./os');
+const processController = require('./process-controller');
 const { KatalonTestProjectDownloader, GitDownloader } = require('./remote-downloader');
 const utils = require('./utils');
 
@@ -21,7 +21,10 @@ const { NODE_ENV } = process.env;
 const defaultConfigFile = utils.getPath('agentconfig');
 const requestInterval = NODE_ENV === 'debug' ? 5 * 1000 : 60 * 1000;
 const pingInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 1000;
+const checkProcessInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 5 * 1000;
+const keepJobAliveInterval = NODE_ENV === 'debug' ? 20 * 1000 : 60 * 1000;
 const sendLogWaitInterval = 10 * 1000;
+
 const tokenManager = new TokenManager();
 tokenManager.expiryExpectancy = 3 * requestInterval;
 
@@ -37,11 +40,12 @@ function updateJob(token, jobOptions) {
   return katalonRequest.updateJob(token, jobOptions);
 }
 
-function buildJobResponse(jobId, jobStatus) {
+function buildJobResponse(jobId, jobStatus, processId) {
   const jobOptions = {
     body: {
       id: jobId,
       status: jobStatus,
+      processId,
     },
   };
   const time = new Date();
@@ -54,8 +58,8 @@ function buildJobResponse(jobId, jobStatus) {
   return jobOptions;
 }
 
-function updateJobStatus(token, jobId, jobStatus) {
-  const jobOptions = buildJobResponse(jobId, jobStatus);
+function updateJobStatus(token, jobId, jobStatus, processId = null) {
+  const jobOptions = buildJobResponse(jobId, jobStatus, processId);
   return updateJob(token, jobOptions);
 }
 
@@ -114,6 +118,10 @@ function notifyJob(token, jobInfo) {
     .catch((error) => logger.warn('Unable to send job notification:', error));
 }
 
+function keepJobAlive(token, jobId) {
+  return setInterval(() => katalonRequest.pingJob(token, jobId), keepJobAliveInterval);
+}
+
 async function executeJob(token, jobInfo, keepFiles) {
   const { jobId } = jobInfo;
 
@@ -121,13 +129,14 @@ async function executeJob(token, jobInfo, keepFiles) {
   // Take the job even if the subsequent setup steps fail
   // Prevent the job to be queued forever
   await updateJobStatus(token, jobId, JOB_STATUS.RUNNING);
+  const keepJobAliveIntervalID = keepJobAlive(token, jobId);
 
   // Create directory where temporary files are contained
   const tmpRoot = path.resolve(global.appRoot, 'tmp/');
   fs.ensureDir(tmpRoot);
 
   // Create temporary directory to keep extracted project
-  const tmpDir = utils.createTempDir(tmpRoot);
+  const tmpDir = utils.createTempDir(tmpRoot, { postfix: jobId });
   const tmpDirPath = tmpDir.name;
   logger.info('Download test project to temp directory:', tmpDirPath);
 
@@ -163,7 +172,14 @@ async function executeJob(token, jobInfo, keepFiles) {
     const { downloader, executor } = jobInfo;
     downloader.logger = jLogger;
     await downloader.download(tmpDirPath);
-    const status = await executor.execute(jLogger, tmpDirPath);
+
+    logger.info(`Create controller for job ID: ${jobId}`);
+    let processId = null;
+    const status = await executor.execute(jLogger, tmpDirPath, (pid) => {
+      processId = pid;
+      processController.createController(pid, jobId);
+      updateJobStatus(token, jobId, JOB_STATUS.RUNNING, processId);
+    });
 
     jLogger.close();
     logger.info('Job execution finished.');
@@ -173,7 +189,7 @@ async function executeJob(token, jobInfo, keepFiles) {
     const jobStatus = status === 0 ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
 
     logger.debug(`Update job with status '${jobStatus}.'`);
-    await updateJobStatus(token, jobId, jobStatus);
+    await updateJobStatus(token, jobId, jobStatus, processId);
     logger.info('Job execution has been completed.');
   } catch (err) {
     logger.error(`${executeJob.name}:`, err);
@@ -185,11 +201,12 @@ async function executeJob(token, jobInfo, keepFiles) {
     logger.debug(`Error caught during job execution! Update job with status '${jobStatus}'`);
     await updateJobStatus(token, jobId, jobStatus);
   } finally {
-
     await uploadLog(token, jobInfo, logFilePath);
     logger.info('Job execution log uploaded.');
     notifyJob(token, jobInfo);
+    clearInterval(keepJobAliveIntervalID);
 
+    processController.killProcessFromJobId(jobId);
     // Remove temporary directory when `keepFiles` is false
     if (!keepFiles) {
       tmpDir.removeCallback();
@@ -273,13 +290,6 @@ const agent = {
     let token;
     const requestAndExecuteJob = async () => {
       try {
-        agentState.incrementExecutingJobs();
-
-        const maxJobs = agentState.threshold + 1;
-        // if (agentState.numExecutingJobs >= maxJobs) {
-        //   return;
-        // }
-
         if (config.isOnPremise === undefined || config.isOnPremise === null) {
           const profiles = await getProfiles();
           config.isOnPremise = isOnPremiseProfile(profiles);
@@ -357,8 +367,6 @@ const agent = {
         await executeJob(token, jobInfo, keepFiles);
       } catch (err) {
         logger.error(err);
-      } finally {
-        agentState.decrementExecutingJobs();
       }
     };
 
@@ -385,7 +393,6 @@ const agent = {
         hostname: hostName,
         ip: hostAddress,
         os: osVersion,
-        numExecutingJobs: agentState.numExecutingJobs,
         agentVersion,
       };
       const options = {
@@ -395,17 +402,13 @@ const agent = {
 
       katalonRequest
         .pingAgent(token, options)
-        .then((response) => {
-          if (response && response.body && response.body.threshold) {
-            agentState.threshold = response.body.threshold;
-          }
-        })
         .catch((err) => logger.error('Cannot send agent info to server:', err)); // async
     };
 
     requestAndExecuteJob();
     setInterval(requestAndExecuteJob, requestInterval);
     setInterval(syncInfo, pingInterval);
+    setInterval(processController.removeInactiveControllers, checkProcessInterval);
   },
 
   async startCI(commandLineConfigs = {}) {

@@ -44,7 +44,7 @@ module.exports = {
     return version;
   },
 
-  runCommand(command, x11Display, xvfbConfiguration, logger = defaultLogger, tmpDirPath = '') {
+  runCommand(command, x11Display, xvfbConfiguration, logger = defaultLogger, tmpDirPath = '', callback) {
     let cmd;
     const args = [];
     const type = os.type();
@@ -78,6 +78,12 @@ module.exports = {
         cwd: tmpDirPath,
         shell,
       });
+
+      if (callback) {
+        const { pid } = cmdProcess;
+        callback(pid);
+      }
+
       cmdProcess.stdout.on('data', (data) => {
         logger.debug(data.toString());
       });

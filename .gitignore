@@ -1,5 +1,5 @@
 # Logs
-logs
+log
 *.log
 *.log.*
 npm-debug.log*
@@ -66,5 +66,8 @@ typings/
 
 # Temp
 tmp
+proc
 
 test/*
+
+.idea
