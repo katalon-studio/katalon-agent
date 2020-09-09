@@ -484,6 +484,7 @@ const agent = {
       await executeJob(token, jobInfo, keepFiles);
     } catch (err) {
       logger.error(err);
+      throw new Error(err);
     }
   },
 
