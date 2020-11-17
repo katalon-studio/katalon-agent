@@ -9,12 +9,10 @@ class TokenManager {
     this.expiryExpectancy = expiryExpectancy || 0;
 
     this.accessToken = '';
-    this.refreshToken = '';
     this.expiry = moment(); // Always expires whenever object is instantiated
 
     this.setToken = this.setToken.bind(this);
     this.requestAccessToken = this.requestAccessToken.bind(this);
-    this.refreshAccessToken = this.refreshAccessToken.bind(this);
   }
 
   setToken(response) {
@@ -45,10 +43,6 @@ class TokenManager {
     return katalonRequest.requestToken(config.email, config.apikey).then(this.setToken);
   }
 
-  refreshAccessToken() {
-    return katalonRequest.refreshToken(this.refreshToken).then(this.setToken);
-  }
-
   tokenWillExpired() {
     const now = moment();
     const diff = this.expiry.diff(now);
@@ -59,8 +53,7 @@ class TokenManager {
     const shouldRequestToken = this.tokenWillExpired();
     if (shouldRequestToken) {
       logger.info('Requesting new access token...');
-      const requestMethod = this.refreshToken ? this.refreshAccessToken : this.requestAccessToken;
-      return requestMethod();
+      return this.requestAccessToken();
     }
     // Use previous token if it has not yet expired
     // This will not take care of the scenario where
