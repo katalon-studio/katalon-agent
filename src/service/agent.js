@@ -10,7 +10,7 @@ const {
   setLogLevel,
 } = require('../helper/agent');
 const config = require('../core/config');
-const { JOB_STATUS } = require('../config/constants');
+const { JOB_STATUS, NODE_STATUS } = require('../config/constants');
 const jobLogger = require('../config/job-logger');
 const logger = require('../config/logger');
 const os = require('../core/os');
@@ -26,7 +26,8 @@ const defaultConfigFile = utils.getPath('agentconfig');
 const requestInterval = NODE_ENV === 'debug' ? 5 * 1000 : 60 * 1000;
 const pingInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 1000;
 const checkProcessInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 5 * 1000;
-const keepJobAliveInterval = NODE_ENV === 'debug' ? 20 * 1000 : 60 * 1000;
+const syncJobInterval = NODE_ENV === 'debug' ? 15 * 1000 : 30 * 1000;
+const cancelPendingJobsInterval = NODE_ENV === 'debug' ? 5 * 1000 : 30 * 1000;
 const sendLogWaitInterval = 10 * 1000;
 
 const tokenManager = new TokenManager(3 * requestInterval);
@@ -99,25 +100,35 @@ function pingAgent(body) {
     .catch((err) => logger.error('Cannot send agent info to server:', err));
 }
 
-function keepJobAlive(jobId) {
-  return setInterval(
-    () =>
-      requestController
-        .pingJob(jobId)
-        .catch((err) => logger.warn('Unable to keep job alive:', jobId, err)),
-    keepJobAliveInterval,
-  );
+function synchronizeJob(jobId, onJobSynchronization = () => {}) {
+  return setInterval(async () => {
+    try {
+      const synchronizedJob = await requestController.pingJob(jobId);
+      onJobSynchronization(synchronizedJob && synchronizedJob.body);
+      return synchronizedJob;
+    } catch (err) {
+      return logger.warn('Unable to synchronize job:', jobId, err);
+    }
+  }, syncJobInterval);
 }
 
 async function executeJob(jobInfo, keepFiles) {
   const { jobId, projectId } = jobInfo;
   const notify = () => notifyJob(jobId, projectId);
+  let isCanceled = false;
+  let jLogger;
 
   // Update job status to running
   // Take the job even if the subsequent setup steps fail
   // Prevent the job to be queued forever
   await updateJobStatus(jobId, JOB_STATUS.RUNNING);
-  const keepJobAliveIntervalID = keepJobAlive(jobId);
+  const syncJobIntervalID = synchronizeJob(jobId, (synchronizedJob) => {
+    const { status } = synchronizedJob;
+    if (status === JOB_STATUS.CANCELED) {
+      isCanceled = true;
+      logger.info(`Job ${jobId} is canceled.`);
+    }
+  });
 
   // Create directory where temporary files are contained
   const tmpRoot = path.resolve(global.appRoot, 'tmp/');
@@ -133,7 +144,7 @@ async function executeJob(jobInfo, keepFiles) {
 
   try {
     // Create logger for job
-    const jLogger = jobLogger.getLogger(logFilePath);
+    jLogger = jobLogger.getLogger(logFilePath);
 
     // Upload log and add new transport to stream log content to s3
     // Everytime a new log entry is written to file
@@ -154,10 +165,20 @@ async function executeJob(jobInfo, keepFiles) {
     jLogger.info(`Agent server: ${config.serverUrl}${config.isOnPremise ? ' (OnPremise)' : ''}`);
     jLogger.info(`Agent user: ${config.email}`);
 
+    if (isCanceled) {
+      jLogger.debug(`Job ${jobId} is canceled. Stop test project download.`);
+      return;
+    }
+
     logger.info('Downloading test project...');
     const { downloader, executor } = jobInfo;
     downloader.logger = jLogger;
     await downloader.download(tmpDirPath);
+
+    if (isCanceled) {
+      jLogger.debug(`Job ${jobId} is canceled. Stop command execution.`);
+      return;
+    }
 
     logger.info(`Create controller for job ID: ${jobId}`);
     let processId = null;
@@ -167,7 +188,11 @@ async function executeJob(jobInfo, keepFiles) {
       updateJobStatus(jobId, JOB_STATUS.RUNNING, processId);
     });
 
-    jLogger.close();
+    if (isCanceled) {
+      jLogger.debug(`Job ${jobId} is canceled.`);
+      return;
+    }
+
     logger.info('Job execution finished.');
     logger.debug('JOB FINISHED WITH STATUS:', status);
 
@@ -187,10 +212,12 @@ async function executeJob(jobInfo, keepFiles) {
     logger.debug(`Error caught during job execution! Update job with status '${jobStatus}'`);
     await updateJobStatus(jobId, jobStatus);
   } finally {
+    jLogger.close();
+
     await uploadLog(jobInfo, logFilePath);
     logger.info('Job execution log uploaded.');
     notify();
-    clearInterval(keepJobAliveIntervalID);
+    clearInterval(syncJobIntervalID);
 
     processController.killProcessFromJobId(jobId);
     // Remove temporary directory when `keepFiles` is false
@@ -326,10 +353,39 @@ class Agent {
       }); // async
     };
 
+    const cancelPendingJobs = async () => {
+      const configs = config.read(this.configFile);
+      if (!configs.uuid) {
+        return;
+      }
+
+      const pendingCanceledJobsResponse = await requestController.getPendingCanceledJobs(
+        configs.uuid,
+        this.teamId,
+      );
+      const { body: pendingCanceledJobs = [] } = pendingCanceledJobsResponse || {};
+
+      await Promise.all(
+        pendingCanceledJobs.map(async ({ id, status, nodeStatus, processId }) => {
+          try {
+            if (status === JOB_STATUS.CANCELED && nodeStatus === NODE_STATUS.PENDING_CANCELED) {
+              if (processId) {
+                await processController.killProcess(processId);
+              }
+              await requestController.updateNodeStatus(id, NODE_STATUS.CANCELED);
+            }
+          } catch (err) {
+            logger.error(`Error when canceling job ${id}:`, err);
+          }
+        }),
+      );
+    };
+
     requestAndExecuteJob();
     setInterval(requestAndExecuteJob, requestInterval);
     setInterval(syncInfo, pingInterval);
     setInterval(processController.removeInactiveControllers, checkProcessInterval);
+    setInterval(cancelPendingJobs, cancelPendingJobsInterval);
   }
 
   async startCI() {
