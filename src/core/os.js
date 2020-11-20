@@ -84,14 +84,16 @@ module.exports = {
         callback(pid);
       }
 
-      cmdProcess.stdout.on('data', (data) => {
+      const stdoutStream = cmdProcess.stdout.on('data', (data) => {
         logger.debug(data.toString());
       });
-      cmdProcess.stderr.on('data', (data) => {
+      const stderrStream = cmdProcess.stderr.on('data', (data) => {
         logger.debug(data.toString());
       });
-      cmdProcess.on('close', (code) => {
+      cmdProcess.on('exit', (code) => {
         logger.info(`Exit code: ${code}.`);
+        stdoutStream.removeAllListeners();
+        stderrStream.removeAllListeners();
         resolve(code);
       });
     });

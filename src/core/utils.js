@@ -1,7 +1,6 @@
 const moment = require('moment');
 const path = require('path');
 const tmp = require('tmp');
-const kill = require('tree-kill');
 const packageJson = require('../../package.json');
 
 module.exports = {
@@ -43,9 +42,5 @@ module.exports = {
 
   getVersion() {
     return packageJson.version;
-  },
-
-  killProcessTree(pid, signal = 'SIGTERM') {
-    return new Promise((_, reject) => kill(pid, signal, reject));
   },
 };
