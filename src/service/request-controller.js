@@ -65,6 +65,24 @@ class KatalonRequestController {
   updateJob(body) {
     return makeRequestWithTokenHelper(this.tokenManager.token, katalonRequest.updateJob, body);
   }
+
+  getPendingCanceledJobs(uuid, teamId) {
+    return makeRequestWithTokenHelper(
+      this.tokenManager.token,
+      katalonRequest.getPendingCanceledJobs,
+      uuid,
+      teamId,
+    );
+  }
+
+  updateNodeStatus(jobId, nodeStatus) {
+    return makeRequestWithTokenHelper(
+      this.tokenManager.token,
+      katalonRequest.updateNodeStatus,
+      jobId,
+      nodeStatus,
+    );
+  }
 }
 
 module.exports.KatalonRequestController = KatalonRequestController;
