@@ -74,6 +74,7 @@ jobs:
 
     - name: Set BUILD_VERSION environment variable
       run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
+      shell: bash
 
     - name: Upload Windows x64 artifact
       uses: actions/upload-artifact@v2
