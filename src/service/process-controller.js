@@ -1,4 +1,5 @@
 const fs = require('fs-extra');
+const kill = require('tree-kill');
 const path = require('path');
 const glob = require('glob');
 
@@ -22,10 +23,21 @@ function isProcessAlive(pid) {
 
 function killProcess(pidNumber) {
   try {
-    process.kill(pidNumber, 'SIGHUP');
+    kill(pidNumber, 'SIGINT', (error) => {
+      if (error) {
+        logger.error(`Unable to kill process: ${pidNumber}.`, error);
+      }
+    });
     logger.debug(`Process ${pidNumber} removed.`);
   } catch (error) {
     logger.error(`Unable to kill process: ${pidNumber}.`, error);
+  }
+}
+
+function killAliveProcessFromProcessController(processController) {
+  const pidNumber = parsePid(processController);
+  if (isProcessAlive(pidNumber)) {
+    killProcess(pidNumber);
   }
 }
 
@@ -43,10 +55,7 @@ function killProcessFromJobId(jobId) {
   if (controllerFiles.length <= 0) {
     logger.debug(`Unable to find process with job ID: ${jobId}`);
   } else {
-    const pidNumber = parsePid(controllerFiles[0]);
-    if (isProcessAlive(pidNumber)) {
-      killProcess(pidNumber);
-    }
+    killAliveProcessFromProcessController(controllerFiles[0]);
   }
 }
 
@@ -71,4 +80,5 @@ module.exports = {
   createController,
   removeInactiveControllers,
   killProcessFromJobId,
+  killProcess,
 };
