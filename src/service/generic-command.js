@@ -1,8 +1,8 @@
 const fs = require('fs-extra');
 const path = require('path');
 
-const logger = require('./logger');
-const os = require('./os');
+const logger = require('../config/logger');
+const os = require('../core/os');
 
 function executeCommands(commands, tmpDirPath, outputDir, jLogger, callback) {
   const osVersion = os.getVersion();

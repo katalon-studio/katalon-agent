@@ -5,7 +5,7 @@ const tmp = require('tmp');
 
 const config = require('./config');
 const http = require('./http');
-const defaultLogger = require('./logger');
+const defaultLogger = require('../config/logger');
 
 module.exports = {
   extract(filePath, targetDir, haveFilter, logger = defaultLogger) {

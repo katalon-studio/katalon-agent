@@ -1,5 +1,5 @@
 const winston = require('winston');
-const { stringify } = require('./utils');
+const { stringify } = require('../core/utils');
 
 function formatter({ level, message, timestamp, metadata }) {
   const metaStr = `${metadata.stack || stringify(metadata)}`;

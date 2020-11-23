@@ -2,7 +2,7 @@ const childProcess = require('child_process');
 const os = require('os');
 const tmp = require('tmp');
 
-const defaultLogger = require('./logger');
+const defaultLogger = require('../config/logger');
 
 module.exports = {
   getUserHome() {
@@ -84,14 +84,16 @@ module.exports = {
         callback(pid);
       }
 
-      cmdProcess.stdout.on('data', (data) => {
+      const stdoutStream = cmdProcess.stdout.on('data', (data) => {
         logger.debug(data.toString());
       });
-      cmdProcess.stderr.on('data', (data) => {
+      const stderrStream = cmdProcess.stderr.on('data', (data) => {
         logger.debug(data.toString());
       });
-      cmdProcess.on('close', (code) => {
+      cmdProcess.on('exit', (code) => {
         logger.info(`Exit code: ${code}.`);
+        stdoutStream.removeAllListeners();
+        stderrStream.removeAllListeners();
         resolve(code);
       });
     });

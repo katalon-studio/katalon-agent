@@ -1,5 +1,5 @@
-const http = require('./http');
-const config = require('./config');
+const http = require('../core/http');
+const config = require('../core/config');
 
 const TOKEN_URI = '/oauth/token';
 const UPLOAD_URL_URI = '/api/v1/files/upload-url';
@@ -109,9 +109,12 @@ module.exports = {
     return http.request(config.serverUrl, url, options, 'post');
   },
 
-  pingAgent(token, options) {
-    options.auth = {
-      bearer: token,
+  pingAgent(token, body) {
+    const options = {
+      auth: {
+        bearer: token,
+      },
+      body,
     };
     return http.request(config.serverUrl, KATALON_AGENT_URI, options, 'POST');
   },
@@ -138,9 +141,12 @@ module.exports = {
     return http.request(config.serverUrl, `${KATALON_JOB_URI}get-job`, options, 'GET');
   },
 
-  updateJob(token, options) {
-    options.auth = {
-      bearer: token,
+  updateJob(token, body) {
+    const options = {
+      auth: {
+        bearer: token,
+      },
+      body,
     };
     return http.request(config.serverUrl, `${KATALON_JOB_URI}update-job`, options, 'POST');
   },
@@ -174,8 +180,7 @@ module.exports = {
     return http.request(config.serverUrl, `${KATALON_JOB_URI + jobId}/get-log`, options, 'GET');
   },
 
-  notifyJob(token, jobInfo) {
-    const { projectId, jobId } = jobInfo;
+  notifyJob(token, jobId, projectId) {
     const options = {
       auth: {
         bearer: token,
@@ -226,5 +231,31 @@ module.exports = {
   getBuildInfo() {
     const options = {};
     return http.request(config.serverUrl, '/info', options, 'GET');
+  },
+
+  getPendingCanceledJobs(token, uuid, teamId) {
+    const options = {
+      auth: {
+        bearer: token,
+      },
+      qs: {
+        uuid,
+        teamId,
+      },
+    };
+    return http.request(config.serverUrl, `${KATALON_JOB_URI}cancel`, options, 'GET');
+  },
+
+  updateNodeStatus(token, jobId, nodeStatus) {
+    const options = {
+      auth: {
+        bearer: token,
+      },
+      body: {
+        id: jobId,
+        nodeStatus,
+      },
+    };
+    return http.request(config.serverUrl, `${KATALON_JOB_URI}node-status`, options, 'PUT');
   },
 };

@@ -1,20 +1,24 @@
 const fs = require('fs-extra');
 const ip = require('ip');
 const path = require('path');
-const { v4: uuidv4 } = require('uuid');
 
-const TokenManager = require('./token-manager');
-const { S3FileTransport } = require('./transports');
-
-const { KatalonCommandExecutor, GenericCommandExecutor } = require('./command-executor');
-const config = require('./config');
-const jobLogger = require('./job-logger');
-const katalonRequest = require('./katalon-request');
-const logger = require('./logger');
-const os = require('./os');
+const {
+  buildUpdateJobBody,
+  createCommandExecutor,
+  createDownloader,
+  generateUuid,
+  setLogLevel,
+} = require('../helper/agent');
+const config = require('../core/config');
+const { JOB_STATUS, NODE_STATUS } = require('../config/constants');
+const jobLogger = require('../config/job-logger');
+const logger = require('../config/logger');
+const os = require('../core/os');
 const processController = require('./process-controller');
-const { KatalonTestProjectDownloader, GitDownloader } = require('./remote-downloader');
-const utils = require('./utils');
+const { KatalonRequestController } = require('./request-controller');
+const TokenManager = require('./token-manager');
+const { S3FileTransport } = require('../config/transports');
+const utils = require('../core/utils');
 
 const { NODE_ENV } = process.env;
 
@@ -22,51 +26,22 @@ const defaultConfigFile = utils.getPath('agentconfig');
 const requestInterval = NODE_ENV === 'debug' ? 5 * 1000 : 60 * 1000;
 const pingInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 1000;
 const checkProcessInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 5 * 1000;
-const keepJobAliveInterval = NODE_ENV === 'debug' ? 20 * 1000 : 60 * 1000;
+const syncJobInterval = NODE_ENV === 'debug' ? 15 * 1000 : 30 * 1000;
+const cancelPendingJobsInterval = NODE_ENV === 'debug' ? 5 * 1000 : 30 * 1000;
 const sendLogWaitInterval = 10 * 1000;
 
-const tokenManager = new TokenManager();
-tokenManager.expiryExpectancy = 3 * requestInterval;
+const tokenManager = new TokenManager(3 * requestInterval);
+const requestController = new KatalonRequestController(tokenManager);
 
-const JOB_STATUS = Object.freeze({
-  RUNNING: 'RUNNING',
-  SUCCESS: 'SUCCESS',
-  FAILED: 'FAILED',
-});
-
-const agentVersion = utils.getVersion();
-
-function updateJob(token, jobOptions) {
-  return katalonRequest.updateJob(token, jobOptions);
+function updateJobStatus(jobId, jobStatus, processId = null) {
+  const body = buildUpdateJobBody(jobId, jobStatus, processId);
+  return requestController.updateJob(body);
 }
 
-function buildJobResponse(jobId, jobStatus, processId) {
-  const jobOptions = {
-    body: {
-      id: jobId,
-      status: jobStatus,
-      processId,
-    },
-  };
-  const time = new Date();
-  if (jobStatus === JOB_STATUS.RUNNING) {
-    jobOptions.body.startTime = time;
-  } else if (jobStatus === JOB_STATUS.SUCCESS || jobStatus === JOB_STATUS.FAILED) {
-    jobOptions.body.stopTime = time;
-  }
-
-  return jobOptions;
-}
-
-function updateJobStatus(token, jobId, jobStatus, processId = null) {
-  const jobOptions = buildJobResponse(jobId, jobStatus, processId);
-  return updateJob(token, jobOptions);
-}
-
-async function uploadLog(token, jobInfo, filePath) {
+async function uploadLog(jobInfo, filePath) {
   logger.info('Uploading job execution log...');
   // Request upload URL
-  const response = await katalonRequest.getUploadInfo(token, jobInfo.projectId);
+  const response = await requestController.getUploadInfo(jobInfo.projectId);
   if (!response || !response.body) {
     return null;
   }
@@ -82,18 +57,18 @@ async function uploadLog(token, jobInfo, filePath) {
   jobInfo.uploadUrl = uploadUrl;
   jobInfo.uploadPath = uploadPath;
 
-  await katalonRequest.uploadFile(uploadUrl, filePath);
+  await requestController.uploadFile(uploadUrl, filePath);
 
-  const batch = `${new Date().getTime()}-${uuidv4()}`;
+  const batch = generateUuid();
   const fileName = path.basename(filePath);
 
   // Update job's upload file
-  return katalonRequest.saveJobLog(token, jobInfo, batch, fileName);
+  return requestController.saveJobLog(jobInfo, batch, fileName);
 }
 
 async function getProfiles() {
   logger.info('Getting server profiles...');
-  const response = await katalonRequest.getBuildInfo();
+  const response = await requestController.getBuildInfo();
   if (!response || !response.body) {
     return null;
   }
@@ -112,24 +87,48 @@ function isOnPremiseProfile(profiles) {
   return null;
 }
 
-function notifyJob(token, jobInfo) {
-  return katalonRequest
-    .notifyJob(token, jobInfo)
+function notifyJob(jobId, projectId) {
+  return requestController
+    .notifyJob(jobId, projectId)
     .catch((error) => logger.warn('Unable to send job notification:', error));
 }
 
-function keepJobAlive(token, jobId) {
-  return setInterval(() => katalonRequest.pingJob(token, jobId), keepJobAliveInterval);
+function pingAgent(body) {
+  logger.trace(body);
+  return requestController
+    .pingAgent(body)
+    .catch((err) => logger.error('Cannot send agent info to server:', err));
 }
 
-async function executeJob(token, jobInfo, keepFiles) {
-  const { jobId } = jobInfo;
+function synchronizeJob(jobId, onJobSynchronization = () => {}) {
+  return setInterval(async () => {
+    try {
+      const synchronizedJob = await requestController.pingJob(jobId);
+      onJobSynchronization(synchronizedJob && synchronizedJob.body);
+      return synchronizedJob;
+    } catch (err) {
+      return logger.warn('Unable to synchronize job:', jobId, err);
+    }
+  }, syncJobInterval);
+}
+
+async function executeJob(jobInfo, keepFiles) {
+  const { jobId, projectId } = jobInfo;
+  const notify = () => notifyJob(jobId, projectId);
+  let isCanceled = false;
+  let jLogger;
 
   // Update job status to running
   // Take the job even if the subsequent setup steps fail
   // Prevent the job to be queued forever
-  await updateJobStatus(token, jobId, JOB_STATUS.RUNNING);
-  const keepJobAliveIntervalID = keepJobAlive(token, jobId);
+  await updateJobStatus(jobId, JOB_STATUS.RUNNING);
+  const syncJobIntervalID = synchronizeJob(jobId, (synchronizedJob) => {
+    const { status } = synchronizedJob;
+    if (status === JOB_STATUS.CANCELED) {
+      isCanceled = true;
+      logger.info(`Job ${jobId} is canceled.`);
+    }
+  });
 
   // Create directory where temporary files are contained
   const tmpRoot = path.resolve(global.appRoot, 'tmp/');
@@ -143,15 +142,13 @@ async function executeJob(token, jobInfo, keepFiles) {
   // Create job logger
   const logFilePath = path.resolve(tmpDirPath, 'debug.log');
 
-  const afterUpload = () => notifyJob(token, jobInfo);
-
   try {
     // Create logger for job
-    const jLogger = jobLogger.getLogger(logFilePath);
+    jLogger = jobLogger.getLogger(logFilePath);
 
     // Upload log and add new transport to stream log content to s3
     // Everytime a new log entry is written to file
-    await uploadLog(token, jobInfo, logFilePath);
+    await uploadLog(jobInfo, logFilePath);
     jLogger.add(
       new S3FileTransport(
         {
@@ -160,7 +157,7 @@ async function executeJob(token, jobInfo, keepFiles) {
           logger,
           wait: sendLogWaitInterval,
         },
-        afterUpload,
+        notify,
       ),
     );
 
@@ -168,20 +165,34 @@ async function executeJob(token, jobInfo, keepFiles) {
     jLogger.info(`Agent server: ${config.serverUrl}${config.isOnPremise ? ' (OnPremise)' : ''}`);
     jLogger.info(`Agent user: ${config.email}`);
 
+    if (isCanceled) {
+      jLogger.debug(`Job ${jobId} is canceled. Stop test project download.`);
+      return;
+    }
+
     logger.info('Downloading test project...');
     const { downloader, executor } = jobInfo;
     downloader.logger = jLogger;
     await downloader.download(tmpDirPath);
+
+    if (isCanceled) {
+      jLogger.debug(`Job ${jobId} is canceled. Stop command execution.`);
+      return;
+    }
 
     logger.info(`Create controller for job ID: ${jobId}`);
     let processId = null;
     const status = await executor.execute(jLogger, tmpDirPath, (pid) => {
       processId = pid;
       processController.createController(pid, jobId);
-      updateJobStatus(token, jobId, JOB_STATUS.RUNNING, processId);
+      updateJobStatus(jobId, JOB_STATUS.RUNNING, processId);
     });
 
-    jLogger.close();
+    if (isCanceled) {
+      jLogger.debug(`Job ${jobId} is canceled.`);
+      return;
+    }
+
     logger.info('Job execution finished.');
     logger.debug('JOB FINISHED WITH STATUS:', status);
 
@@ -189,7 +200,7 @@ async function executeJob(token, jobInfo, keepFiles) {
     const jobStatus = status === 0 ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
 
     logger.debug(`Update job with status '${jobStatus}.'`);
-    await updateJobStatus(token, jobId, jobStatus, processId);
+    await updateJobStatus(jobId, jobStatus, processId);
     logger.info('Job execution has been completed.');
   } catch (err) {
     logger.error(`${executeJob.name}:`, err);
@@ -199,12 +210,14 @@ async function executeJob(token, jobInfo, keepFiles) {
     // but because of other reasons such as cannot remove tmp directory or cannot upload log
     const jobStatus = JOB_STATUS.FAILED;
     logger.debug(`Error caught during job execution! Update job with status '${jobStatus}'`);
-    await updateJobStatus(token, jobId, jobStatus);
+    await updateJobStatus(jobId, jobStatus);
   } finally {
-    await uploadLog(token, jobInfo, logFilePath);
+    jLogger.close();
+
+    await uploadLog(jobInfo, logFilePath);
     logger.info('Job execution log uploaded.');
-    notifyJob(token, jobInfo);
-    clearInterval(keepJobAliveIntervalID);
+    notify();
+    clearInterval(syncJobIntervalID);
 
     processController.killProcessFromJobId(jobId);
     // Remove temporary directory when `keepFiles` is false
@@ -222,61 +235,11 @@ function validateField(configs, propertyName, configFile = defaultConfigFile) {
   return true;
 }
 
-function setLogLevel(logLevel) {
-  if (logLevel) {
-    logger.level = logLevel;
-  }
-}
-
-function createDownloader(token, parameter) {
-  if (parameter.type === 'GIT') {
-    return new GitDownloader(logger, parameter.gitRepositoryResource);
-  }
-
-  return new KatalonTestProjectDownloader(logger, parameter.downloadUrl, token);
-}
-
-function createCommandExecutor(
-  token,
-  projectId,
-  teamId,
-  ksArgs,
-  x11Display,
-  xvfbConfiguration,
-  parameter,
-) {
-  if (parameter.configType === 'GENERIC_COMMAND') {
-    const info = {
-      commands: parameter.command,
-      projectId,
-      sessionId: parameter.sessionId,
-    };
-    return new GenericCommandExecutor(token, info);
-  }
-
-  const info = {
-    teamId,
-    projectId,
-    ksVersionNumber: parameter.ksVersion,
-    ksLocation: parameter.ksLocation,
-    ksArgs,
-    x11Display,
-    xvfbConfiguration,
-  };
-  return new KatalonCommandExecutor(token, info);
-}
-
-const agent = {
-  start(commandLineConfigs = {}) {
-    logger.info(`Katalon Agent ${config.version} started @ ${new Date()}`);
-    const hostAddress = ip.address();
-    const hostName = os.getHostName();
-    const osVersion = os.getVersion();
-
+class Agent {
+  constructor(commandLineConfigs = {}) {
     const configFile = commandLineConfigs.configPath || defaultConfigFile;
-    logger.info('Loading configs @', configFile);
+    logger.info('Loading agent configs @', configFile);
     config.update(commandLineConfigs, configFile);
-    const { email, teamId, apikey } = config;
     setLogLevel(config.logLevel);
 
     validateField(config, 'email', configFile);
@@ -284,10 +247,14 @@ const agent = {
     validateField(config, 'serverUrl', configFile);
     validateField(config, 'teamId', configFile);
 
-    tokenManager.email = email;
-    tokenManager.password = apikey;
+    this.configFile = configFile;
+    this.teamId = config.teamId;
+    this.apikey = config.apikey;
+  }
 
-    let token;
+  start() {
+    logger.info(`Katalon Agent ${config.version} started @ ${new Date()}`);
+
     const requestAndExecuteJob = async () => {
       try {
         if (config.isOnPremise === undefined || config.isOnPremise === null) {
@@ -298,15 +265,10 @@ const agent = {
           return;
         }
 
-        token = await tokenManager.ensureToken();
-        if (!token) {
-          return;
-        }
-
-        const configs = config.read(configFile);
+        const configs = config.read(this.configFile);
         if (!configs.uuid) {
-          configs.uuid = this.generateUuid();
-          config.write(configFile, configs);
+          configs.uuid = generateUuid();
+          config.write(this.configFile, configs);
         }
 
         const { uuid, keepFiles, logLevel, x11Display, xvfbRun } = configs;
@@ -314,7 +276,7 @@ const agent = {
         setLogLevel(logLevel);
 
         // Agent is not executing job, request new job
-        const requestJobResponse = await katalonRequest.requestJob(token, uuid, teamId);
+        const requestJobResponse = await requestController.requestJob(uuid, this.teamId);
         if (
           !requestJobResponse ||
           !requestJobResponse.body ||
@@ -333,23 +295,23 @@ const agent = {
 
         let ksArgs;
         if (config.isOnPremise) {
-          ksArgs = utils.updateCommand(
-            parameter.command,
-            { flag: '-apiKeyOnPremise', value: apikey },
-          );
+          ksArgs = utils.updateCommand(parameter.command, {
+            flag: '-apiKeyOnPremise',
+            value: this.apikey,
+          });
         } else {
           ksArgs = utils.updateCommand(
             parameter.command,
-            { flag: '-apiKey', value: apikey },
+            { flag: '-apiKey', value: this.apikey },
             { flag: '-serverUrl', value: config.serverUrl },
           );
         }
 
-        const downloader = createDownloader(token, parameter);
+        const downloader = createDownloader(tokenManager, parameter);
         const executor = createCommandExecutor(
-          token,
+          tokenManager,
           projectId,
-          teamId,
+          this.teamId,
           ksArgs,
           x11Display,
           xvfbRun,
@@ -361,67 +323,73 @@ const agent = {
           executor,
           jobId,
           projectId,
-          teamId,
+          teamId: this.teamId,
         };
 
-        await executeJob(token, jobInfo, keepFiles);
+        await executeJob(jobInfo, keepFiles);
       } catch (err) {
         logger.error(err);
       }
     };
 
     const syncInfo = () => {
-      if (!token) {
-        return;
-      }
-
-      const configs = config.read(configFile);
+      const configs = config.read(this.configFile);
       if (!configs.uuid) {
         return;
       }
 
       if (!configs.agentName) {
-        configs.agentName = hostName;
+        configs.agentName = os.getHostName();
       }
 
-      const { uuid, agentName } = configs;
+      pingAgent({
+        uuid: configs.uuid,
+        name: configs.agentName,
+        teamId: this.teamId,
+        hostname: os.getHostName(),
+        ip: ip.address(),
+        os: os.getVersion(),
+        version: utils.getVersion(),
+      }); // async
+    };
 
-      const requestBody = {
-        uuid,
-        name: agentName,
-        teamId,
-        hostname: hostName,
-        ip: hostAddress,
-        os: osVersion,
-        agentVersion,
-      };
-      const options = {
-        body: requestBody,
-      };
-      logger.trace(requestBody);
+    const cancelPendingJobs = async () => {
+      const configs = config.read(this.configFile);
+      if (!configs.uuid) {
+        return;
+      }
 
-      katalonRequest
-        .pingAgent(token, options)
-        .catch((err) => logger.error('Cannot send agent info to server:', err)); // async
+      const pendingCanceledJobsResponse = await requestController.getPendingCanceledJobs(
+        configs.uuid,
+        this.teamId,
+      );
+      const { body: pendingCanceledJobs = [] } = pendingCanceledJobsResponse || {};
+
+      await Promise.all(
+        pendingCanceledJobs.map(async ({ id, status, nodeStatus, processId }) => {
+          try {
+            if (status === JOB_STATUS.CANCELED && nodeStatus === NODE_STATUS.PENDING_CANCELED) {
+              if (processId) {
+                await processController.killProcess(processId);
+              }
+              await requestController.updateNodeStatus(id, NODE_STATUS.CANCELED);
+            }
+          } catch (err) {
+            logger.error(`Error when canceling job ${id}:`, err);
+          }
+        }),
+      );
     };
 
     requestAndExecuteJob();
     setInterval(requestAndExecuteJob, requestInterval);
     setInterval(syncInfo, pingInterval);
     setInterval(processController.removeInactiveControllers, checkProcessInterval);
-  },
+    setInterval(cancelPendingJobs, cancelPendingJobsInterval);
+  }
 
-  async startCI(commandLineConfigs = {}) {
+  async startCI() {
     logger.info(`Agent (CI mode) ${config.version} started @ ${new Date()}`);
-
-    const configFile = commandLineConfigs.configPath || defaultConfigFile;
-    logger.info('Loading agent configs @', configFile);
-    config.update(commandLineConfigs, configFile);
-    const { email, teamId, apikey } = config;
-    setLogLevel(config.logLevel);
-
-    tokenManager.email = email;
-    tokenManager.password = apikey;
 
     try {
       if (config.isOnPremise === undefined || config.isOnPremise === null) {
@@ -432,9 +400,7 @@ const agent = {
         return;
       }
 
-      const token = await tokenManager.ensureToken();
-
-      const configs = config.read(configFile);
+      const configs = config.read(this.configFile);
 
       const { keepFiles, logLevel, x11Display, xvfbRun } = configs;
 
@@ -452,21 +418,21 @@ const agent = {
       if (config.isOnPremise) {
         ksArgs = utils.updateCommand(parameter.command, {
           flag: '-apiKeyOnPremise',
-          value: apikey,
+          value: this.apikey,
         });
       } else {
         ksArgs = utils.updateCommand(
           parameter.command,
-          { flag: '-apiKey', value: apikey },
+          { flag: '-apiKey', value: this.apikey },
           { flag: '-serverUrl', value: config.serverUrl },
         );
       }
 
-      const downloader = createDownloader(token, parameter);
+      const downloader = createDownloader(tokenManager, parameter);
       const executor = createCommandExecutor(
-        token,
+        tokenManager,
         projectId,
-        teamId,
+        this.teamId,
         ksArgs,
         x11Display,
         xvfbRun,
@@ -478,32 +444,30 @@ const agent = {
         executor,
         jobId,
         projectId,
-        teamId,
+        teamId: this.teamId,
       };
 
-      await executeJob(token, jobInfo, keepFiles);
+      await executeJob(jobInfo, keepFiles);
     } catch (err) {
       logger.error(err);
     }
-  },
+  }
 
   stop() {
     logger.info(`Katalon Agent ${config.version} stopped @ ${new Date()}`);
-  },
+  }
+}
 
-  generateUuid() {
-    return `${new Date().getTime()}-${uuidv4()}`;
-  },
+module.exports = {
+  Agent,
 
   updateConfigs(options) {
     const { version, configPath: configFile = defaultConfigFile, ...opts } = options;
     config.update(opts, configFile);
     if (!config.uuid) {
-      config.uuid = this.generateUuid();
+      config.uuid = generateUuid();
     }
     config.write(configFile, config);
     logger.info(`Updated configs @ ${configFile}.`);
   },
 };
-
-module.exports = agent;
