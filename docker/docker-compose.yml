@@ -1,0 +1,16 @@
+version: "3.2"
+services:
+  katalon-agent:
+    image: "katalon-agent"
+    container_name: "katalon-agent"
+    environment:
+      AGENT_NAME: Katalon Agent
+      TEAM_ID:
+      KATALON_API_KEY:
+    volumes:
+      - katalon-runtime-engines:/root/.katalon
+      - katalon-projects:/katalon/agent
+
+volumes:
+  katalon-runtime-engines:
+  katalon-projects:
