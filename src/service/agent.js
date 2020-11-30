@@ -27,7 +27,7 @@ const requestInterval = NODE_ENV === 'debug' ? 5 * 1000 : 60 * 1000;
 const pingInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 1000;
 const checkProcessInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 5 * 1000;
 const syncJobInterval = NODE_ENV === 'debug' ? 15 * 1000 : 30 * 1000;
-const cancelPendingJobsInterval = NODE_ENV === 'debug' ? 5 * 1000 : 30 * 1000;
+const cancelPendingJobsInterval = NODE_ENV === 'debug' ? 5 * 1000 : 60 * 1000;
 const sendLogWaitInterval = 10 * 1000;
 
 const tokenManager = new TokenManager(3 * requestInterval);
@@ -204,6 +204,7 @@ async function executeJob(jobInfo, keepFiles) {
     logger.info('Job execution has been completed.');
   } catch (err) {
     logger.error(`${executeJob.name}:`, err);
+    jLogger.error(err);
 
     // Update job status to failed when exception occured
     // NOTE: Job status is set FAILED might not be because of a failed execution
@@ -370,7 +371,7 @@ class Agent {
           try {
             if (status === JOB_STATUS.CANCELED && nodeStatus === NODE_STATUS.PENDING_CANCELED) {
               if (processId) {
-                await processController.killProcess(processId);
+                await processController.killProcessFromJobId(id);
               }
               await requestController.updateNodeStatus(id, NODE_STATUS.CANCELED);
             }
