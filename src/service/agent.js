@@ -27,7 +27,6 @@ const requestInterval = NODE_ENV === 'debug' ? 5 * 1000 : 60 * 1000;
 const pingInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 1000;
 const checkProcessInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 5 * 1000;
 const syncJobInterval = NODE_ENV === 'debug' ? 15 * 1000 : 30 * 1000;
-const cancelPendingJobsInterval = NODE_ENV === 'debug' ? 5 * 1000 : 30 * 1000;
 const sendLogWaitInterval = 10 * 1000;
 
 const tokenManager = new TokenManager(3 * requestInterval);
@@ -104,10 +103,9 @@ function synchronizeJob(jobId, onJobSynchronization = () => {}) {
   return setInterval(async () => {
     try {
       const synchronizedJob = await requestController.pingJob(jobId);
-      onJobSynchronization(synchronizedJob && synchronizedJob.body);
-      return synchronizedJob;
+      await onJobSynchronization(synchronizedJob && synchronizedJob.body);
     } catch (err) {
-      return logger.warn('Unable to synchronize job:', jobId, err);
+      logger.warn('Unable to synchronize job:', jobId, err);
     }
   }, syncJobInterval);
 }
@@ -122,10 +120,18 @@ async function executeJob(jobInfo, keepFiles) {
   // Take the job even if the subsequent setup steps fail
   // Prevent the job to be queued forever
   await updateJobStatus(jobId, JOB_STATUS.RUNNING);
-  const syncJobIntervalID = synchronizeJob(jobId, (synchronizedJob) => {
-    const { status } = synchronizedJob;
-    if (status === JOB_STATUS.CANCELED) {
+  const syncJobIntervalID = synchronizeJob(jobId, async (synchronizedJob) => {
+    const { status, id, nodeStatus, processId } = synchronizedJob;
+    if (status === JOB_STATUS.CANCELED && nodeStatus === NODE_STATUS.PENDING_CANCELED) {
       isCanceled = true;
+      try {
+        if (processId) {
+          processController.killProcessFromJobId(id);
+        }
+        await requestController.updateNodeStatus(id, NODE_STATUS.CANCELED);
+      } catch (err) {
+        logger.error(`Error when canceling job ${id}:`, err);
+      }
       logger.info(`Job ${jobId} is canceled.`);
     }
   });
@@ -353,39 +359,10 @@ class Agent {
       }); // async
     };
 
-    const cancelPendingJobs = async () => {
-      const configs = config.read(this.configFile);
-      if (!configs.uuid) {
-        return;
-      }
-
-      const pendingCanceledJobsResponse = await requestController.getPendingCanceledJobs(
-        configs.uuid,
-        this.teamId,
-      );
-      const { body: pendingCanceledJobs = [] } = pendingCanceledJobsResponse || {};
-
-      await Promise.all(
-        pendingCanceledJobs.map(async ({ id, status, nodeStatus, processId }) => {
-          try {
-            if (status === JOB_STATUS.CANCELED && nodeStatus === NODE_STATUS.PENDING_CANCELED) {
-              if (processId) {
-                await processController.killProcess(processId);
-              }
-              await requestController.updateNodeStatus(id, NODE_STATUS.CANCELED);
-            }
-          } catch (err) {
-            logger.error(`Error when canceling job ${id}:`, err);
-          }
-        }),
-      );
-    };
-
     requestAndExecuteJob();
     setInterval(requestAndExecuteJob, requestInterval);
     setInterval(syncInfo, pingInterval);
     setInterval(processController.removeInactiveControllers, checkProcessInterval);
-    setInterval(cancelPendingJobs, cancelPendingJobsInterval);
   }
 
   async startCI() {

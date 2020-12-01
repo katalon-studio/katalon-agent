@@ -66,15 +66,6 @@ class KatalonRequestController {
     return makeRequestWithTokenHelper(this.tokenManager.token, katalonRequest.updateJob, body);
   }
 
-  getPendingCanceledJobs(uuid, teamId) {
-    return makeRequestWithTokenHelper(
-      this.tokenManager.token,
-      katalonRequest.getPendingCanceledJobs,
-      uuid,
-      teamId,
-    );
-  }
-
   updateNodeStatus(jobId, nodeStatus) {
     return makeRequestWithTokenHelper(
       this.tokenManager.token,
