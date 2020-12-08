@@ -210,6 +210,7 @@ async function executeJob(jobInfo, keepFiles) {
     logger.info('Job execution has been completed.');
   } catch (err) {
     logger.error(`${executeJob.name}:`, err);
+    jLogger.error(err);
 
     // Update job status to failed when exception occured
     // NOTE: Job status is set FAILED might not be because of a failed execution
