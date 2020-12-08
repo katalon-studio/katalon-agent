@@ -233,19 +233,6 @@ module.exports = {
     return http.request(config.serverUrl, '/info', options, 'GET');
   },
 
-  getPendingCanceledJobs(token, uuid, teamId) {
-    const options = {
-      auth: {
-        bearer: token,
-      },
-      qs: {
-        uuid,
-        teamId,
-      },
-    };
-    return http.request(config.serverUrl, `${KATALON_JOB_URI}cancel`, options, 'GET');
-  },
-
   updateNodeStatus(token, jobId, nodeStatus) {
     const options = {
       auth: {
