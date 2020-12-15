@@ -356,7 +356,7 @@ class Agent {
         hostname: os.getHostName(),
         ip: ip.address(),
         os: os.getVersion(),
-        version: utils.getVersion(),
+        agentVersion: utils.getVersion(),
       }); // async
     };
 
