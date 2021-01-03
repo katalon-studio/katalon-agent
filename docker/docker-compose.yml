@@ -9,8 +9,10 @@ services:
       KATALON_API_KEY:
     volumes:
       - katalon-runtime-engines:/root/.katalon
-      - katalon-projects:/katalon/agent
+      - katalon-projects:/katalon/agent/tmp
+      - katalon-agent-log:/katalon/agent/log
 
 volumes:
   katalon-runtime-engines:
   katalon-projects:
+  katalon-agent-log:
