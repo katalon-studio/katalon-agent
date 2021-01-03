@@ -1,7 +1,7 @@
 version: "3.2"
 services:
   katalon-agent:
-    image: "katalon-agent"
+    image: "katalonstudio/agent"
     container_name: "katalon-agent"
     environment:
       AGENT_NAME: Katalon Agent
