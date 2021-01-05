@@ -15,8 +15,8 @@ const PROGRESS_RENDER_THROTTLE = 5000;
 function replaceOAuthWithBasicAuth(options = {}) {
   if (options.auth) {
     options.auth = {
-      user: '',
-      pass: config.apikey,
+      username: '',
+      password: config.apikey,
     };
   }
 }
