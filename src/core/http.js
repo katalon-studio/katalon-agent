@@ -12,6 +12,15 @@ const config = require('./config');
 const FILTERED_ERROR_CODE = new Set([400, 401, 403, 404, 500, 502, 503, 504]);
 const PROGRESS_RENDER_THROTTLE = 5000;
 
+function replaceOAuthWithBasicAuth(options = {}) {
+  if (options.auth) {
+    options.auth = {
+      user: '',
+      pass: config.apikey,
+    };
+  }
+}
+
 function buildOptions(url, headers, options) {
   let defaultOptions = {
     url,
@@ -26,6 +35,7 @@ function buildOptions(url, headers, options) {
     };
   }
   options = _.merge(defaultOptions, options || {});
+  replaceOAuthWithBasicAuth(options);
   return options;
 }
 

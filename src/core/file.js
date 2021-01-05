@@ -26,7 +26,7 @@ module.exports = {
     const file = tmp.fileSync();
     const filePath = file.name;
     logger.debug(`Download into temporary directory: ${filePath}`);
-    const options = config.isOnPremise && token ? { auth: { bearer: token } } : {};
+    const options = config.isOnPremise ? { auth: { bearer: token } } : {};
     return http
       .stream(url, filePath, options)
       .then(() => this.extract(filePath, targetDir, haveFilter, logger));

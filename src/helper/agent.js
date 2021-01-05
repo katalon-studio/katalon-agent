@@ -5,6 +5,10 @@ const { KatalonCommandExecutor, GenericCommandExecutor } = require('../service/c
 const logger = require('../config/logger');
 const { KatalonTestProjectDownloader, GitDownloader } = require('../service/remote-downloader');
 
+function getAuth(tokenManager) {
+  return null;
+}
+
 function buildUpdateJobBody(jobId, jobStatus, processId) {
   const result = {
     id: jobId,
@@ -36,7 +40,7 @@ function createCommandExecutor(
       projectId,
       sessionId: parameter.sessionId,
     };
-    return new GenericCommandExecutor(tokenManager.tokenSync, info);
+    return new GenericCommandExecutor(getAuth(tokenManager), info);
   }
 
   const info = {
@@ -48,7 +52,7 @@ function createCommandExecutor(
     x11Display,
     xvfbConfiguration,
   };
-  return new KatalonCommandExecutor(tokenManager.tokenSync, info);
+  return new KatalonCommandExecutor(getAuth(tokenManager), info);
 }
 
 function createDownloader(tokenManager, parameter) {
@@ -56,7 +60,7 @@ function createDownloader(tokenManager, parameter) {
     return new GitDownloader(logger, parameter.gitRepositoryResource);
   }
 
-  return new KatalonTestProjectDownloader(logger, parameter.downloadUrl, tokenManager.tokenSync);
+  return new KatalonTestProjectDownloader(logger, parameter.downloadUrl, getAuth(tokenManager));
 }
 
 function generateUuid() {

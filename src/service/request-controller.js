@@ -10,13 +10,17 @@ class KatalonRequestController {
     this.tokenManager = tokenManager;
   }
 
+  get auth() {
+    return null;
+  }
+
   getBuildInfo() {
     return katalonRequest.getBuildInfo();
   }
 
   getUploadInfo(projectId) {
     return makeRequestWithTokenHelper(
-      this.tokenManager.token,
+      this.auth,
       katalonRequest.getUploadInfo,
       projectId,
     );
@@ -24,7 +28,7 @@ class KatalonRequestController {
 
   notifyJob(jobId, projectId) {
     return makeRequestWithTokenHelper(
-      this.tokenManager.token,
+      this.auth,
       katalonRequest.notifyJob,
       jobId,
       projectId,
@@ -32,16 +36,16 @@ class KatalonRequestController {
   }
 
   pingAgent(body) {
-    return makeRequestWithTokenHelper(this.tokenManager.token, katalonRequest.pingAgent, body);
+    return makeRequestWithTokenHelper(this.auth, katalonRequest.pingAgent, body);
   }
 
   pingJob(jobId) {
-    return makeRequestWithTokenHelper(this.tokenManager.token, katalonRequest.pingJob, jobId);
+    return makeRequestWithTokenHelper(this.auth, katalonRequest.pingJob, jobId);
   }
 
   requestJob(uuid, teamId) {
     return makeRequestWithTokenHelper(
-      this.tokenManager.token,
+      this.auth,
       katalonRequest.requestJob,
       uuid,
       teamId,
@@ -50,7 +54,7 @@ class KatalonRequestController {
 
   saveJobLog(jobInfo, batch, fileName) {
     return makeRequestWithTokenHelper(
-      this.tokenManager.token,
+      this.auth,
       katalonRequest.saveJobLog,
       jobInfo,
       batch,
@@ -63,12 +67,12 @@ class KatalonRequestController {
   }
 
   updateJob(body) {
-    return makeRequestWithTokenHelper(this.tokenManager.token, katalonRequest.updateJob, body);
+    return makeRequestWithTokenHelper(this.auth, katalonRequest.updateJob, body);
   }
 
   updateNodeStatus(jobId, nodeStatus) {
     return makeRequestWithTokenHelper(
-      this.tokenManager.token,
+      this.auth,
       katalonRequest.updateNodeStatus,
       jobId,
       nodeStatus,
