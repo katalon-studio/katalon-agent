@@ -11,6 +11,7 @@ const reportUploader = require('./report-uploader');
 const PROJECT_FILE_PATTERN = '**/*.prj';
 const TESTOPS_PROPERTIES_FILE = 'com.kms.katalon.integration.analytics.properties';
 const GENERIC_COMMAND_OUTPUT_DIR = 'katalon-agent-output';
+const GENERIC_COMMAND_REPORT_DIR_ENV = 'KATALON_AGENT_REPORT_FOLDER';
 const JUNIT_FILE_PATTERN = '**/*.xml';
 
 function buildTestOpsIntegrationProperties(teamId, projectId) {
@@ -134,11 +135,17 @@ class GenericCommandExecutor {
       sessionId: this.sessionId,
     };
 
+    const reportLocations = [outputDir];
+    const reportDir = process.env[GENERIC_COMMAND_REPORT_DIR_ENV];
+    if (reportDir) {
+      reportLocations.push(path.join(execDirPath, reportDir));
+    }
+
     logger.info('Uploading JUnit reports...');
     // Collect all junit xml files and upload to TestOps
     await reportUploader.uploadReports(
       this.projectId,
-      outputDir,
+      reportLocations,
       'junit',
       JUNIT_FILE_PATTERN,
       opts,
