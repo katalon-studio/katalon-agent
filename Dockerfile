@@ -52,16 +52,16 @@ WORKDIR $KATALON_SCRIPT_DIR
 COPY ./docker/scripts/wrap_chrome_binary.sh wrap_chrome_binary.sh
 COPY ./docker/scripts/setup_environment.sh setup_environment.sh
 COPY ./docker/scripts/setup_agent.sh setup_agent.sh
+COPY ./docker/scripts/setup.sh setup.sh
 COPY ./docker/scripts/agent.sh agent.sh
-RUN chmod a+x wrap_chrome_binary.sh setup_environment.sh setup_agent.sh agent.sh
-
-# Setup environment
-RUN $KATALON_SCRIPT_DIR/setup_environment.sh
 
 # Copy agent
 WORKDIR $KATALON_AGENT_DIR
 COPY --from=build /katalon/bin/cli-linux-x64 *.sh ./
-RUN $KATALON_SCRIPT_DIR/setup_agent.sh
+
+# Setup
+WORKDIR $KATALON_SCRIPT_DIR
+RUN ./setup.sh
 
 # PATH Environment
 ENV PATH "$PATH:$KATALON_SCRIPT_DIR:$KATALON_AGENT_DIR:$GRADLE_BIN"
@@ -69,7 +69,6 @@ RUN echo "PATH=\"$PATH\"" > /etc/environment
 
 WORKDIR /
 COPY ./docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod a+x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
