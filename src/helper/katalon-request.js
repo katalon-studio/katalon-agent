@@ -53,11 +53,8 @@ module.exports = {
     return http.request(config.serverUrl, TOKEN_URI, options, 'post');
   },
 
-  getUploadInfo(token, projectId) {
+  getUploadInfo(projectId) {
     const options = {
-      auth: {
-        bearer: token,
-      },
       json: true,
       qs: {
         projectId,
@@ -75,7 +72,6 @@ module.exports = {
   },
 
   uploadFileInfo(
-    token,
     projectId,
     batch,
     folderName,
@@ -92,9 +88,6 @@ module.exports = {
       url = KATALON_RECORDER_TEST_REPORTS_URI;
     }
     const options = {
-      auth: {
-        bearer: token,
-      },
       json: true,
       qs: {
         projectId,
@@ -109,30 +102,21 @@ module.exports = {
     return http.request(config.serverUrl, url, options, 'post');
   },
 
-  pingAgent(token, body) {
+  pingAgent(body) {
     const options = {
-      auth: {
-        bearer: token,
-      },
       body,
     };
     return http.request(config.serverUrl, KATALON_AGENT_URI, options, 'POST');
   },
 
-  pingJob(token, jobId) {
+  pingJob(jobId) {
     const options = {
-      auth: {
-        bearer: token,
-      },
     };
     return http.request(config.serverUrl, `${KATALON_JOB_URI}${jobId}`, options, 'PATCH');
   },
 
-  requestJob(token, uuid, teamId) {
+  requestJob(uuid, teamId) {
     const options = {
-      auth: {
-        bearer: token,
-      },
       qs: {
         uuid,
         teamId,
@@ -141,22 +125,16 @@ module.exports = {
     return http.request(config.serverUrl, `${KATALON_JOB_URI}get-job`, options, 'GET');
   },
 
-  updateJob(token, body) {
+  updateJob(body) {
     const options = {
-      auth: {
-        bearer: token,
-      },
       body,
     };
     return http.request(config.serverUrl, `${KATALON_JOB_URI}update-job`, options, 'POST');
   },
 
-  saveJobLog(token, jobInfo, batch, fileName) {
+  saveJobLog(jobInfo, batch, fileName) {
     const { projectId, jobId, uploadPath, oldUploadPath } = jobInfo;
     const options = {
-      auth: {
-        bearer: token,
-      },
       qs: {
         projectId,
         jobId,
@@ -170,21 +148,15 @@ module.exports = {
     return http.request(config.serverUrl, `${KATALON_JOB_URI}save-log`, options, 'POST');
   },
 
-  getJobLog(token, jobInfo) {
+  getJobLog(jobInfo) {
     const { jobId } = jobInfo;
     const options = {
-      auth: {
-        bearer: token,
-      },
     };
     return http.request(config.serverUrl, `${KATALON_JOB_URI + jobId}/get-log`, options, 'GET');
   },
 
-  notifyJob(token, jobId, projectId) {
+  notifyJob(jobId, projectId) {
     const options = {
-      auth: {
-        bearer: token,
-      },
       qs: {
         projectId,
       },
@@ -233,11 +205,8 @@ module.exports = {
     return http.request(config.serverUrl, '/info', options, 'GET');
   },
 
-  updateNodeStatus(token, jobId, nodeStatus) {
+  updateNodeStatus(jobId, nodeStatus) {
     const options = {
-      auth: {
-        bearer: token,
-      },
       body: {
         id: jobId,
         nodeStatus,

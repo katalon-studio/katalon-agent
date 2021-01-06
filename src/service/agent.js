@@ -16,7 +16,6 @@ const logger = require('../config/logger');
 const os = require('../core/os');
 const processController = require('./process-controller');
 const { KatalonRequestController } = require('./request-controller');
-const TokenManager = require('./token-manager');
 const { S3FileTransport } = require('../config/transports');
 const utils = require('../core/utils');
 
@@ -29,8 +28,7 @@ const checkProcessInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 5 * 1000;
 const syncJobInterval = NODE_ENV === 'debug' ? 15 * 1000 : 30 * 1000;
 const sendLogWaitInterval = 10 * 1000;
 
-const tokenManager = new TokenManager(3 * requestInterval);
-const requestController = new KatalonRequestController(tokenManager);
+const requestController = new KatalonRequestController();
 
 function updateJobStatus(jobId, jobStatus, processId = null) {
   const body = buildUpdateJobBody(jobId, jobStatus, processId);
@@ -314,9 +312,8 @@ class Agent {
           );
         }
 
-        const downloader = createDownloader(tokenManager, parameter);
+        const downloader = createDownloader(parameter);
         const executor = createCommandExecutor(
-          tokenManager,
           projectId,
           this.teamId,
           ksArgs,
@@ -406,9 +403,8 @@ class Agent {
         );
       }
 
-      const downloader = createDownloader(tokenManager, parameter);
+      const downloader = createDownloader(parameter);
       const executor = createCommandExecutor(
-        tokenManager,
         projectId,
         this.teamId,
         ksArgs,

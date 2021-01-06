@@ -7,19 +7,18 @@ class KatalonStudioDownloader {
   }
 
   download(targetDir) {
-    return file.downloadAndExtract(this.downloadUrl, targetDir, false, null, this.logger);
+    return file.downloadAndExtract(this.downloadUrl, targetDir, false, this.logger);
   }
 }
 
 class KatalonTestProjectDownloader {
-  constructor(logger, downloadUrl, token) {
+  constructor(logger, downloadUrl) {
     this.logger = logger;
     this.downloadUrl = downloadUrl;
-    this.token = token;
   }
 
   download(targetDir) {
-    return file.downloadAndExtract(this.downloadUrl, targetDir, true, this.token, this.logger);
+    return file.downloadAndExtract(this.downloadUrl, targetDir, true, this.logger);
   }
 }
 

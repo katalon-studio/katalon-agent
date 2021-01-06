@@ -1,65 +1,36 @@
 const katalonRequest = require('../helper/katalon-request');
 
-async function makeRequestWithTokenHelper(tokenPromise, requestMethod, ...args) {
-  const token = await tokenPromise;
-  return requestMethod(token, ...args);
+async function requestWrapper(requestMethod, ...args) {
+  return requestMethod(...args);
 }
 
 class KatalonRequestController {
-  constructor(tokenManager) {
-    this.tokenManager = tokenManager;
-  }
-
-  get auth() {
-    return null;
-  }
-
   getBuildInfo() {
     return katalonRequest.getBuildInfo();
   }
 
   getUploadInfo(projectId) {
-    return makeRequestWithTokenHelper(
-      this.auth,
-      katalonRequest.getUploadInfo,
-      projectId,
-    );
+    return requestWrapper(katalonRequest.getUploadInfo, projectId);
   }
 
   notifyJob(jobId, projectId) {
-    return makeRequestWithTokenHelper(
-      this.auth,
-      katalonRequest.notifyJob,
-      jobId,
-      projectId,
-    );
+    return requestWrapper(katalonRequest.notifyJob, jobId, projectId);
   }
 
   pingAgent(body) {
-    return makeRequestWithTokenHelper(this.auth, katalonRequest.pingAgent, body);
+    return requestWrapper(katalonRequest.pingAgent, body);
   }
 
   pingJob(jobId) {
-    return makeRequestWithTokenHelper(this.auth, katalonRequest.pingJob, jobId);
+    return requestWrapper(katalonRequest.pingJob, jobId);
   }
 
   requestJob(uuid, teamId) {
-    return makeRequestWithTokenHelper(
-      this.auth,
-      katalonRequest.requestJob,
-      uuid,
-      teamId,
-    );
+    return requestWrapper(katalonRequest.requestJob, uuid, teamId);
   }
 
   saveJobLog(jobInfo, batch, fileName) {
-    return makeRequestWithTokenHelper(
-      this.auth,
-      katalonRequest.saveJobLog,
-      jobInfo,
-      batch,
-      fileName,
-    );
+    return requestWrapper(katalonRequest.saveJobLog, jobInfo, batch, fileName);
   }
 
   uploadFile(uploadUrl, filePath) {
@@ -67,16 +38,11 @@ class KatalonRequestController {
   }
 
   updateJob(body) {
-    return makeRequestWithTokenHelper(this.auth, katalonRequest.updateJob, body);
+    return requestWrapper(katalonRequest.updateJob, body);
   }
 
   updateNodeStatus(jobId, nodeStatus) {
-    return makeRequestWithTokenHelper(
-      this.auth,
-      katalonRequest.updateNodeStatus,
-      jobId,
-      nodeStatus,
-    );
+    return requestWrapper(katalonRequest.updateNodeStatus, jobId, nodeStatus);
   }
 }
 
