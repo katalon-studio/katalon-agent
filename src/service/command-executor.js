@@ -13,7 +13,7 @@ const TESTOPS_PROPERTIES_FILE = 'com.kms.katalon.integration.analytics.propertie
 const GENERIC_COMMAND_OUTPUT_DIR = 'katalon-agent-output';
 const JUNIT_FILE_PATTERN = '**/*.xml';
 
-function buildTestOpsIntegrationProperties(token, teamId, projectId) {
+function buildTestOpsIntegrationProperties(teamId, projectId) {
   const deprecatedProperties = {
     'analytics.server.endpoint': config.serverUrl,
     'analytics.authentication.email': config.email,
@@ -31,7 +31,6 @@ function buildTestOpsIntegrationProperties(token, teamId, projectId) {
   return {
     ...deprecatedProperties,
     'analytics.integration.enable': true,
-    'analytics.authentication.token': token,
     'analytics.team': JSON.stringify({ id: teamId.toString() }),
     'analytics.project': JSON.stringify({ id: projectId.toString() }),
     ...onPremiseProperties,
@@ -88,9 +87,8 @@ class BaseKatalonCommandExecutor {
 }
 
 class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
-  constructor(token, info) {
+  constructor(info) {
     super(info);
-    this.token = token;
     this.teamId = info.teamId;
     this.projectId = info.projectId;
   }
@@ -107,14 +105,13 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     );
     properties.writeProperties(
       testOpsPropertiesPath,
-      buildTestOpsIntegrationProperties(this.token, this.teamId, this.projectId),
+      buildTestOpsIntegrationProperties(this.teamId, this.projectId),
     );
   }
 }
 
 class GenericCommandExecutor {
-  constructor(token, info) {
-    this.token = token;
+  constructor(info) {
     this.commands = info.commands;
     this.projectId = info.projectId;
     this.sessionId = info.sessionId;
@@ -140,7 +137,6 @@ class GenericCommandExecutor {
     logger.info('Uploading JUnit reports...');
     // Collect all junit xml files and upload to TestOps
     await reportUploader.uploadReports(
-      this.token,
       this.projectId,
       outputDir,
       'junit',

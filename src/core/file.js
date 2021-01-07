@@ -6,6 +6,7 @@ const tmp = require('tmp');
 const config = require('./config');
 const http = require('./http');
 const defaultLogger = require('../config/logger');
+const { getAuth } = require('./auth');
 
 module.exports = {
   extract(filePath, targetDir, haveFilter, logger = defaultLogger) {
@@ -21,12 +22,12 @@ module.exports = {
     });
   },
 
-  downloadAndExtract(url, targetDir, haveFilter = false, token = null, logger = defaultLogger) {
+  downloadAndExtract(url, targetDir, haveFilter = false, logger = defaultLogger) {
     logger.info(`Downloading from ${url}. It may take a few minutes.`);
     const file = tmp.fileSync();
     const filePath = file.name;
     logger.debug(`Download into temporary directory: ${filePath}`);
-    const options = config.isOnPremise && token ? { auth: { bearer: token } } : {};
+    const options = config.isOnPremise ? { auth: getAuth() } : {};
     return http
       .stream(url, filePath, options)
       .then(() => this.extract(filePath, targetDir, haveFilter, logger));
