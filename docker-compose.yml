@@ -2,7 +2,9 @@ version: "3.2"
 services:
   katalon-agent:
     image: "katalonstudio/agent"
-    container_name: "katalon-agent"
+    deploy:
+      mode: replicated
+      replicas: 10
     environment:
       SERVER_URL: https://testops.katalon.io
       AGENT_NAME: Katalon Agent
@@ -13,5 +15,3 @@ services:
 
 volumes:
   katalon-runtime-engines:
-  katalon-projects:
-  katalon-agent-log:
