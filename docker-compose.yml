@@ -4,13 +4,12 @@ services:
     image: "katalonstudio/agent"
     container_name: "katalon-agent"
     environment:
+      SERVER_URL: https://testops.katalon.io
       AGENT_NAME: Katalon Agent
       TEAM_ID:
       KATALON_API_KEY:
     volumes:
       - katalon-runtime-engines:/root/.katalon
-      - katalon-projects:/katalon/agent/tmp
-      - katalon-agent-log:/katalon/agent/log
 
 volumes:
   katalon-runtime-engines:
