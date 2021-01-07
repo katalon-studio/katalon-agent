@@ -4,6 +4,7 @@ services:
     image: "katalonstudio/agent"
     container_name: "katalon-agent"
     environment:
+      SERVER_URL: https://testops.katalon.io
       AGENT_NAME: Katalon Agent
       TEAM_ID:
       KATALON_API_KEY:
