@@ -44,7 +44,17 @@ module.exports = {
     return version;
   },
 
-  runCommand(command, x11Display, xvfbConfiguration, logger = defaultLogger, tmpDirPath = '', callback) {
+  runCommand(
+    command,
+    {
+      x11Display,
+      xvfbConfiguration,
+      logger = defaultLogger,
+      tmpDirPath = '',
+      callback = () => {},
+      env,
+    },
+  ) {
     let cmd;
     const args = [];
     const type = os.type();
@@ -74,9 +84,14 @@ module.exports = {
 
     logger.info(`Execute "${cmd} ${args.join(' ')}" in ${tmpDirPath}.`);
     const promise = new Promise((resolve) => {
+      const environment = {
+        ...process.env,
+        ...env,
+      };
       const cmdProcess = childProcess.spawn(cmd, args, {
         cwd: tmpDirPath,
         shell,
+        env: environment,
       });
 
       if (callback) {
