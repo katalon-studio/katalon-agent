@@ -50,6 +50,7 @@ class BaseKatalonCommandExecutor {
     this.ksArgs = info.ksArgs;
     this.x11Display = info.x11Display;
     this.xvfbConfiguration = info.xvfbConfiguration;
+    this.env = info.env;
   }
 
   async execute(logger, execDirPath, callback) {
@@ -82,6 +83,7 @@ class BaseKatalonCommandExecutor {
       this.xvfbConfiguration,
       logger,
       callback,
+      this.env,
     );
   }
 }
@@ -115,6 +117,7 @@ class GenericCommandExecutor {
     this.commands = info.commands;
     this.projectId = info.projectId;
     this.sessionId = info.sessionId;
+    this.env = info.env;
   }
 
   async execute(logger, execDirPath, callback) {
@@ -127,6 +130,7 @@ class GenericCommandExecutor {
       outputDir,
       logger,
       callback,
+      this.env,
     );
     // testCopyJUnitReports(outputDir);
 

@@ -4,6 +4,7 @@ const { JOB_STATUS } = require('../config/constants');
 const { KatalonCommandExecutor, GenericCommandExecutor } = require('../service/command-executor');
 const logger = require('../config/logger');
 const { KatalonTestProjectDownloader, GitDownloader } = require('../service/remote-downloader');
+const { mergeEnvs } = require('../core/utils');
 
 function buildUpdateJobBody(jobId, jobStatus, processId) {
   const result = {
@@ -29,11 +30,13 @@ function createCommandExecutor(
   xvfbConfiguration,
   parameter,
 ) {
+  const env = mergeEnvs(parameter.environmentVariables);
   if (parameter.configType === 'GENERIC_COMMAND') {
     const info = {
       commands: parameter.command,
       projectId,
       sessionId: parameter.sessionId,
+      env,
     };
     return new GenericCommandExecutor(info);
   }
@@ -46,6 +49,7 @@ function createCommandExecutor(
     ksArgs,
     x11Display,
     xvfbConfiguration,
+    env,
   };
   return new KatalonCommandExecutor(info);
 }
