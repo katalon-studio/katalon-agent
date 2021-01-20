@@ -53,6 +53,6 @@
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-import": "^2.22.1",
     "pkg": "4.4.8",
-    "release-it": "^13.6.1"
+    "release-it": "^14.2.2"
   }
 }
