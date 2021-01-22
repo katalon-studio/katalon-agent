@@ -2,7 +2,12 @@ env:
   commonjs: true
   es6: true
   node: true
-extends: airbnb-base
+  jest/globals: true
+extends:
+  - airbnb-base
+  - plugin:jest/recommended
+plugins:
+  - jest
 globals:
   Atomics: readonly
   SharedArrayBuffer: readonly
