@@ -78,4 +78,12 @@ module.exports = {
     };
     return http.put(api.updateNodeStatus(), data);
   },
+
+  getKSReleases() {
+    return http.get(api.ksReleases());
+  },
+
+  download(url, filePath) {
+    return http.stream(url, filePath);
+  },
 };

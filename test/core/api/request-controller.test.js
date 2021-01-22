@@ -12,6 +12,7 @@ const TEST_PARAMS = {
   PROJECT_ID: 1,
   JOB_ID: 533,
   JOB_LOG: 'debug.log',
+  DOWNLOAD_URL: '',
 };
 
 const debugLog = path.join(__dirname, TEST_PARAMS.JOB_LOG);
@@ -44,5 +45,16 @@ describe('Controller test', () => {
     const batch = generateUuid();
     const result = await controller.saveJobLog(jobInfo, batch, TEST_PARAMS.JOB_LOG);
     expect(result.status).toBe(200);
+  });
+
+  it('should get KS releases', async () => {
+    const result = await controller.getKSReleases();
+    expect(result.status).toBe(200);
+    expect(result.body).not.toBeNull();
+    expect(result.body.length).toBeGreaterThan(1);
+  });
+
+  it.skip('should download file', async () => {
+    const result = await controller.download(TEST_PARAMS.DOWNLOAD_URL, 'abc.zip');
   });
 });

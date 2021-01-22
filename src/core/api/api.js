@@ -1,5 +1,5 @@
 const urljoin = require('url-join');
-const { PATHS, REPORT_TYPE } = require('./constants');
+const { PATHS, REPORT_TYPE, KS_RELEASES_URL } = require('./constants');
 const { TestOpsApiParam, ApiParam } = require('./api-param');
 
 module.exports = {
@@ -90,5 +90,11 @@ module.exports = {
 
   updateNodeStatus() {
     return new TestOpsApiParam(urljoin(PATHS.JOB, 'node-status'));
+  },
+
+  ksReleases() {
+    return new ApiParam('', {
+      baseUrl: KS_RELEASES_URL,
+    });
   },
 };
