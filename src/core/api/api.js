@@ -1,100 +1,98 @@
-const urljoin = require('url-join');
-const { PATHS, REPORT_TYPE, KS_RELEASES_URL } = require('./constants');
-const { TestOpsApiParam, ApiParam } = require('./api-param');
+const urlParam = require('./url-param');
+const http = require('./http');
+const { OAUTH2_GRANT_TYPES } = require('./constants');
 
 module.exports = {
-  accessToken() {
-    return new TestOpsApiParam(PATHS.TOKEN);
+  requestToken(email, password) {
+    const data = {
+      grant_type: OAUTH2_GRANT_TYPES.PASSWORD,
+      username: email,
+      password,
+    };
+    return http.post(urlParam.accessToken(), data);
+  },
+
+  refreshToken(refreshToken) {
+    const data = {
+      grant_type: OAUTH2_GRANT_TYPES.REFRESH_TOKEN,
+      refresh_token: refreshToken,
+    };
+    return http.post(urlParam.accessToken(), data);
   },
 
   getUploadInfo(projectId) {
-    return new TestOpsApiParam(PATHS.UPLOAD_URL, {
-      params: {
-        projectId,
-      },
-    });
+    return http.get(urlParam.getUploadInfo(projectId));
   },
 
-  uploadFileToS3(signedUrl) {
-    return new ApiParam('', {
-      baseUrl: signedUrl,
-    });
+  uploadFile(uploadUrl, filePath) {
+    return http.uploadFileToS3(urlParam.uploadFileToS3(uploadUrl), filePath);
   },
 
-  uploadFileInfo(projectId, batch, folderName, fileName, uploadedPath, isEnd, reportType) {
-    let path = PATHS.REPORT.KATALON;
-    if (reportType === REPORT_TYPE.JUNIT) {
-      path = PATHS.REPORT.JUNIT;
-    } else if (reportType === REPORT_TYPE.KATALON_RECORDER) {
-      path = PATHS.REPORT.KATALON_RECORDER;
-    }
-    return new TestOpsApiParam(path, {
-      params: {
+  uploadFileInfo(
+    projectId,
+    batch,
+    folderName,
+    fileName,
+    uploadedPath,
+    isEnd,
+    reportType,
+    extraParams = {},
+  ) {
+    return http.post(
+      urlParam.uploadFileInfo(
         projectId,
         batch,
-        folderPath: folderName,
+        folderName,
         fileName,
         uploadedPath,
         isEnd,
-      },
-    });
+        reportType,
+        extraParams,
+      ),
+    );
   },
 
-  pingAgent() {
-    return new TestOpsApiParam(PATHS.AGENT);
+  pingAgent(body) {
+    return http.post(urlParam.pingAgent(), body);
   },
 
   pingJob(jobId) {
-    return new TestOpsApiParam(urljoin(PATHS.JOB, jobId.toString()));
+    return http.patch(urlParam.pingJob(jobId));
   },
 
   requestJob(uuid, teamId) {
-    return new TestOpsApiParam(urljoin(PATHS.JOB, 'get-job'), {
-      params: {
-        uuid,
-        teamId,
-      },
-    });
+    return http.get(urlParam.requestJob(uuid, teamId));
   },
 
-  updateJob() {
-    return new TestOpsApiParam(urljoin(PATHS.JOB, 'update-job'));
+  updateJob(body) {
+    return http.post(urlParam.updateJob(), body);
   },
 
   saveJobLog(jobInfo, batch, fileName) {
-    const { projectId, jobId, uploadPath, oldUploadPath } = jobInfo;
-    return new TestOpsApiParam(urljoin(PATHS.JOB, 'save-log'), {
-      params: {
-        projectId,
-        jobId,
-        batch,
-        folderPath: '',
-        fileName,
-        uploadedPath: uploadPath,
-        oldUploadedPath: oldUploadPath,
-      },
-    });
+    return http.post(urlParam.saveJobLog(jobInfo, batch, fileName));
   },
 
   notifyJob(jobId, projectId) {
-    return new TestOpsApiParam(urljoin(PATHS.JOB, jobId.toString(), 'notify'), {
-      params: {
-        projectId,
-      },
-    });
+    return http.post(urlParam.notifyJob(jobId, projectId));
   },
 
   getBuildInfo() {
-    return new TestOpsApiParam(PATHS.INFO);
+    return http.get(urlParam.getBuildInfo());
   },
 
-  updateNodeStatus() {
-    return new TestOpsApiParam(urljoin(PATHS.JOB, 'node-status'));
+  updateNodeStatus(jobId, nodeStatus) {
+    const data = {
+      id: jobId,
+      nodeStatus,
+    };
+    return http.put(urlParam.updateNodeStatus(), data);
   },
 
-  ksReleases() {
-    return new ApiParam('', {
-      baseUrl: KS_RELEASES_URL,
-    });
+  getKSReleases() {
+    return http.get(urlParam.ksReleases());
+  },
+
+  download(url, filePath) {
+    return http.stream(urlParam.download(url), filePath);
   },
 };

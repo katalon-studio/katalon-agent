@@ -3,10 +3,8 @@ const path = require('path');
 const simpleGit = require('simple-git/promise')();
 const tmp = require('tmp');
 
-const config = require('./config');
-const http = require('./http');
+const api = require('./api');
 const defaultLogger = require('../config/logger');
-const { getAuth } = require('./auth');
 
 module.exports = {
   extract(filePath, targetDir, haveFilter, logger = defaultLogger) {
@@ -27,9 +25,8 @@ module.exports = {
     const file = tmp.fileSync();
     const filePath = file.name;
     logger.debug(`Download into temporary directory: ${filePath}`);
-    const options = config.isOnPremise ? { auth: getAuth() } : {};
-    return http
-      .stream(url, filePath, options)
+    return api
+      .download(url, filePath)
       .then(() => this.extract(filePath, targetDir, haveFilter, logger));
   },
 

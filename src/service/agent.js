@@ -13,9 +13,9 @@ const config = require('../core/config');
 const { JOB_STATUS, NODE_STATUS } = require('../config/constants');
 const jobLogger = require('../config/job-logger');
 const logger = require('../config/logger');
+const api = require('../core/api');
 const os = require('../core/os');
 const processController = require('./process-controller');
-const { KatalonRequestController } = require('./request-controller');
 const { S3FileTransport } = require('../config/transports');
 const utils = require('../core/utils');
 
@@ -28,17 +28,15 @@ const checkProcessInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 5 * 1000;
 const syncJobInterval = NODE_ENV === 'debug' ? 15 * 1000 : 30 * 1000;
 const sendLogWaitInterval = 10 * 1000;
 
-const requestController = new KatalonRequestController();
-
 function updateJobStatus(jobId, jobStatus, processId = null) {
   const body = buildUpdateJobBody(jobId, jobStatus, processId);
-  return requestController.updateJob(body);
+  return api.updateJob(body);
 }
 
 async function uploadLog(jobInfo, filePath) {
   logger.info('Uploading job execution log...');
   // Request upload URL
-  const response = await requestController.getUploadInfo(jobInfo.projectId);
+  const response = await api.getUploadInfo(jobInfo.projectId);
   if (!response || !response.body) {
     return null;
   }
@@ -54,18 +52,18 @@ async function uploadLog(jobInfo, filePath) {
   jobInfo.uploadUrl = uploadUrl;
   jobInfo.uploadPath = uploadPath;
 
-  await requestController.uploadFile(uploadUrl, filePath);
+  await api.uploadFile(uploadUrl, filePath);
 
   const batch = generateUuid();
   const fileName = path.basename(filePath);
 
   // Update job's upload file
-  return requestController.saveJobLog(jobInfo, batch, fileName);
+  return api.saveJobLog(jobInfo, batch, fileName);
 }
 
 async function getProfiles() {
   logger.info('Getting server profiles...');
-  const response = await requestController.getBuildInfo();
+  const response = await api.getBuildInfo();
   if (!response || !response.body) {
     return null;
   }
@@ -85,14 +83,14 @@ function isOnPremiseProfile(profiles) {
 }
 
 function notifyJob(jobId, projectId) {
-  return requestController
+  return api
     .notifyJob(jobId, projectId)
     .catch((error) => logger.warn('Unable to send job notification:', error));
 }
 
 function pingAgent(body) {
   logger.trace(body);
-  return requestController
+  return api
     .pingAgent(body)
     .catch((err) => logger.error('Cannot send agent info to server:', err));
 }
@@ -100,7 +98,7 @@ function pingAgent(body) {
 function synchronizeJob(jobId, onJobSynchronization = () => {}) {
   return setInterval(async () => {
     try {
-      const synchronizedJob = await requestController.pingJob(jobId);
+      const synchronizedJob = await api.pingJob(jobId);
       await onJobSynchronization(synchronizedJob && synchronizedJob.body);
     } catch (err) {
       logger.warn('Unable to synchronize job:', jobId, err);
@@ -126,7 +124,7 @@ async function executeJob(jobInfo, keepFiles) {
         if (processId) {
           processController.killProcessFromJobId(id);
         }
-        await requestController.updateNodeStatus(id, NODE_STATUS.CANCELED);
+        await api.updateNodeStatus(id, NODE_STATUS.CANCELED);
       } catch (err) {
         logger.error(`Error when canceling job ${id}:`, err);
       }
@@ -281,7 +279,7 @@ class Agent {
         setLogLevel(logLevel);
 
         // Agent is not executing job, request new job
-        const requestJobResponse = await requestController.requestJob(uuid, this.teamId);
+        const requestJobResponse = await api.requestJob(uuid, this.teamId);
         if (
           !requestJobResponse ||
           !requestJobResponse.body ||

@@ -2,14 +2,11 @@ const _ = require('lodash');
 const fs = require('fs');
 const path = require('path');
 
-const http = require('../core/http');
+const api = require('../core/api');
 const defaultLogger = require('../config/logger');
 const os = require('../core/os');
 const { KatalonStudioDownloader } = require('./remote-downloader');
 const utils = require('../core/utils');
-
-const releasesList =
-  'https://raw.githubusercontent.com/katalon-studio/katalon-studio/master/releases.json';
 
 function find(startPath, filter, callback) {
   if (!fs.existsSync(startPath)) {
@@ -44,7 +41,7 @@ function getKsLocation(ksVersionNumber, ksLocation) {
     });
   }
 
-  return http.request(releasesList, '', {}, 'GET').then(({ body }) => {
+  return api.getKSReleases().then(({ body }) => {
     const osVersion = os.getVersion();
     const ksVersion = body.find(
       (item) => item.version === ksVersionNumber && item.os === osVersion,

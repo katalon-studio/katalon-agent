@@ -1,7 +1,7 @@
 const moment = require('moment');
 
+const api = require('../core/api');
 const config = require('../core/config');
-const katalonRequest = require('../helper/katalon-request');
 const logger = require('../config/logger');
 
 class TokenManager {
@@ -40,7 +40,7 @@ class TokenManager {
   }
 
   requestAccessToken() {
-    return katalonRequest.requestToken(config.email, config.apikey).then(this.setToken);
+    return api.requestToken(config.email, config.apikey).then(this.setToken);
   }
 
   tokenWillExpired() {

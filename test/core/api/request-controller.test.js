@@ -1,7 +1,7 @@
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const config = require('../../../src/core/config');
-const controller = require('../../../src/core/api/request-controller');
+const controller = require('../../../src/core/api');
 const logger = require('../../../src/config/logger');
 
 function generateUuid() {

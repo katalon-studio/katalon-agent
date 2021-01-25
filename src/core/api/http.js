@@ -2,7 +2,6 @@ const axios = require('axios').default;
 const fs = require('fs');
 const path = require('path');
 const ProgressBar = require('progress');
-const urljoin = require('url-join');
 const { getAuth } = require('../auth');
 const { FILTERED_ERROR_CODE } = require('./constants');
 const logger = require('../../config/logger');
@@ -45,23 +44,23 @@ axios.interceptors.response.use(
 );
 
 module.exports = {
-  get(apiParam) {
-    return this.request('get', apiParam);
+  get(urlParam) {
+    return this.request('get', urlParam);
   },
 
-  post(apiParam, data) {
-    return this.request('post', apiParam, data);
+  post(urlParam, data) {
+    return this.request('post', urlParam, data);
   },
 
-  put(apiParam, data) {
-    return this.request('put', apiParam, data);
+  put(urlParam, data) {
+    return this.request('put', urlParam, data);
   },
 
-  patch(apiParam, data) {
-    return this.request('patch', apiParam, data);
+  patch(urlParam, data) {
+    return this.request('patch', urlParam, data);
   },
 
-  uploadFileToS3(apiParam, filePath) {
+  uploadFileToS3(urlParam, filePath) {
     const stats = fs.statSync(filePath);
     const headers = {
       'content-type': 'application/octet-stream',
@@ -70,11 +69,11 @@ module.exports = {
     };
     const data = fs.createReadStream(filePath);
     const noAuthOpt = { auth: null };
-    return this.request('put', apiParam, data, headers, noAuthOpt);
+    return this.request('put', urlParam, data, headers, noAuthOpt);
   },
 
-  stream(url, filePath) {
-    logger.info(`Downloading from ${url} to ${filePath}.`);
+  stream(urlParam, filePath) {
+    logger.info(`Downloading from ${urlParam.url} to ${filePath}.`);
 
     const fileName = path.basename(filePath);
     const format = `\t ${fileName}\t :percent[:bar]\t :currentB (:rateB/s) | Elapsed: :elapseds | ETA: :etas`;
@@ -85,18 +84,11 @@ module.exports = {
       renderThrottle: PROGRESS_RENDER_THROTTLE,
     };
 
-    return this.request(
-      'get',
-      {
-        baseUrl: url,
-      },
-      null,
-      null,
-      {
-        auth: null,
-        responseType: 'stream',
-      },
-    ).then((res) => {
+    // TODO: handle auth for onpremise download
+    return this.request('get', urlParam, null, null, {
+      auth: null,
+      responseType: 'stream',
+    }).then((res) => {
       if (res.body) {
         const readableStream = res.body;
         const total = parseInt(res.headers['content-length'], 10) || 1;
@@ -121,12 +113,12 @@ module.exports = {
     });
   },
 
-  request(method, apiParam, data = {}, headers = {}, overrideOpts = {}) {
+  request(method, urlParam, data = {}, headers = {}, overrideOpts = {}) {
     const auth = getAuth();
     return axios({
-      url: urljoin(apiParam.baseUrl || '', apiParam.path || ''),
       method,
-      params: apiParam.params,
+      url: urlParam.url,
+      params: urlParam.params,
       data,
       headers,
       auth,
