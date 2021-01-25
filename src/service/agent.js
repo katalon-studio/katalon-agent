@@ -108,6 +108,19 @@ function synchronizeJob(jobId, onJobSynchronization = () => {}) {
   }, syncJobInterval);
 }
 
+async function getProjectTimezone(jobId) {
+  try {
+    const synchronizedJob = await requestController.pingJob(jobId);
+    if (synchronizedJob) {
+      const { project } = synchronizedJob.body;
+      const { timezone } = project;
+      return timezone;
+    }
+  } catch (err) {
+    logger.warn('Unable to synchronize job:', jobId, err);
+  }
+}
+
 async function executeJob(jobInfo, keepFiles) {
   const { jobId, projectId } = jobInfo;
   const notify = () => notifyJob(jobId, projectId);
@@ -147,8 +160,10 @@ async function executeJob(jobInfo, keepFiles) {
   const logFilePath = path.resolve(tmpDirPath, 'debug.log');
 
   try {
+    const projectTimeZone = await getProjectTimezone(jobId);
+
     // Create logger for job
-    jLogger = jobLogger.getLogger(logFilePath);
+    jLogger = jobLogger.getLogger(logFilePath, projectTimeZone);
 
     // Upload log and add new transport to stream log content to s3
     // Everytime a new log entry is written to file

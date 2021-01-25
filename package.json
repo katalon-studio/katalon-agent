@@ -35,6 +35,7 @@
     "lodash": "^4.17.20",
     "log4js": "^6.3.0",
     "moment": "^2.26.0",
+    "moment-timezone": "^0.5.32",
     "progress": "^2.0.3",
     "properties": "^1.2.1",
     "request": "^2.72.0",
