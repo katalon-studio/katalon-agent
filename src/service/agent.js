@@ -108,21 +108,8 @@ function synchronizeJob(jobId, onJobSynchronization = () => {}) {
   }, syncJobInterval);
 }
 
-async function getProjectTimezone(jobId) {
-  try {
-    const synchronizedJob = await requestController.pingJob(jobId);
-    if (synchronizedJob) {
-      const { project } = synchronizedJob.body;
-      const { timezone } = project;
-      return timezone;
-    }
-  } catch (err) {
-    logger.warn('Unable to synchronize job:', jobId, err);
-  }
-}
-
 async function executeJob(jobInfo, keepFiles) {
-  const { jobId, projectId } = jobInfo;
+  const { jobId, projectId, timezone } = jobInfo;
   const notify = () => notifyJob(jobId, projectId);
   let isCanceled = false;
   let jLogger;
@@ -160,10 +147,8 @@ async function executeJob(jobInfo, keepFiles) {
   const logFilePath = path.resolve(tmpDirPath, 'debug.log');
 
   try {
-    const projectTimeZone = await getProjectTimezone(jobId);
-
     // Create logger for job
-    jLogger = jobLogger.getLogger(logFilePath, projectTimeZone);
+    jLogger = jobLogger.getLogger(logFilePath, timezone);
 
     // Upload log and add new transport to stream log content to s3
     // Everytime a new log entry is written to file
@@ -301,6 +286,7 @@ class Agent {
           !requestJobResponse ||
           !requestJobResponse.body ||
           !requestJobResponse.body.parameter ||
+          !requestJobResponse.body.project ||
           !requestJobResponse.body.testProject
         ) {
           // There is no job to execute
@@ -310,6 +296,7 @@ class Agent {
         const {
           id: jobId,
           parameter,
+          project: { timezone },
           testProject: { projectId },
         } = jobBody;
 
@@ -342,6 +329,7 @@ class Agent {
           executor,
           jobId,
           projectId,
+          timezone,
           teamId: this.teamId,
         };
 
@@ -401,6 +389,7 @@ class Agent {
       const {
         id: jobId,
         parameter,
+        project: { timezone },
         testProject: { projectId },
       } = jobBody;
 
@@ -433,6 +422,7 @@ class Agent {
         executor,
         jobId,
         projectId,
+        timezone,
         teamId: this.teamId,
       };
 
