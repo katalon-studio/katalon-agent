@@ -6,6 +6,7 @@ env:
 extends:
   - airbnb-base
   - plugin:jest/recommended
+  - plugin:jest/style
 plugins:
   - jest
 globals:
@@ -29,3 +30,4 @@ rules:
   no-unused-vars: 1
   function-paren-newline: 0
   object-curly-newline: [ 2, { "consistent": true } ]
+  'jest/no-disabled-tests': 0

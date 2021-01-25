@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const ProgressBar = require('progress');
 const { getAuth } = require('../auth');
+const globalConfig = require('../config');
 const { FILTERED_ERROR_CODE } = require('./constants');
 const logger = require('../../config/logger');
 
@@ -84,14 +85,13 @@ module.exports = {
       renderThrottle: PROGRESS_RENDER_THROTTLE,
     };
 
-    // TODO: handle auth for onpremise download
     return this.request('get', urlParam, null, null, {
-      auth: null,
+      auth: globalConfig.isOnPremise ? getAuth() : null,
       responseType: 'stream',
-    }).then((res) => {
-      if (res.body) {
-        const readableStream = res.body;
-        const total = parseInt(res.headers['content-length'], 10) || 1;
+    }).then(({ status, body, headers }) => {
+      if (body) {
+        const readableStream = body;
+        const total = parseInt(headers['content-length'], 10) || 1;
         const opts = {
           ...progressOpts,
           total,
@@ -105,11 +105,20 @@ module.exports = {
         return new Promise((resolve) => {
           readableStream.pipe(fs.createWriteStream(filePath)).on('finish', () => {
             logger.info('Finished downloading.');
-            resolve(filePath);
+            resolve({
+              status,
+              body: {
+                filePath,
+                stat: fs.statSync(filePath),
+              },
+            });
           });
         });
       }
-      return null;
+      return {
+        status,
+        body,
+      };
     });
   },
 

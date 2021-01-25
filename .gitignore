@@ -69,8 +69,7 @@ tmp
 proc
 
 test/*
-!test/core/**/*.js
-!test/core/**/*
+!test/core/
 
 .idea
 *.iml
