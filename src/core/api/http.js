@@ -2,8 +2,6 @@ const axios = require('axios').default;
 const fs = require('fs');
 const path = require('path');
 const ProgressBar = require('progress');
-const { getAuth } = require('../auth');
-const globalConfig = require('../config');
 const { FILTERED_ERROR_CODE } = require('./constants');
 const logger = require('../../config/logger');
 
@@ -45,20 +43,20 @@ axios.interceptors.response.use(
 );
 
 module.exports = {
-  get(urlParam) {
-    return this.request('get', urlParam);
+  get(urlParam, headers) {
+    return this.request('get', urlParam, null, headers);
   },
 
-  post(urlParam, data) {
-    return this.request('post', urlParam, data);
+  post(urlParam, data, headers) {
+    return this.request('post', urlParam, data, headers);
   },
 
-  put(urlParam, data) {
-    return this.request('put', urlParam, data);
+  put(urlParam, data, headers) {
+    return this.request('put', urlParam, data, headers);
   },
 
-  patch(urlParam, data) {
-    return this.request('patch', urlParam, data);
+  patch(urlParam, data, headers) {
+    return this.request('patch', urlParam, data, headers);
   },
 
   uploadFileToS3(urlParam, filePath) {
@@ -69,11 +67,10 @@ module.exports = {
       'Content-Length': stats.size,
     };
     const data = fs.createReadStream(filePath);
-    const noAuthOpt = { auth: null };
-    return this.request('put', urlParam, data, headers, noAuthOpt);
+    return this.request('put', urlParam, data, headers);
   },
 
-  stream(urlParam, filePath) {
+  stream(urlParam, filePath, headers) {
     logger.info(`Downloading from ${urlParam.url} to ${filePath}.`);
 
     const fileName = path.basename(filePath);
@@ -85,8 +82,7 @@ module.exports = {
       renderThrottle: PROGRESS_RENDER_THROTTLE,
     };
 
-    return this.request('get', urlParam, null, null, {
-      auth: globalConfig.isOnPremise ? getAuth() : null,
+    return this.request('get', urlParam, null, headers, {
       responseType: 'stream',
     }).then(({ status, body, headers }) => {
       if (body) {
@@ -123,14 +119,12 @@ module.exports = {
   },
 
   request(method, urlParam, data = {}, headers = {}, overrideOpts = {}) {
-    const auth = getAuth();
     return axios({
       method,
       url: urlParam.url,
       params: urlParam.params,
       data,
       headers,
-      auth,
       ...overrideOpts,
     });
   },

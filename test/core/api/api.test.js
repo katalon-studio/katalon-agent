@@ -2,6 +2,7 @@ const ip = require('ip');
 const os = require('os');
 const path = require('path');
 const tmp = require('tmp');
+const urljoin = require('url-join');
 const { v4: uuidv4 } = require('uuid');
 const api = require('../../../src/core/api');
 const config = require('../../../src/core/config');
@@ -17,6 +18,7 @@ const TEST_PARAMS = {
   JOB_ID: 533,
   JOB_LOG: 'debug.log',
   DOWNLOAD_URL: 'https://github.com/katalon-studio-samples/test-project-sample/archive/master.zip',
+  TESTOPS_DOWNLOAD_PATH: '/api/v1/files/1',
 };
 
 const debugLog = path.join(__dirname, TEST_PARAMS.JOB_LOG);
@@ -28,6 +30,8 @@ beforeAll(() => {
 
 describe('Controller test', () => {
   let uploadInfo;
+  let refreshToken;
+
   it('should get upload info', async () => {
     const result = await api.getUploadInfo(TEST_PARAMS.PROJECT_ID);
     expect(result.body).not.toBeNull();
@@ -65,6 +69,24 @@ describe('Controller test', () => {
     });
     const filePath = tmpFile.name;
     const result = await api.download(TEST_PARAMS.DOWNLOAD_URL, filePath);
+    expect(result.status).toBe(200);
+    expect(result.body).not.toBeNull();
+    expect(result.body.filePath).toBe(filePath);
+    expect(result.body.stat).not.toBeNull();
+    expect(result.body.stat.size).toBeGreaterThan(0);
+    tmpFile.removeCallback();
+  });
+
+  it('should download file from TestOps download url', async () => {
+    const tmpFile = tmp.fileSync({
+      tmpdir: path.join(__dirname),
+      keep: true,
+    });
+    const filePath = tmpFile.name;
+    const result = await api.downloadFromTestOps(
+      urljoin(config.serverUrl, TEST_PARAMS.TESTOPS_DOWNLOAD_PATH),
+      filePath,
+    );
     expect(result.status).toBe(200);
     expect(result.body).not.toBeNull();
     expect(result.body.filePath).toBe(filePath);
@@ -113,5 +135,22 @@ describe('Controller test', () => {
     expect(result.body).toMatchObject({
       id: TEST_PARAMS.JOB_ID,
     });
+  });
+
+  it('should request new access token', async () => {
+    const result = await api.requestToken(config.email, config.apikey);
+    expect(result.status).toBe(200);
+    expect(result.body).not.toBeNull();
+    expect(result.body.access_token).not.toBeNull();
+    expect(result.body.refresh_token).not.toBeNull();
+    refreshToken = result.body.refresh_token;
+  });
+
+  it.skip('should request new access token from refresh token', async () => {
+    const result = await api.refreshToken(refreshToken);
+    expect(result.status).toBe(200);
+    expect(result.body).not.toBeNull();
+    expect(result.body.access_token).not.toBeNull();
+    expect(result.body.refresh_token).not.toBeNull();
   });
 });

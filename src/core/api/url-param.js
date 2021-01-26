@@ -1,14 +1,5 @@
-const urljoin = require('url-join');
-const config = require('../config');
-const { KS_RELEASES_URL, PATHS, REPORT_TYPE, TESTOPS_BASE_URL } = require('./constants');
-
-function buildUrl({ params = {}, baseUrl = config.serverUrl || TESTOPS_BASE_URL }, ...paths) {
-  const url = urljoin(baseUrl, ...paths.map((p) => p.toString()));
-  return {
-    url,
-    params,
-  };
-}
+const { KS_RELEASES_URL, PATHS, REPORT_TYPE } = require('./constants');
+const { buildUrl } = require('./utils');
 
 module.exports = {
   accessToken() {

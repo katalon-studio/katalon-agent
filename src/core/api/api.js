@@ -1,27 +1,36 @@
-const urlParam = require('./url-param');
+const querystring = require('querystring');
+const { OAUTH2_GRANT_TYPES, OAUTH2_CLIENT } = require('./constants');
 const http = require('./http');
-const { OAUTH2_GRANT_TYPES } = require('./constants');
+const httpInternal = require('./http-testops');
+const urlParam = require('./url-param');
+const { getBasicAuthHeader } = require('./utils');
 
 module.exports = {
   requestToken(email, password) {
-    const data = {
+    const data = querystring.stringify({
       grant_type: OAUTH2_GRANT_TYPES.PASSWORD,
       username: email,
       password,
+    });
+    const headers = {
+      Authorization: getBasicAuthHeader({
+        username: OAUTH2_CLIENT.clientId,
+        password: OAUTH2_CLIENT.clientSecret,
+      }),
     };
-    return http.post(urlParam.accessToken(), data);
+    return httpInternal.post(urlParam.accessToken(), data, headers);
   },
 
   refreshToken(refreshToken) {
-    const data = {
+    const data = querystring.stringify({
       grant_type: OAUTH2_GRANT_TYPES.REFRESH_TOKEN,
       refresh_token: refreshToken,
-    };
-    return http.post(urlParam.accessToken(), data);
+    });
+    return httpInternal.post(urlParam.accessToken(), data);
   },
 
   getUploadInfo(projectId) {
-    return http.get(urlParam.getUploadInfo(projectId));
+    return httpInternal.get(urlParam.getUploadInfo(projectId));
   },
 
   uploadFile(uploadUrl, filePath) {
@@ -38,7 +47,7 @@ module.exports = {
     reportType,
     extraParams = {},
   ) {
-    return http.post(
+    return httpInternal.post(
       urlParam.uploadFileInfo(
         projectId,
         batch,
@@ -53,31 +62,31 @@ module.exports = {
   },
 
   pingAgent(body) {
-    return http.post(urlParam.pingAgent(), body);
+    return httpInternal.post(urlParam.pingAgent(), body);
   },
 
   pingJob(jobId) {
-    return http.patch(urlParam.pingJob(jobId));
+    return httpInternal.patch(urlParam.pingJob(jobId));
   },
 
   requestJob(uuid, teamId) {
-    return http.get(urlParam.requestJob(uuid, teamId));
+    return httpInternal.get(urlParam.requestJob(uuid, teamId));
   },
 
   updateJob(body) {
-    return http.post(urlParam.updateJob(), body);
+    return httpInternal.post(urlParam.updateJob(), body);
   },
 
   saveJobLog(jobInfo, batch, fileName) {
-    return http.post(urlParam.saveJobLog(jobInfo, batch, fileName));
+    return httpInternal.post(urlParam.saveJobLog(jobInfo, batch, fileName));
   },
 
   notifyJob(jobId, projectId) {
-    return http.post(urlParam.notifyJob(jobId, projectId));
+    return httpInternal.post(urlParam.notifyJob(jobId, projectId));
   },
 
   getBuildInfo() {
-    return http.get(urlParam.getBuildInfo());
+    return httpInternal.get(urlParam.getBuildInfo());
   },
 
   updateNodeStatus(jobId, nodeStatus) {
@@ -85,7 +94,7 @@ module.exports = {
       id: jobId,
       nodeStatus,
     };
-    return http.put(urlParam.updateNodeStatus(), data);
+    return httpInternal.put(urlParam.updateNodeStatus(), data);
   },
 
   getKSReleases() {
@@ -94,5 +103,9 @@ module.exports = {
 
   download(url, filePath) {
     return http.stream(urlParam.download(url), filePath);
+  },
+
+  downloadFromTestOps(url, filePath) {
+    return httpInternal.stream(urlParam.download(url), filePath);
   },
 };
