@@ -59,7 +59,7 @@ function createDownloader(parameter) {
     return new GitDownloader(logger, parameter.gitRepositoryResource);
   }
 
-  const downloadUrl = parameter.internalDownloadUrl || parameter.downloadUrl;
+  const downloadUrl = parameter.testOpsDownloadUrl || parameter.downloadUrl;
   return new KatalonTestProjectDownloader(logger, downloadUrl);
 }
 
