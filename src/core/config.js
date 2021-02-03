@@ -21,9 +21,8 @@ module.exports = {
     };
 
     // Add configs to global and export configs
-    _.extend(global, configs);
-    Object.keys(global).forEach((p) => {
-      module.exports[p] = global[p];
+    Object.keys(configs).forEach((p) => {
+      module.exports[p] = configs[p];
     });
   },
 
