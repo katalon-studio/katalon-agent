@@ -4,6 +4,7 @@ const path = require('path');
 const ProgressBar = require('progress');
 const { FILTERED_ERROR_CODE } = require('./constants');
 const logger = require('../../config/logger');
+const { getProxy } = require('./proxy');
 
 const PROGRESS_RENDER_THROTTLE = 5000;
 
@@ -125,6 +126,7 @@ module.exports = {
       params: urlParam.params,
       data,
       headers,
+      proxy: getProxy(),
       ...overrideOpts,
     });
   },
