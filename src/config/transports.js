@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const TransportStream = require('winston-transport');
 
-const katalonHttp = require('../core/http');
+const api = require('../core/api');
 
 class S3FileTransport extends TransportStream {
   constructor(options = {}, afterLog) {
@@ -19,8 +19,8 @@ class S3FileTransport extends TransportStream {
 
   uploadToS3(info, callback) {
     try {
-      return katalonHttp
-        .uploadToS3(this.signedUrl, this.filePath)
+      return api
+        .uploadFile(this.signedUrl, this.filePath)
         .then(() => this.afterLog && this.afterLog())
         .catch((error) => this._handleError(error));
     } catch (error) {

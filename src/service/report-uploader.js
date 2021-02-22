@@ -2,16 +2,16 @@ const glob = require('glob');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
-const katalonRequest = require('../helper/katalon-request');
+const api = require('../core/api');
 
 function uploadFile(projectId, batch, folderName, filePath, isEnd, reportType, opts = {}) {
-  return katalonRequest.getUploadInfo(projectId).then(({ body }) => {
+  return api.getUploadInfo(projectId).then(({ body }) => {
     const { uploadUrl } = body;
     const uploadPath = body.path;
 
-    return katalonRequest.uploadFile(uploadUrl, filePath).then(() => {
+    return api.uploadFile(uploadUrl, filePath).then(() => {
       const fileName = path.basename(filePath);
-      return katalonRequest.uploadFileInfo(
+      return api.uploadFileInfo(
         projectId,
         batch,
         folderName,

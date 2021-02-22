@@ -69,6 +69,8 @@ tmp
 proc
 
 test/*
+!test/core/
 
 .idea
 *.iml
+test/core/api/debug.log

@@ -18,7 +18,7 @@ class KatalonTestProjectDownloader {
   }
 
   download(targetDir) {
-    return file.downloadAndExtract(this.downloadUrl, targetDir, true, this.logger);
+    return file.downloadAndExtractFromTestOps(this.downloadUrl, targetDir, true, this.logger);
   }
 }
 
