@@ -73,3 +73,4 @@ test/*
 
 .idea
 *.iml
+test/core/api/debug.log
