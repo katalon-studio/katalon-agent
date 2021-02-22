@@ -4,6 +4,13 @@ const { v4: uuidv4 } = require('uuid');
 
 const api = require('../core/api');
 
+class Report {
+  constructor(fullPath, dirName) {
+    this.path = fullPath;
+    this.dirName = dirName;
+  }
+}
+
 function uploadFile(projectId, batch, folderName, filePath, isEnd, reportType, opts = {}) {
   return api.getUploadInfo(projectId).then(({ body }) => {
     const { uploadUrl } = body;
@@ -25,26 +32,34 @@ function uploadFile(projectId, batch, folderName, filePath, isEnd, reportType, o
   });
 }
 
-module.exports = {
-  uploadReports(projectId, folderPath, reportType, reportPattern, opts = {}) {
+function collectReports(folderPaths = [], reportPattern = '*') {
+  const reports = [];
+  folderPaths.forEach((folderPath) => {
     const pathPattern = path.resolve(folderPath, reportPattern);
-    const reports = glob.sync(pathPattern, { nodir: true });
-    const dirNames = reports.map((report) => path.dirname(path.relative(folderPath, report)));
+    const reportPaths = glob.sync(pathPattern, { nodir: true });
+    reportPaths
+      .map((reportPath) => new Report(reportPath, path.dirname(reportPath)))
+      .forEach((report) => reports.push(report));
+  });
+  return reports;
+}
 
+module.exports = {
+  uploadReports(projectId, folderPaths, reportType, reportPattern, opts = {}) {
+    const reports = collectReports(folderPaths, reportPattern);
     const [first, ...rest] = reports;
-    const [firstDirName, ...restDirNames] = dirNames;
     if (!first) {
       return Promise.resolve();
     }
 
     const batch = `${new Date().getTime()}-${uuidv4()}`;
 
-    const uploadPromises = rest.map((report, idx) =>
-      uploadFile(projectId, batch, restDirNames[idx], report, false, reportType, opts),
+    const uploadPromises = rest.map((report) =>
+      uploadFile(projectId, batch, report.dirName, report.path, false, reportType, opts),
     );
 
     return Promise.all(uploadPromises).then(() =>
-      uploadFile(projectId, batch, firstDirName, first, true, reportType, opts),
+      uploadFile(projectId, batch, first.dirName, first.path, true, reportType, opts),
     );
   },
 };
