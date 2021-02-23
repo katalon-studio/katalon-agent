@@ -14,61 +14,12 @@ if (process.argv.includes('--service')) {
   global.appRoot = path.resolve('.');
 }
 
-const agent = require('./src/agent');
-const bdd = require('./src/bdd');
-const config = require('./src/config');
+const { Agent, updateConfigs } = require('./src/service/agent');
+const config = require('./src/core/config');
 const packageJson = require('./package.json');
-const reportUploader = require('./src/report-uploader');
 
 const version = `Version: ${packageJson.version}`;
 config.version = packageJson.version;
-
-// program options and arguments
-program
-  .description(packageJson.description)
-  .command('get-feature <JQL>')
-  .version(version)
-  .option('-j, --jira-url <value>', 'JIRA URL')
-  .option('-u, --username <value>', 'Username')
-  .option('-p, --password <value>', 'Password')
-  .option('-o, --output <value>', 'Output Directory')
-  .option('-x, --proxy <value>', 'HTTTP/HTTPS Proxy')
-  .on('--help', () => {})
-  .action((JQL, command) => {
-    const options = {
-      outputDir: command.output,
-      jiraUrl: command.jiraUrl,
-      username: command.username,
-      password: command.password,
-      proxy: command.proxy,
-      jql: JQL,
-    };
-
-    config.update(options);
-    bdd.getFeatures();
-  });
-
-program
-  .command('upload-report <path>')
-  .version(version)
-  .option('-s, --server-url <value>', 'Katalon Analytics URL', 'https://analytics.katalon.com')
-  .option('-u, --username <value>', 'Email')
-  .option('-p, --password <value>', 'Password')
-  .option('-k, --katalon-project <value>', 'Katalon Project Id')
-  .option('-x, --proxy <value>', 'HTTTP/HTTPS Proxy')
-  .on('--help', () => {})
-  .action((uploadPath, command) => {
-    const options = {
-      serverUrl: command.serverUrl,
-      email: command.username,
-      password: command.password,
-      proxy: command.proxy,
-      projectId: command.katalonProject,
-    };
-
-    config.update(options);
-    reportUploader.upload(uploadPath);
-  });
 
 program
   .command('config')
@@ -98,7 +49,7 @@ program
       x11Display: command.x11Display,
       keepFiles: command.keepFiles,
     };
-    agent.updateConfigs(options);
+    updateConfigs(options);
   });
 
 program
@@ -133,6 +84,8 @@ program
         });
     }
 
+    const agent = new Agent(options);
+
     process.on('SIGINT', () => {
       agent.stop();
       // graceful shutdown
@@ -140,9 +93,9 @@ program
     });
 
     if (command.ci) {
-      agent.startCI(options).then(() => process.emit('SIGINT'));
+      agent.startCI().then(() => process.emit('SIGINT'));
     } else {
-      agent.start(options);
+      agent.start();
     }
   });
 

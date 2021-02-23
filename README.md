@@ -1,4 +1,4 @@
-# KATALON AGENT
+# Katalon TestOps Agent
 
 ## Start the Katalon Agent
 

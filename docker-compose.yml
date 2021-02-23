@@ -1,0 +1,18 @@
+version: "3.2"
+services:
+  katalon-agent:
+    image: "katalonstudio/agent"
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 10
+    environment:
+      SERVER_URL: https://testops.katalon.io
+      AGENT_NAME: Katalon Agent
+      TEAM_ID:
+      KATALON_API_KEY:
+    volumes:
+      - katalon-runtime-engines:/root/.katalon
+
+volumes:
+  katalon-runtime-engines:

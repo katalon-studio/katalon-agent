@@ -33,7 +33,7 @@ jobs:
       uses: actions/checkout@v2.1.0
 
     - name: Setup Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1.4.2
+      uses: actions/setup-node@v2.1.2
       with:
         node-version: ${{ matrix.node-version }}
 
@@ -73,7 +73,8 @@ jobs:
       run: npm run buildWin --if-present
 
     - name: Set BUILD_VERSION environment variable
-      run: echo "::set-env name=BUILD_VERSION::$(node -p "require('./package').version")"
+      run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
+      shell: bash
 
     - name: Upload Windows x64 artifact
       uses: actions/upload-artifact@v2
@@ -111,7 +112,7 @@ jobs:
         name: katalon-agent-macos-x64-${{ env.BUILD_VERSION }}
         path: |
           bin/cli-macos-x64
-          bin/*.sh
+          bin/start.sh
 
   ### RELEASE ###
   release:
@@ -131,7 +132,7 @@ jobs:
       uses: actions/checkout@v2.1.0
 
     - name: Setup Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1.4.2
+      uses: actions/setup-node@v2.1.2
       with:
         node-version: ${{ matrix.node-version }}
 
@@ -155,7 +156,7 @@ jobs:
       run: chmod +x katalon-agent-linux-*/* katalon-agent-macos-*/*
 
     - name: Set BUILD_VERSION environment variable
-      run: echo "::set-env name=BUILD_VERSION::$(node -p "require('./package').version")"
+      run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
 
     - name: Package artifacts for release
       env:
