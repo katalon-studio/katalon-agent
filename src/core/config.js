@@ -4,7 +4,6 @@ const ini = require('ini');
 const path = require('path');
 
 const configFile = path.resolve(process.cwd(), 'config.ini');
-let global = {};
 
 // NOTE: ONLY EXPORT FUNCTIONS, DO NOT EXPORT FIELDS
 module.exports = {
@@ -22,9 +21,8 @@ module.exports = {
     };
 
     // Add configs to global and export configs
-    global = _.extend(global, configs);
-    Object.keys(global).forEach((p) => {
-      module.exports[p] = global[p];
+    Object.keys(configs).forEach((p) => {
+      module.exports[p] = configs[p];
     });
   },
 

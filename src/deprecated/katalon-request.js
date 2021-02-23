@@ -11,8 +11,6 @@ const KATALON_JUNIT_TEST_REPORTS_URI = '/api/v1/junit/test-reports';
 const KATALON_AGENT_URI = '/api/v1/agent/';
 const KATALON_JOB_URI = '/api/v1/jobs/';
 
-const TRIGGER_URL = 'https://1td5kpj4g5.execute-api.us-east-1.amazonaws.com/staging/';
-
 const oauth2 = {
   grant_type: 'password',
   client_secret: 'kit_uploader',
@@ -148,13 +146,6 @@ module.exports = {
     return http.request(config.serverUrl, `${KATALON_JOB_URI}save-log`, options, 'POST');
   },
 
-  getJobLog(jobInfo) {
-    const { jobId } = jobInfo;
-    const options = {
-    };
-    return http.request(config.serverUrl, `${KATALON_JOB_URI + jobId}/get-log`, options, 'GET');
-  },
-
   notifyJob(jobId, projectId) {
     const options = {
       qs: {
@@ -162,42 +153,6 @@ module.exports = {
       },
     };
     return http.request(config.serverUrl, `${KATALON_JOB_URI + jobId}/notify`, options, 'POST');
-  },
-
-  requestWrapper(request, email, password, token, ...args) {
-    return request(token, ...args).then((response) => {
-      const {
-        status,
-        body: { error: errorType, error_description: errorMessage },
-      } = response;
-
-      if (status === 401) {
-        if (errorType === 'invalid_token' && errorMessage.includes('expired')) {
-          return this.requestToken(email, password).then((requestTokenResponse) => {
-            // Save new token to global
-            global.token = requestTokenResponse.body.access_token;
-            // Remake request with newly saved token
-            return request(global.token, ...args);
-          });
-        }
-      }
-      // Token not expired, resolve response normally
-      return response;
-    });
-  },
-
-  sendTrigger(projectId, topic, additionalInfo) {
-    const options = {
-      json: true,
-      body: {
-        data: {
-          projectId: projectId.toString(),
-          topic,
-          ...additionalInfo,
-        },
-      },
-    };
-    return http.request(TRIGGER_URL, '', options, 'post');
   },
 
   getBuildInfo() {

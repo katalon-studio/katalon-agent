@@ -59,7 +59,8 @@ function createDownloader(parameter) {
     return new GitDownloader(logger, parameter.gitRepositoryResource);
   }
 
-  return new KatalonTestProjectDownloader(logger, parameter.downloadUrl);
+  const downloadUrl = parameter.testOpsDownloadUrl || parameter.downloadUrl;
+  return new KatalonTestProjectDownloader(logger, downloadUrl);
 }
 
 function generateUuid() {
