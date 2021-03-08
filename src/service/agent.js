@@ -138,7 +138,7 @@ async function executeJob(jobInfo, keepFiles) {
 
   // Create directory where temporary files are contained
   const tmpRoot = path.resolve(global.appRoot, 'tmp/');
-  fs.ensureDir(tmpRoot);
+  fs.ensureDirSync(tmpRoot);
 
   // Create temporary directory to keep extracted project
   const tmpDir = utils.createTempDir(tmpRoot, { postfix: jobId });
