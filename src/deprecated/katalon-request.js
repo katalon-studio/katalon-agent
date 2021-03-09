@@ -11,8 +11,6 @@ const KATALON_JUNIT_TEST_REPORTS_URI = '/api/v1/junit/test-reports';
 const KATALON_AGENT_URI = '/api/v1/agent/';
 const KATALON_JOB_URI = '/api/v1/jobs/';
 
-const TRIGGER_URL = 'https://1td5kpj4g5.execute-api.us-east-1.amazonaws.com/staging/';
-
 const oauth2 = {
   grant_type: 'password',
   client_secret: 'kit_uploader',
@@ -53,11 +51,8 @@ module.exports = {
     return http.request(config.serverUrl, TOKEN_URI, options, 'post');
   },
 
-  getUploadInfo(token, projectId) {
+  getUploadInfo(projectId) {
     const options = {
-      auth: {
-        bearer: token,
-      },
       json: true,
       qs: {
         projectId,
@@ -75,7 +70,6 @@ module.exports = {
   },
 
   uploadFileInfo(
-    token,
     projectId,
     batch,
     folderName,
@@ -92,9 +86,6 @@ module.exports = {
       url = KATALON_RECORDER_TEST_REPORTS_URI;
     }
     const options = {
-      auth: {
-        bearer: token,
-      },
       json: true,
       qs: {
         projectId,
@@ -109,30 +100,21 @@ module.exports = {
     return http.request(config.serverUrl, url, options, 'post');
   },
 
-  pingAgent(token, body) {
+  pingAgent(body) {
     const options = {
-      auth: {
-        bearer: token,
-      },
       body,
     };
     return http.request(config.serverUrl, KATALON_AGENT_URI, options, 'POST');
   },
 
-  pingJob(token, jobId) {
+  pingJob(jobId) {
     const options = {
-      auth: {
-        bearer: token,
-      },
     };
     return http.request(config.serverUrl, `${KATALON_JOB_URI}${jobId}`, options, 'PATCH');
   },
 
-  requestJob(token, uuid, teamId) {
+  requestJob(uuid, teamId) {
     const options = {
-      auth: {
-        bearer: token,
-      },
       qs: {
         uuid,
         teamId,
@@ -141,22 +123,16 @@ module.exports = {
     return http.request(config.serverUrl, `${KATALON_JOB_URI}get-job`, options, 'GET');
   },
 
-  updateJob(token, body) {
+  updateJob(body) {
     const options = {
-      auth: {
-        bearer: token,
-      },
       body,
     };
     return http.request(config.serverUrl, `${KATALON_JOB_URI}update-job`, options, 'POST');
   },
 
-  saveJobLog(token, jobInfo, batch, fileName) {
+  saveJobLog(jobInfo, batch, fileName) {
     const { projectId, jobId, uploadPath, oldUploadPath } = jobInfo;
     const options = {
-      auth: {
-        bearer: token,
-      },
       qs: {
         projectId,
         jobId,
@@ -170,21 +146,8 @@ module.exports = {
     return http.request(config.serverUrl, `${KATALON_JOB_URI}save-log`, options, 'POST');
   },
 
-  getJobLog(token, jobInfo) {
-    const { jobId } = jobInfo;
+  notifyJob(jobId, projectId) {
     const options = {
-      auth: {
-        bearer: token,
-      },
-    };
-    return http.request(config.serverUrl, `${KATALON_JOB_URI + jobId}/get-log`, options, 'GET');
-  },
-
-  notifyJob(token, jobId, projectId) {
-    const options = {
-      auth: {
-        bearer: token,
-      },
       qs: {
         projectId,
       },
@@ -192,52 +155,13 @@ module.exports = {
     return http.request(config.serverUrl, `${KATALON_JOB_URI + jobId}/notify`, options, 'POST');
   },
 
-  requestWrapper(request, email, password, token, ...args) {
-    return request(token, ...args).then((response) => {
-      const {
-        status,
-        body: { error: errorType, error_description: errorMessage },
-      } = response;
-
-      if (status === 401) {
-        if (errorType === 'invalid_token' && errorMessage.includes('expired')) {
-          return this.requestToken(email, password).then((requestTokenResponse) => {
-            // Save new token to global
-            global.token = requestTokenResponse.body.access_token;
-            // Remake request with newly saved token
-            return request(global.token, ...args);
-          });
-        }
-      }
-      // Token not expired, resolve response normally
-      return response;
-    });
-  },
-
-  sendTrigger(projectId, topic, additionalInfo) {
-    const options = {
-      json: true,
-      body: {
-        data: {
-          projectId: projectId.toString(),
-          topic,
-          ...additionalInfo,
-        },
-      },
-    };
-    return http.request(TRIGGER_URL, '', options, 'post');
-  },
-
   getBuildInfo() {
     const options = {};
     return http.request(config.serverUrl, '/info', options, 'GET');
   },
 
-  updateNodeStatus(token, jobId, nodeStatus) {
+  updateNodeStatus(jobId, nodeStatus) {
     const options = {
-      auth: {
-        bearer: token,
-      },
       body: {
         id: jobId,
         nodeStatus,

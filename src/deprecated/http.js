@@ -7,7 +7,8 @@ const urljoin = require('url-join');
 
 const { Readable } = require('stream');
 const logger = require('../config/logger');
-const config = require('./config');
+const config = require('../core/config');
+const { getAuth } = require('../core/auth');
 
 const FILTERED_ERROR_CODE = new Set([400, 401, 403, 404, 500, 502, 503, 504]);
 const PROGRESS_RENDER_THROTTLE = 5000;
@@ -90,6 +91,7 @@ module.exports = {
       ...options,
       json: true,
       method,
+      auth: getAuth(),
     });
     logger.trace('REQUEST:\n', options);
     const promise = new Promise((resolve, reject) => {

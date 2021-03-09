@@ -43,4 +43,8 @@ module.exports = {
   getVersion() {
     return packageJson.version;
   },
+
+  mergeEnvs(envs) {
+    return envs.reduce((merged, { name, value }) => ({ ...merged, [name]: value }), {});
+  },
 };

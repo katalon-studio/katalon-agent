@@ -11,9 +11,10 @@ const reportUploader = require('./report-uploader');
 const PROJECT_FILE_PATTERN = '**/*.prj';
 const TESTOPS_PROPERTIES_FILE = 'com.kms.katalon.integration.analytics.properties';
 const GENERIC_COMMAND_OUTPUT_DIR = 'katalon-agent-output';
+const GENERIC_COMMAND_REPORT_DIR_ENV = 'KATALON_AGENT_REPORT_FOLDER';
 const JUNIT_FILE_PATTERN = '**/*.xml';
 
-function buildTestOpsIntegrationProperties(token, teamId, projectId) {
+function buildTestOpsIntegrationProperties(teamId, projectId) {
   const deprecatedProperties = {
     'analytics.server.endpoint': config.serverUrl,
     'analytics.authentication.email': config.email,
@@ -31,7 +32,6 @@ function buildTestOpsIntegrationProperties(token, teamId, projectId) {
   return {
     ...deprecatedProperties,
     'analytics.integration.enable': true,
-    'analytics.authentication.token': token,
     'analytics.team': JSON.stringify({ id: teamId.toString() }),
     'analytics.project': JSON.stringify({ id: projectId.toString() }),
     ...onPremiseProperties,
@@ -51,6 +51,7 @@ class BaseKatalonCommandExecutor {
     this.ksArgs = info.ksArgs;
     this.x11Display = info.x11Display;
     this.xvfbConfiguration = info.xvfbConfiguration;
+    this.env = info.env;
   }
 
   async execute(logger, execDirPath, callback) {
@@ -83,14 +84,14 @@ class BaseKatalonCommandExecutor {
       this.xvfbConfiguration,
       logger,
       callback,
+      this.env,
     );
   }
 }
 
 class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
-  constructor(token, info) {
+  constructor(info) {
     super(info);
-    this.token = token;
     this.teamId = info.teamId;
     this.projectId = info.projectId;
   }
@@ -107,17 +108,17 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     );
     properties.writeProperties(
       testOpsPropertiesPath,
-      buildTestOpsIntegrationProperties(this.token, this.teamId, this.projectId),
+      buildTestOpsIntegrationProperties(this.teamId, this.projectId),
     );
   }
 }
 
 class GenericCommandExecutor {
-  constructor(token, info) {
-    this.token = token;
+  constructor(info) {
     this.commands = info.commands;
     this.projectId = info.projectId;
     this.sessionId = info.sessionId;
+    this.env = info.env;
   }
 
   async execute(logger, execDirPath, callback) {
@@ -130,6 +131,7 @@ class GenericCommandExecutor {
       outputDir,
       logger,
       callback,
+      this.env,
     );
     // testCopyJUnitReports(outputDir);
 
@@ -137,12 +139,17 @@ class GenericCommandExecutor {
       sessionId: this.sessionId,
     };
 
+    const reportLocations = [outputDir];
+    const reportDir = process.env[GENERIC_COMMAND_REPORT_DIR_ENV];
+    if (reportDir) {
+      reportLocations.push(path.join(execDirPath, reportDir));
+    }
+
     logger.info('Uploading JUnit reports...');
     // Collect all junit xml files and upload to TestOps
     await reportUploader.uploadReports(
-      this.token,
       this.projectId,
-      outputDir,
+      reportLocations,
       'junit',
       JUNIT_FILE_PATTERN,
       opts,

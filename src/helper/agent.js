@@ -4,6 +4,7 @@ const { JOB_STATUS } = require('../config/constants');
 const { KatalonCommandExecutor, GenericCommandExecutor } = require('../service/command-executor');
 const logger = require('../config/logger');
 const { KatalonTestProjectDownloader, GitDownloader } = require('../service/remote-downloader');
+const { mergeEnvs } = require('../core/utils');
 
 function buildUpdateJobBody(jobId, jobStatus, processId) {
   const result = {
@@ -22,7 +23,6 @@ function buildUpdateJobBody(jobId, jobStatus, processId) {
 }
 
 function createCommandExecutor(
-  tokenManager,
   projectId,
   teamId,
   ksArgs,
@@ -30,13 +30,15 @@ function createCommandExecutor(
   xvfbConfiguration,
   parameter,
 ) {
+  const env = mergeEnvs(parameter.environmentVariables);
   if (parameter.configType === 'GENERIC_COMMAND') {
     const info = {
       commands: parameter.command,
       projectId,
       sessionId: parameter.sessionId,
+      env,
     };
-    return new GenericCommandExecutor(tokenManager.tokenSync, info);
+    return new GenericCommandExecutor(info);
   }
 
   const info = {
@@ -47,16 +49,18 @@ function createCommandExecutor(
     ksArgs,
     x11Display,
     xvfbConfiguration,
+    env,
   };
-  return new KatalonCommandExecutor(tokenManager.tokenSync, info);
+  return new KatalonCommandExecutor(info);
 }
 
-function createDownloader(tokenManager, parameter) {
+function createDownloader(parameter) {
   if (parameter.type === 'GIT') {
     return new GitDownloader(logger, parameter.gitRepositoryResource);
   }
 
-  return new KatalonTestProjectDownloader(logger, parameter.downloadUrl, tokenManager.tokenSync);
+  const downloadUrl = parameter.testOpsDownloadUrl || parameter.downloadUrl;
+  return new KatalonTestProjectDownloader(logger, downloadUrl);
 }
 
 function generateUuid() {

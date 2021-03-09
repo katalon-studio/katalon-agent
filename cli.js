@@ -15,60 +15,11 @@ if (process.argv.includes('--service')) {
 }
 
 const { Agent, updateConfigs } = require('./src/service/agent');
-const bdd = require('./src/service/bdd');
 const config = require('./src/core/config');
 const packageJson = require('./package.json');
-const reportUploader = require('./src/service/report-uploader');
 
 const version = `Version: ${packageJson.version}`;
 config.version = packageJson.version;
-
-// program options and arguments
-program
-  .description(packageJson.description)
-  .command('get-feature <JQL>')
-  .version(version)
-  .option('-j, --jira-url <value>', 'JIRA URL')
-  .option('-u, --username <value>', 'Username')
-  .option('-p, --password <value>', 'Password')
-  .option('-o, --output <value>', 'Output Directory')
-  .option('-x, --proxy <value>', 'HTTTP/HTTPS Proxy')
-  .on('--help', () => {})
-  .action((JQL, command) => {
-    const options = {
-      outputDir: command.output,
-      jiraUrl: command.jiraUrl,
-      username: command.username,
-      password: command.password,
-      proxy: command.proxy,
-      jql: JQL,
-    };
-
-    config.update(options);
-    bdd.getFeatures();
-  });
-
-program
-  .command('upload-report <path>')
-  .version(version)
-  .option('-s, --server-url <value>', 'Katalon Analytics URL', 'https://analytics.katalon.com')
-  .option('-u, --username <value>', 'Email')
-  .option('-p, --password <value>', 'Password')
-  .option('-k, --katalon-project <value>', 'Katalon Project Id')
-  .option('-x, --proxy <value>', 'HTTTP/HTTPS Proxy')
-  .on('--help', () => {})
-  .action((uploadPath, command) => {
-    const options = {
-      serverUrl: command.serverUrl,
-      email: command.username,
-      password: command.password,
-      proxy: command.proxy,
-      projectId: command.katalonProject,
-    };
-
-    config.update(options);
-    reportUploader.upload(uploadPath);
-  });
 
 program
   .command('config')
