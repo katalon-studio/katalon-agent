@@ -123,7 +123,7 @@ class GenericCommandExecutor {
 
   async execute(logger, execDirPath, callback) {
     const outputDir = path.join(execDirPath, GENERIC_COMMAND_OUTPUT_DIR);
-    fs.ensureDir(outputDir);
+    fs.ensureDirSync(outputDir);
 
     const status = await genericCommand.executeCommands(
       this.commands,
