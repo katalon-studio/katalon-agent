@@ -1,6 +1,9 @@
 name: Demo Workflow Dispatch
 
 on:
+  push:
+    branches:
+      - '*'
   workflow_dispatch:
     inputs:
       logLevel:
