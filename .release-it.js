@@ -21,7 +21,7 @@ module.exports = {
   github: {
     release: true,
     releaseName: `Release ${version} 🚧${buildInfo}`,
-    draft: true,
+    draft: false,
     assets: [
       "packages/*.zip",
       "packages/*.tar.gz",
