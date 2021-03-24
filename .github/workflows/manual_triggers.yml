@@ -108,7 +108,7 @@ jobs:
 
   ### RELEASE ###
   release:
-    name: Draft new release
+    name: Release
 
     needs: build
 
@@ -163,7 +163,7 @@ jobs:
           cd katalon-agent-linux-x64-$BUILD_VERSION
           tar cvzf ../packages/katalon-agent-linux-x64-$BUILD_VERSION.tar.gz *
 
-      - name: Draft new release
+      - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run release
