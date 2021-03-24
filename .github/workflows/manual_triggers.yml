@@ -1,15 +1,6 @@
 name: Manual Triggers
 
 on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
-  release:
-    types:
-      - published
   workflow_dispatch:
 
 jobs:
@@ -162,7 +153,6 @@ jobs:
       - name: Package artifacts for release
         env:
           GZIP: -9
-        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
         run: |
           mkdir -p packages
           ls -la
@@ -174,35 +164,7 @@ jobs:
           tar cvzf ../packages/katalon-agent-linux-x64-$BUILD_VERSION.tar.gz *
 
       - name: Draft new release
-        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run release
 
-  ### DEPLOY ###
-  deploy:
-    name: Deploy cloud agent
-
-    needs: build
-
-    runs-on: ubuntu-latest
-
-    if: ${{ github.event_name == 'release' }}
-
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v2
-        with:
-          path: .
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_API_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
-          aws-region: us-east-1
-
-      - name: Deploy to s3
-        run: |
-          ls -laR
-          aws s3 cp katalon-agent-linux-x64-*/cli-linux-x64 s3://${{ secrets.AWS_S3_BUCKET }}
