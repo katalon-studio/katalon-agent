@@ -1,9 +1,10 @@
-name: Build Agent
+name: Package Agent
 
 on:
   push:
     branches:
-      - '*'
+      - master
+      - release
 
 jobs:
   ### BUILD ###
