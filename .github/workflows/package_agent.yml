@@ -3,9 +3,8 @@ name: Package Agent
 on:
   push:
     branches:
-#      - master
-#      - release
-      - "*"
+      - master
+      - release
 
 jobs:
   ### BUILD ###
