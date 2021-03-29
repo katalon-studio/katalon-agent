@@ -1,6 +1,6 @@
 {
   "name": "katalon-agent",
-  "version": "v1.7.0",
+  "version": "v1.7.0-beta",
   "description": "",
   "main": "cli.js",
   "scripts": {
