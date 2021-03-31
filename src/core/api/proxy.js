@@ -1,3 +1,4 @@
+const https = require('https');
 const config = require('../config');
 const logger = require('../../config/logger');
 
@@ -28,6 +29,14 @@ function getProxy() {
   }
 }
 
+function getIgnoreSsl() {
+  const agent = new https.Agent({
+    rejectUnauthorized: false,
+  });
+  return agent;
+}
+
 module.exports = {
   getProxy,
+  getIgnoreSsl,
 };
