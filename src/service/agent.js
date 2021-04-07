@@ -422,6 +422,7 @@ class Agent {
       await executeJob(jobInfo, keepFiles);
     } catch (err) {
       logger.error(err);
+      throw new Error(err);
     }
   }
 
