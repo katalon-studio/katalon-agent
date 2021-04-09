@@ -4,7 +4,7 @@ const path = require('path');
 const ProgressBar = require('progress');
 const { FILTERED_ERROR_CODE } = require('./constants');
 const logger = require('../../config/logger');
-const { getProxy } = require('./proxy');
+const { getProxy, getIgnoreSsl } = require('./proxy');
 
 const PROGRESS_RENDER_THROTTLE = 5000;
 
@@ -128,6 +128,7 @@ module.exports = {
       headers,
       proxy: getProxy(),
       ...overrideOpts,
+      httpsAgent: getIgnoreSsl(),
     });
   },
 };
