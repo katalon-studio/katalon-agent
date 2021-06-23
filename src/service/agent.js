@@ -107,7 +107,7 @@ function synchronizeJob(jobId, onJobSynchronization = () => {}) {
 }
 
 async function executeJob(jobInfo, keepFiles) {
-  const { jobId, projectId } = jobInfo;
+  const { jobId, projectId, timezone } = jobInfo;
   const notify = () => notifyJob(jobId, projectId);
   let isCanceled = false;
   let jLogger;
@@ -146,7 +146,7 @@ async function executeJob(jobInfo, keepFiles) {
 
   try {
     // Create logger for job
-    jLogger = jobLogger.getLogger(logFilePath);
+    jLogger = jobLogger.getLogger(logFilePath, timezone);
 
     // Upload log and add new transport to stream log content to s3
     // Everytime a new log entry is written to file
@@ -284,6 +284,7 @@ class Agent {
           !requestJobResponse ||
           !requestJobResponse.body ||
           !requestJobResponse.body.parameter ||
+          !requestJobResponse.body.project ||
           !requestJobResponse.body.testProject
         ) {
           // There is no job to execute
@@ -293,6 +294,7 @@ class Agent {
         const {
           id: jobId,
           parameter,
+          project: { timezone },
           testProject: { projectId },
         } = jobBody;
 
@@ -325,6 +327,7 @@ class Agent {
           executor,
           jobId,
           projectId,
+          timezone,
           teamId: this.teamId,
         };
 
@@ -384,6 +387,7 @@ class Agent {
       const {
         id: jobId,
         parameter,
+        project: { timezone },
         testProject: { projectId },
       } = jobBody;
 
@@ -416,6 +420,7 @@ class Agent {
         executor,
         jobId,
         projectId,
+        timezone,
         teamId: this.teamId,
       };
 
