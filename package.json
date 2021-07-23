@@ -38,7 +38,7 @@
     "moment": "^2.29.1",
     "progress": "^2.0.3",
     "properties": "^1.2.1",
-    "request": "^2.72.0",
+    "request": "^2.88.2",
     "simple-git": "^2.31.0",
     "tmp": "^0.2.1",
     "tree-kill": "^1.2.2",
