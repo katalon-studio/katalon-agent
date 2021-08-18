@@ -73,10 +73,11 @@ module.exports = {
 
   /**
    * Add this method to fix TOS-919. We used to only use uploadFileToS3 to upload a file to both S3
-   * and local file storage. Unlike that method, in this method, we remove the Content-Length header
-   * out of the request to prevent the case when there is a mismatch between the size defined in the
-   * Content-Length header and the real size of the request body content, which leads to the request
-   * being rejected by TestOps server and causing a 400 status code.
+   * and local file storage. From now on, uploading file to local file storage will be handled by
+   * this method. In this method, we remove the Content-Length header out of the request to prevent
+   * the case when there is a mismatch between the size defined in the Content-Length header and the
+   * real size of the request body content, which leads to the request being rejected by TestOps
+   * server and causing a 400 status code.
    *
    * @param {*} urlParam
    * @param {*} filePath
