@@ -158,6 +158,7 @@ async function executeJob(jobInfo, keepFiles) {
           signedUrl: jobInfo.uploadUrl,
           logger,
           wait: sendLogWaitInterval,
+          useS3: !config.isOnPremise,
         },
         notify,
       ),

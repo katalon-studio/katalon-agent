@@ -71,6 +71,26 @@ module.exports = {
     return this.request('put', urlParam, data, headers);
   },
 
+  /**
+   * Add this method to fix TOS-919. We used to only use uploadFileToS3 to upload a file to both S3
+   * and local file storage. Unlike that method, in this method, we remove the Content-Length header
+   * out of the request to prevent the case when there is a mismatch between the size defined in the
+   * Content-Length header and the real size of the request body content, which leads to the request
+   * being rejected by TestOps server and causing a 400 status code.
+   *
+   * @param {*} urlParam
+   * @param {*} filePath
+   * @returns
+   */
+  uploadFileToLocalStorage(urlParam, filePath) {
+    const headers = {
+      'content-type': 'application/octet-stream',
+      accept: 'application/json',
+    };
+    const data = fs.createReadStream(filePath);
+    return this.request('put', urlParam, data, headers);
+  },
+
   stream(urlParam, filePath, headers) {
     logger.info(`Downloading from ${urlParam.url} to ${filePath}.`);
 

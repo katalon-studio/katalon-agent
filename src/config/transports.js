@@ -13,6 +13,8 @@ class S3FileTransport extends TransportStream {
     this.wait = options.wait;
     this.afterLog = afterLog;
 
+    this.useS3 = options.useS3;
+
     this.uploadToS3 = this.uploadToS3.bind(this);
     this.uploadToS3Throttled = _.throttle(this.uploadToS3, this.wait, { trailing: false });
   }
@@ -20,7 +22,7 @@ class S3FileTransport extends TransportStream {
   uploadToS3(info, callback) {
     try {
       return api
-        .uploadFile(this.signedUrl, this.filePath)
+        .uploadFile(this.signedUrl, this.filePath, this.useS3)
         .then(() => this.afterLog && this.afterLog())
         .catch((error) => this._handleError(error));
     } catch (error) {

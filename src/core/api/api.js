@@ -33,8 +33,11 @@ module.exports = {
     return httpInternal.get(urlParam.getUploadInfo(projectId));
   },
 
-  uploadFile(uploadUrl, filePath) {
-    return http.uploadFileToS3(urlParam.uploadFileToS3(uploadUrl), filePath);
+  uploadFile(uploadUrl, filePath, useS3 = true) {
+    if (useS3) {
+      return http.uploadFileToS3(urlParam.uploadFileToS3(uploadUrl), filePath);
+    }
+    return http.uploadFileToLocalStorage(urlParam.uploadFileToLocalStorage(uploadUrl), filePath);
   },
 
   uploadFileInfo(

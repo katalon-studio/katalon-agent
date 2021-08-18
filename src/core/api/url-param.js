@@ -17,6 +17,10 @@ module.exports = {
     return buildUrl({ baseUrl: signedUrl });
   },
 
+  uploadFileToLocalStorage(uploadUrl) {
+    return buildUrl({ baseUrl: uploadUrl });
+  },
+
   uploadFileInfo(
     projectId,
     batch,
