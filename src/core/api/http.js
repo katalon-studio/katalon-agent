@@ -4,7 +4,7 @@ const path = require('path');
 const ProgressBar = require('progress');
 const { FILTERED_ERROR_CODE } = require('./constants');
 const logger = require('../../config/logger');
-const { getProxy, getIgnoreSsl } = require('./proxy');
+const { getProxy, getIgnoreSsl, getDefaultHttpsAgent } = require('./proxy');
 
 const PROGRESS_RENDER_THROTTLE = 5000;
 
@@ -123,12 +123,13 @@ module.exports = {
     return axios({
       method,
       url: urlParam.url,
+      timeout: 60000,
       params: urlParam.params,
       data,
       headers,
       proxy: getProxy(),
       ...overrideOpts,
-      httpsAgent: getIgnoreSsl(),
+      httpsAgent: getDefaultHttpsAgent(),
     });
   },
 };
