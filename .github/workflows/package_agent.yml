@@ -3,8 +3,7 @@ name: Package Agent
 on:
   push:
     branches:
-      - master
-      - release
+      - TOS-1633
 
 jobs:
   ### BUILD ###
