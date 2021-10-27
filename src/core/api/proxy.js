@@ -36,7 +36,16 @@ function getIgnoreSsl() {
   return agent;
 }
 
+function getDefaultHttpsAgent() {
+  const agent = new https.Agent({
+    rejectUnauthorized: false,
+    keepAlive: true,
+  });
+  return agent;
+}
+
 module.exports = {
   getProxy,
   getIgnoreSsl,
+  getDefaultHttpsAgent
 };
