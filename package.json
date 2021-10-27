@@ -24,7 +24,7 @@
     "test": "jest --runInBand"
   },
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "commander": "^7.0.0",
     "cpy-cli": "^3.1.1",
     "decompress": "^4.2.1",
