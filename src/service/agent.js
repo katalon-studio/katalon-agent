@@ -107,7 +107,7 @@ function synchronizeJob(jobId, onJobSynchronization = () => {}) {
 }
 
 async function executeJob(jobInfo, keepFiles) {
-  const { jobId, projectId } = jobInfo;
+  const { jobId, projectId, extraFiles } = jobInfo;
   const notify = () => notifyJob(jobId, projectId);
   let isCanceled = false;
   let jLogger;
@@ -176,6 +176,10 @@ async function executeJob(jobInfo, keepFiles) {
     const { downloader, executor } = jobInfo;
     downloader.logger = jLogger;
     await downloader.download(tmpDirPath);
+
+    // TODO: update flow
+
+    // TODO: update flow
 
     if (isCanceled) {
       jLogger.debug(`Job ${jobId} is canceled. Stop command execution.`);
@@ -320,12 +324,15 @@ class Agent {
           parameter,
         );
 
+        const { extraFiles } = parameter;
+        // add extraFiles is a list
         const jobInfo = {
           downloader,
           executor,
           jobId,
           projectId,
           teamId: this.teamId,
+          extraFiles,
         };
 
         await executeJob(jobInfo, keepFiles);
@@ -411,12 +418,14 @@ class Agent {
         parameter,
       );
 
+      const { extraFiles } = parameter;
       const jobInfo = {
         downloader,
         executor,
         jobId,
         projectId,
         teamId: this.teamId,
+        extraFiles,
       };
 
       await executeJob(jobInfo, keepFiles);
