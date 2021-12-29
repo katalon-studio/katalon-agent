@@ -40,14 +40,11 @@ module.exports = {
   move(filePath, targetDir, extraFile, logger = defaultLogger) {
     logger.info(`Moving the ${filePath} into ${targetDir}.`);
     const target = path.join(targetDir, extraFile.path);
-    // Only move file with override status
-    if (extraFile.config === 'override') {
-      fs.move(filePath, target, (err) => {
-        if (err) return logger.info(`Can not move Test Suite ${err}`);
-        logger.info('Updated script repository with Test Suite from TestOps');
-        return true;
-      });
-    }
+    fs.move(filePath, target, (err) => {
+      if (err) return logger.error(`Can not move Test Suite ${err}`);
+      logger.info('Updated script repository with Test Suite from TestOps');
+      return true;
+    });
   },
 
   downloadAndExtract(url, targetDir, haveFilter = false, logger = defaultLogger) {
@@ -63,9 +60,13 @@ module.exports = {
   },
 
   downloadExtraFileFromTestOps(extraFile, targetDir, logger = defaultLogger) {
-    return download(api.downloadFromTestOps, extraFile.contentURL, logger).then((filePath) =>
-      this.move(filePath, targetDir, extraFile, logger),
-    );
+    if (extraFile.config !== 'skipIfExist') {
+      return download(api.downloadFromTestOps, extraFile.contentURL, logger)
+        .then((filePath) =>
+          this.move(filePath, targetDir, extraFile, logger),
+        );
+    }
+    return false;
   },
 
   clone(gitRepository, targetDir, cloneOpts = {}, logger = defaultLogger) {

@@ -181,14 +181,9 @@ async function executeJob(jobInfo, keepFiles) {
 
     // if the extraFiles is not provided, the agent will work as normal flow
     if (_.isArray(extraFiles)) {
-      // Create a list of Promise
-      const listTestSuites = [];
-      for (const extraFile of extraFiles) {
-        listTestSuites.push(file.downloadExtraFileFromTestOps(extraFile, tmpDirPath, jLogger));
-      }
-      // Wait for each promise to resolve
-      // Make sure all test suites from TO move to tmp directory
-      await Promise.all(listTestSuites);
+      await Promise.all(extraFiles.map((extraFile) =>
+        file.downloadExtraFileFromTestOps(extraFile, tmpDirPath, jLogger),
+      ));
     }
 
     if (isCanceled) {
