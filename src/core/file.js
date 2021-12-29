@@ -2,6 +2,7 @@ const decompress = require('decompress');
 const path = require('path');
 const simpleGit = require('simple-git/promise')();
 const tmp = require('tmp');
+const fs = require('fs-extra');
 
 const api = require('./api');
 const defaultLogger = require('../config/logger');
@@ -36,6 +37,19 @@ module.exports = {
     });
   },
 
+  move(filePath, targetDir, extraFile, logger = defaultLogger) {
+    logger.info(`Moving the ${filePath} into ${targetDir}.`);
+    const target = path.join(targetDir, extraFile.path);
+    // Only move file with override status
+    if (extraFile.config === 'override') {
+      fs.move(filePath, target, (err) => {
+        if (err) return logger.info(`Can not move Test Suite ${err}`);
+        logger.info('Updated script repository with Test Suite from TestOps');
+        return true;
+      });
+    }
+  },
+
   downloadAndExtract(url, targetDir, haveFilter = false, logger = defaultLogger) {
     return download(api.download, url, logger).then((filePath) =>
       this.extract(filePath, targetDir, haveFilter, logger),
@@ -45,6 +59,12 @@ module.exports = {
   downloadAndExtractFromTestOps(url, targetDir, haveFilter = false, logger = defaultLogger) {
     return download(api.downloadFromTestOps, url, logger).then((filePath) =>
       this.extract(filePath, targetDir, haveFilter, logger),
+    );
+  },
+
+  downloadExtraFileFromTestOps(extraFile, targetDir, logger = defaultLogger) {
+    return download(api.downloadFromTestOps, extraFile.contentURL, logger).then((filePath) =>
+      this.move(filePath, targetDir, extraFile, logger),
     );
   },
 

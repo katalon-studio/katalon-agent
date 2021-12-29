@@ -18,6 +18,7 @@ const os = require('../core/os');
 const processController = require('./process-controller');
 const { S3FileTransport } = require('../config/transports');
 const utils = require('../core/utils');
+const file = require('../core/file');
 
 const { NODE_ENV } = process.env;
 
@@ -177,9 +178,15 @@ async function executeJob(jobInfo, keepFiles) {
     downloader.logger = jLogger;
     await downloader.download(tmpDirPath);
 
-    // TODO: update flow
-
-    // TODO: update flow
+    // if the extraFiles is not provided, the agent will work as normal flow
+    if (extraFiles !== undefined && extraFiles !== null) {
+      if (extraFiles.iterator !== undefined) {
+        for (const extraFile of extraFiles) {
+          // eslint-disable-next-line no-await-in-loop
+          await file.downloadExtraFileFromTestOps(extraFile, tmpDirPath, jLogger);
+        }
+      }
+    }
 
     if (isCanceled) {
       jLogger.debug(`Job ${jobId} is canceled. Stop command execution.`);
