@@ -1,6 +1,7 @@
 const fs = require('fs-extra');
 const ip = require('ip');
 const path = require('path');
+const _ = require('lodash');
 
 const {
   buildUpdateJobBody,
@@ -179,12 +180,10 @@ async function executeJob(jobInfo, keepFiles) {
     await downloader.download(tmpDirPath);
 
     // if the extraFiles is not provided, the agent will work as normal flow
-    if (extraFiles !== undefined && extraFiles !== null) {
-      if (extraFiles.iterator !== undefined) {
-        for (const extraFile of extraFiles) {
-          // eslint-disable-next-line no-await-in-loop
-          await file.downloadExtraFileFromTestOps(extraFile, tmpDirPath, jLogger);
-        }
+    if (_.isArray(extraFiles)) {
+      for (const extraFile of extraFiles) {
+        // eslint-disable-next-line no-await-in-loop
+        await file.downloadExtraFileFromTestOps(extraFile, tmpDirPath, jLogger);
       }
     }
 
