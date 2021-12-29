@@ -181,10 +181,14 @@ async function executeJob(jobInfo, keepFiles) {
 
     // if the extraFiles is not provided, the agent will work as normal flow
     if (_.isArray(extraFiles)) {
+      // Create a list of Promise
+      const listTestSuites = [];
       for (const extraFile of extraFiles) {
-        // eslint-disable-next-line no-await-in-loop
-        await file.downloadExtraFileFromTestOps(extraFile, tmpDirPath, jLogger);
+        listTestSuites.push(file.downloadExtraFileFromTestOps(extraFile, tmpDirPath, jLogger));
       }
+      // Wait for each promise to resolve
+      // Make sure all test suites from TO move to tmp directory
+      await Promise.all(listTestSuites);
     }
 
     if (isCanceled) {
