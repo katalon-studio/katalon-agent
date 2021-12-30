@@ -58,8 +58,8 @@ module.exports = {
    * projectPath: './Folder1
    * relativePath: 'TestOps/ New test.ts'
    */
-  checkFileExist(projectPath, relativePath) {
-    const absPath = path.join(projectPath, relativePath);
+  checkFileExist(dirPath, relativePath) {
+    const absPath = path.join(dirPath, relativePath);
     return fs.existsSync(absPath);
   },
 };
