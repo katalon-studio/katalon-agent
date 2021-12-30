@@ -116,7 +116,7 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
 
       if (shouldDownloadExtraFile) {
         const target = path.join(ksProjectPath, extraFile.path);
-        extraFileDownloads.push(file.downloadFromTestOps(extraFile.contentURL, target, jLogger));
+        extraFileDownloads.push(file.downloadFromTestOps(extraFile.contentUrl, target, jLogger));
         shouldDownloadExtraFile = false;
       }
     }
