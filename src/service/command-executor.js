@@ -47,23 +47,6 @@ function testCopyJUnitReports(outputDir) {
   files.forEach((file) => fs.copyFileSync(path.join(sampleDir, file), path.join(outputDir, file)));
 }
 
-async function downloadFile(extraFiles, ksProjectPath, jLogger) {
-  const extraFileDownloads = [];
-  for (const extraFile of extraFiles) {
-    if (extraFile.config === 'skipIfExist') {
-      // check the file actual exist
-      if (!utils.checkFileExist(ksProjectPath, extraFile.path)) {
-        const target = path.join(ksProjectPath, extraFile.path);
-        extraFileDownloads.push(file.downloadFromTestOps(extraFile.contentURL, target, jLogger));
-      }
-    } else if (extraFile.config === 'override') {
-      const target = path.join(ksProjectPath, extraFile.path);
-      extraFileDownloads.push(file.downloadFromTestOps(extraFile.contentURL, target, jLogger));
-    }
-  }
-
-  await Promise.all(extraFileDownloads);
-}
 
 class BaseKatalonCommandExecutor {
   constructor(info) {
@@ -73,7 +56,6 @@ class BaseKatalonCommandExecutor {
     this.x11Display = info.x11Display;
     this.xvfbConfiguration = info.xvfbConfiguration;
     this.env = info.env;
-    this.extraFiles = info.extraFiles;
   }
 
   async execute(logger, execDirPath, callback) {
@@ -94,15 +76,7 @@ class BaseKatalonCommandExecutor {
     const [ksProjectPath] = ksProjectPaths;
 
     if (this.preExecuteHook && typeof this.preExecuteHook === 'function') {
-      this.preExecuteHook(logger, ksProjectPath);
-    }
-
-    // The logic download extra file will run after we manually configure integration settings
-    // if the extraFiles is not provided, the agent will work as normal flow
-    if (_.isArray(this.extraFiles)) {
-      const parts = ksProjectPath.split('/');
-      const ksProjectDir = parts.slice(0, parts.length - 1).join('/');
-      await downloadFile(this.extraFiles, ksProjectDir, logger);
+      await this.preExecuteHook(logger, ksProjectPath);
     }
 
     return ks.execute(
@@ -124,9 +98,32 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     super(info);
     this.teamId = info.teamId;
     this.projectId = info.projectId;
+    this.extraFiles = info.extraFiles;
   }
 
-  preExecuteHook(logger, ksProjectPath) {
+  async downloadExtraFiles(extraFiles, ksProjectPath, jLogger) {
+    const extraFileDownloads = [];
+    let shouldDownloadExtraFile = false;
+    for (const extraFile of extraFiles) {
+      if (extraFile.writeMode === 'SKIP_IF_EXISTS') {
+        // check the file actual exist
+        if (!utils.checkFileExist(ksProjectPath, extraFile.path)) {
+          shouldDownloadExtraFile = true;
+        }
+      } else if (extraFile.writeMode === 'OVERRIDE') {
+        shouldDownloadExtraFile = true;
+      }
+
+      if (shouldDownloadExtraFile) {
+        const target = path.join(ksProjectPath, extraFile.path);
+        extraFileDownloads.push(file.downloadFromTestOps(extraFile.contentURL, target, jLogger));
+        shouldDownloadExtraFile = false;
+      }
+    }
+    await Promise.all(extraFileDownloads);
+  }
+
+  async preExecuteHook(logger, ksProjectPath) {
     // Manually configure integration settings for KS to upload execution report
     logger.debug('Configure Katalon TestOps integration.');
     const ksProjectDir = path.dirname(ksProjectPath);
@@ -140,6 +137,12 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
       testOpsPropertiesPath,
       buildTestOpsIntegrationProperties(this.teamId, this.projectId),
     );
+
+    // The logic download extra file will run after we manually configure integration settings
+    // if the extraFiles is not provided, the agent will work as normal flow
+    if (_.isArray(this.extraFiles)) {
+      await this.downloadExtraFiles(this.extraFiles, ksProjectDir, logger);
+    }
   }
 }
 

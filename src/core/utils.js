@@ -49,15 +49,17 @@ module.exports = {
     return envs.reduce((merged, { name, value }) => ({ ...merged, [name]: value }), {});
   },
 
-  checkFileExist(ksProjectPath, newTestSuitePath) {
-    const currentTestSuitePath = path.join(ksProjectPath, newTestSuitePath);
-    const allCurrentFiles = fs.readdirSync(currentTestSuitePath);
-    const newFile = newTestSuitePath.split('/').pop();
-    for (const file of allCurrentFiles) {
-      if (file === newFile) {
-        return true;
-      }
-    }
-    return false;
+  /**
+   *
+   * @param projectPath: current path
+   * @param relativePath: the new path content file that want to check it exist or not
+   * @returns {boolean}
+   * Example:
+   * projectPath: './Folder1
+   * relativePath: 'TestOps/ New test.ts'
+   */
+  checkFileExist(projectPath, relativePath) {
+    const absPath = path.join(projectPath, relativePath);
+    return fs.existsSync(absPath);
   },
 };
