@@ -1,8 +1,6 @@
 const fs = require('fs-extra');
 const ip = require('ip');
 const path = require('path');
-const _ = require('lodash');
-const fss = require('fs');
 
 const {
   buildUpdateJobBody,
@@ -20,7 +18,6 @@ const os = require('../core/os');
 const processController = require('./process-controller');
 const { S3FileTransport } = require('../config/transports');
 const utils = require('../core/utils');
-const file = require('../core/file');
 
 const { NODE_ENV } = process.env;
 
