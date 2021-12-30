@@ -103,21 +103,11 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
 
   async downloadExtraFiles(extraFiles, ksProjectPath, jLogger) {
     const extraFileDownloads = [];
-    let shouldDownloadExtraFile = false;
     for (const extraFile of extraFiles) {
-      if (extraFile.writeMode === 'SKIP_IF_EXISTS') {
-        // check the file actual exist
-        if (!utils.checkFileExist(ksProjectPath, extraFile.path)) {
-          shouldDownloadExtraFile = true;
-        }
-      } else if (extraFile.writeMode === 'OVERRIDE') {
-        shouldDownloadExtraFile = true;
-      }
-
-      if (shouldDownloadExtraFile) {
+      if ((extraFile.writeMode === 'SKIP_IF_EXISTS' && !utils.checkFileExist(ksProjectPath, extraFile.path)) ||
+        (extraFile.writeMode === 'OVERRIDE')) {
         const target = path.join(ksProjectPath, extraFile.path);
         extraFileDownloads.push(file.downloadFromTestOps(extraFile.contentUrl, target, jLogger));
-        shouldDownloadExtraFile = false;
       }
     }
     await Promise.all(extraFileDownloads);
