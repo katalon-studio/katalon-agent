@@ -73,6 +73,7 @@ class BaseKatalonCommandExecutor {
     this.x11Display = info.x11Display;
     this.xvfbConfiguration = info.xvfbConfiguration;
     this.env = info.env;
+    this.extraFiles = info.extraFiles;
   }
 
   async execute(logger, execDirPath, callback) {
@@ -96,6 +97,14 @@ class BaseKatalonCommandExecutor {
       this.preExecuteHook(logger, ksProjectPath);
     }
 
+    // The logic download extra file will run after we manually configure integration settings
+    // if the extraFiles is not provided, the agent will work as normal flow
+    if (_.isArray(this.extraFiles)) {
+      const parts = ksProjectPath.split('/');
+      const ksProjectDir = parts.slice(0, parts.length - 1).join('/');
+      await downloadFile(this.extraFiles, ksProjectDir, logger);
+    }
+
     return ks.execute(
       this.ksVersionNumber,
       this.ksLocation,
@@ -115,10 +124,9 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     super(info);
     this.teamId = info.teamId;
     this.projectId = info.projectId;
-    this.extraFiles = info.extraFiles;
   }
 
-  async preExecuteHook(logger, ksProjectPath) {
+  preExecuteHook(logger, ksProjectPath) {
     // Manually configure integration settings for KS to upload execution report
     logger.debug('Configure Katalon TestOps integration.');
     const ksProjectDir = path.dirname(ksProjectPath);
@@ -132,10 +140,6 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
       testOpsPropertiesPath,
       buildTestOpsIntegrationProperties(this.teamId, this.projectId),
     );
-    // if the extraFiles is not provided, the agent will work as normal flow
-    if (_.isArray(this.extraFiles)) {
-      await downloadFile(this.extraFiles, ksProjectPath, logger);
-    }
   }
 }
 
