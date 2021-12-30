@@ -6,6 +6,7 @@ const fs = require('fs-extra');
 
 const api = require('./api');
 const defaultLogger = require('../config/logger');
+const fss = require('fs');
 
 function download(downloadMethod, url, logger = defaultLogger) {
   logger.info(`Downloading from ${url}. It may take a few minutes.`);
@@ -37,11 +38,23 @@ module.exports = {
     });
   },
 
-  move(filePath, targetDir, logger = defaultLogger) {
-    logger.info(`Moving the ${filePath} into ${targetDir}.`);
-    fs.move(filePath, targetDir, (err) => {
-      if (err) return logger.error(`Can not move Test Suite ${err}`);
-      return logger.info('Updated script repository with extra files from TestOps');
+  checkFileExist(ksProjectPath, newTestSuitePath) {
+    const currentTestSuitePath = path.join(ksProjectPath, newTestSuitePath);
+    const allCurrentFiles = fss.readdirSync(currentTestSuitePath);
+    const newFile = newTestSuitePath.split('/').pop();
+    for (const file of allCurrentFiles) {
+      if (file === newFile) {
+        return true;
+      }
+    }
+    return false;
+  },
+
+  move(filePath, targetPath, logger = defaultLogger) {
+    logger.info(`Moving the ${filePath} into ${targetPath}.`);
+    fs.move(filePath, targetPath, (err) => {
+      if (err) return logger.error(`Can not move ${filePath} into ${targetPath} because ${err}`);
+      return logger.info(`Moved the ${filePath} into ${targetPath}`);
     });
   },
 
@@ -57,9 +70,9 @@ module.exports = {
     );
   },
 
-  downloadExtraFileFromTestOps(url, targetDir, logger = defaultLogger) {
+  downloadFromTestOps(url, targetPath, logger = defaultLogger) {
     return download(api.downloadFromTestOps, url, logger).then((filePath) =>
-      this.move(filePath, targetDir, logger),
+      this.move(filePath, targetPath, logger),
     );
   },
 
