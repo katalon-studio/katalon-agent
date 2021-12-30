@@ -40,7 +40,7 @@ module.exports = {
   move(filePath, targetPath, logger = defaultLogger) {
     logger.info(`Moving the ${filePath} into ${targetPath}.`);
     fs.move(filePath, targetPath, (err) => {
-      if (err) return logger.error(`Can not move ${filePath} into ${targetPath} because ${err}`);
+      if (err) return logger.error(`Can not move ${filePath} into ${targetPath}`, err);
       return logger.info(`Moved the ${filePath} into ${targetPath}`);
     });
   },
