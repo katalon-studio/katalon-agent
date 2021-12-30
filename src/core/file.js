@@ -37,10 +37,9 @@ module.exports = {
     });
   },
 
-  move(filePath, targetDir, extraFile, logger = defaultLogger) {
+  move(filePath, targetDir, logger = defaultLogger) {
     logger.info(`Moving the ${filePath} into ${targetDir}.`);
-    const target = path.join(targetDir, extraFile.path);
-    fs.move(filePath, target, (err) => {
+    fs.move(filePath, targetDir, (err) => {
       if (err) return logger.error(`Can not move Test Suite ${err}`);
       logger.info('Updated script repository with Test Suite from TestOps');
       return true;
@@ -59,14 +58,10 @@ module.exports = {
     );
   },
 
-  downloadExtraFileFromTestOps(extraFile, targetDir, logger = defaultLogger) {
-    if (extraFile.config !== 'skipIfExist') {
-      return download(api.downloadFromTestOps, extraFile.contentURL, logger)
-        .then((filePath) =>
-          this.move(filePath, targetDir, extraFile, logger),
-        );
-    }
-    return false;
+  downloadExtraFileFromTestOps(url, targetDir, logger = defaultLogger) {
+    return download(api.downloadFromTestOps, url, logger).then((filePath) =>
+      this.move(filePath, targetDir, logger),
+    );
   },
 
   clone(gitRepository, targetDir, cloneOpts = {}, logger = defaultLogger) {

@@ -2,6 +2,7 @@ const fs = require('fs-extra');
 const ip = require('ip');
 const path = require('path');
 const _ = require('lodash');
+const fss = require('fs');
 
 const {
   buildUpdateJobBody,
@@ -109,7 +110,7 @@ function synchronizeJob(jobId, onJobSynchronization = () => {}) {
 }
 
 async function executeJob(jobInfo, keepFiles) {
-  const { jobId, projectId, extraFiles } = jobInfo;
+  const { jobId, projectId } = jobInfo;
   const notify = () => notifyJob(jobId, projectId);
   let isCanceled = false;
   let jLogger;
@@ -179,12 +180,9 @@ async function executeJob(jobInfo, keepFiles) {
     downloader.logger = jLogger;
     await downloader.download(tmpDirPath);
 
-    // if the extraFiles is not provided, the agent will work as normal flow
-    if (_.isArray(extraFiles)) {
-      await Promise.all(extraFiles.map((extraFile) =>
-        file.downloadExtraFileFromTestOps(extraFile, tmpDirPath, jLogger),
-      ));
-    }
+    const folderScriptRepo = fss.readdirSync(tmpDirPath);
+    const scriptRepoDirPath = path.join(tmpDirPath, folderScriptRepo[1]);
+    await executor.preExecuteHook(jLogger, scriptRepoDirPath);
 
     if (isCanceled) {
       jLogger.debug(`Job ${jobId} is canceled. Stop command execution.`);
@@ -329,15 +327,12 @@ class Agent {
           parameter,
         );
 
-        const { extraFiles } = parameter;
-        // add extraFiles is a list
         const jobInfo = {
           downloader,
           executor,
           jobId,
           projectId,
           teamId: this.teamId,
-          extraFiles,
         };
 
         await executeJob(jobInfo, keepFiles);
@@ -423,14 +418,12 @@ class Agent {
         parameter,
       );
 
-      const { extraFiles } = parameter;
       const jobInfo = {
         downloader,
         executor,
         jobId,
         projectId,
         teamId: this.teamId,
-        extraFiles,
       };
 
       await executeJob(jobInfo, keepFiles);

@@ -1,12 +1,15 @@
 const fs = require('fs-extra');
 const glob = require('glob');
 const path = require('path');
+const fss = require('fs');
 
+const _ = require('lodash');
 const config = require('../core/config');
 const genericCommand = require('./generic-command');
 const ks = require('./katalon-studio');
 const properties = require('../core/properties');
 const reportUploader = require('./report-uploader');
+const file = require('../core/file');
 
 const PROJECT_FILE_PATTERN = '**/*.prj';
 const TESTOPS_PROPERTIES_FILE = 'com.kms.katalon.integration.analytics.properties';
@@ -42,6 +45,36 @@ function testCopyJUnitReports(outputDir) {
   const sampleDir = 'C:/Projects/katalon-analytics/misc/sample-junit-reports';
   const files = ['casperjs.xml', 'sample-junit.xml', 'sample-junit-out.xml'];
   files.forEach((file) => fs.copyFileSync(path.join(sampleDir, file), path.join(outputDir, file)));
+}
+
+function checkFileExist(ksProjectPath, newTestSuitePath) {
+  const currentTestSuitePath = path.join(ksProjectPath, 'Test Suites');
+  const allCurrentFiles = fss.readdirSync(currentTestSuitePath);
+  const newFile = newTestSuitePath.split('/').pop();
+  for (const file of allCurrentFiles) {
+    if (file === newFile) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function downloadFile(extraFiles, ksProjectPath, jLogger) {
+  const extraFileDownloads = [];
+  for (const extraFile of extraFiles) {
+    if (extraFile.config === 'skipIfExist') {
+      // check the file actual exist
+      if (!checkFileExist(ksProjectPath, extraFile.path)) {
+        const target = path.join(ksProjectPath, extraFile.path);
+        extraFileDownloads.push(file.downloadExtraFileFromTestOps(extraFile.contentURL, target, jLogger));
+      }
+    } else if (extraFile.config === 'override') {
+      const target = path.join(ksProjectPath, extraFile.path);
+      extraFileDownloads.push(file.downloadExtraFileFromTestOps(extraFile.contentURL, target, jLogger));
+    }
+  }
+
+  await Promise.all(extraFileDownloads);
 }
 
 class BaseKatalonCommandExecutor {
@@ -94,9 +127,10 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     super(info);
     this.teamId = info.teamId;
     this.projectId = info.projectId;
+    this.extraFiles = info.extraFiles;
   }
 
-  preExecuteHook(logger, ksProjectPath) {
+  async preExecuteHook(logger, ksProjectPath) {
     // Manually configure integration settings for KS to upload execution report
     logger.debug('Configure Katalon TestOps integration.');
     const ksProjectDir = path.dirname(ksProjectPath);
@@ -110,6 +144,10 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
       testOpsPropertiesPath,
       buildTestOpsIntegrationProperties(this.teamId, this.projectId),
     );
+    // if the extraFiles is not provided, the agent will work as normal flow
+    if (_.isArray(this.extraFiles)) {
+      await downloadFile(this.extraFiles, ksProjectPath, logger);
+    }
   }
 }
 
