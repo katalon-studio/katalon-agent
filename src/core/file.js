@@ -6,7 +6,6 @@ const fs = require('fs-extra');
 
 const api = require('./api');
 const defaultLogger = require('../config/logger');
-const fss = require('fs');
 
 function download(downloadMethod, url, logger = defaultLogger) {
   logger.info(`Downloading from ${url}. It may take a few minutes.`);
@@ -36,18 +35,6 @@ module.exports = {
         return true;
       },
     });
-  },
-
-  checkFileExist(ksProjectPath, newTestSuitePath) {
-    const currentTestSuitePath = path.join(ksProjectPath, newTestSuitePath);
-    const allCurrentFiles = fss.readdirSync(currentTestSuitePath);
-    const newFile = newTestSuitePath.split('/').pop();
-    for (const file of allCurrentFiles) {
-      if (file === newFile) {
-        return true;
-      }
-    }
-    return false;
   },
 
   move(filePath, targetPath, logger = defaultLogger) {

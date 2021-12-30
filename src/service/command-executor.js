@@ -1,7 +1,6 @@
 const fs = require('fs-extra');
 const glob = require('glob');
 const path = require('path');
-const fss = require('fs');
 
 const _ = require('lodash');
 const config = require('../core/config');
@@ -10,6 +9,7 @@ const ks = require('./katalon-studio');
 const properties = require('../core/properties');
 const reportUploader = require('./report-uploader');
 const file = require('../core/file');
+const utils = require('../core/utils');
 
 const PROJECT_FILE_PATTERN = '**/*.prj';
 const TESTOPS_PROPERTIES_FILE = 'com.kms.katalon.integration.analytics.properties';
@@ -47,30 +47,18 @@ function testCopyJUnitReports(outputDir) {
   files.forEach((file) => fs.copyFileSync(path.join(sampleDir, file), path.join(outputDir, file)));
 }
 
-function checkFileExist(ksProjectPath, newTestSuitePath) {
-  const currentTestSuitePath = path.join(ksProjectPath, 'Test Suites');
-  const allCurrentFiles = fss.readdirSync(currentTestSuitePath);
-  const newFile = newTestSuitePath.split('/').pop();
-  for (const file of allCurrentFiles) {
-    if (file === newFile) {
-      return true;
-    }
-  }
-  return false;
-}
-
 async function downloadFile(extraFiles, ksProjectPath, jLogger) {
   const extraFileDownloads = [];
   for (const extraFile of extraFiles) {
     if (extraFile.config === 'skipIfExist') {
       // check the file actual exist
-      if (!checkFileExist(ksProjectPath, extraFile.path)) {
+      if (!utils.checkFileExist(ksProjectPath, extraFile.path)) {
         const target = path.join(ksProjectPath, extraFile.path);
-        extraFileDownloads.push(file.downloadExtraFileFromTestOps(extraFile.contentURL, target, jLogger));
+        extraFileDownloads.push(file.downloadFromTestOps(extraFile.contentURL, target, jLogger));
       }
     } else if (extraFile.config === 'override') {
       const target = path.join(ksProjectPath, extraFile.path);
-      extraFileDownloads.push(file.downloadExtraFileFromTestOps(extraFile.contentURL, target, jLogger));
+      extraFileDownloads.push(file.downloadFromTestOps(extraFile.contentURL, target, jLogger));
     }
   }
 

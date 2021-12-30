@@ -1,6 +1,7 @@
 const moment = require('moment');
 const path = require('path');
 const tmp = require('tmp');
+const fs = require('fs');
 const packageJson = require('../../package.json');
 
 module.exports = {
@@ -46,5 +47,17 @@ module.exports = {
 
   mergeEnvs(envs) {
     return envs.reduce((merged, { name, value }) => ({ ...merged, [name]: value }), {});
+  },
+
+  checkFileExist(ksProjectPath, newTestSuitePath) {
+    const currentTestSuitePath = path.join(ksProjectPath, newTestSuitePath);
+    const allCurrentFiles = fs.readdirSync(currentTestSuitePath);
+    const newFile = newTestSuitePath.split('/').pop();
+    for (const file of allCurrentFiles) {
+      if (file === newFile) {
+        return true;
+      }
+    }
+    return false;
   },
 };
