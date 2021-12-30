@@ -47,7 +47,6 @@ function testCopyJUnitReports(outputDir) {
   files.forEach((file) => fs.copyFileSync(path.join(sampleDir, file), path.join(outputDir, file)));
 }
 
-
 class BaseKatalonCommandExecutor {
   constructor(info) {
     this.ksVersionNumber = info.ksVersionNumber;
