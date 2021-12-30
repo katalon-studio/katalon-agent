@@ -180,10 +180,6 @@ async function executeJob(jobInfo, keepFiles) {
     downloader.logger = jLogger;
     await downloader.download(tmpDirPath);
 
-    const folderScriptRepo = fss.readdirSync(tmpDirPath);
-    const scriptRepoDirPath = path.join(tmpDirPath, folderScriptRepo[1]);
-    await executor.preExecuteHook(jLogger, scriptRepoDirPath);
-
     if (isCanceled) {
       jLogger.debug(`Job ${jobId} is canceled. Stop command execution.`);
       return;
