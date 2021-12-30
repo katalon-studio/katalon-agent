@@ -41,7 +41,7 @@ module.exports = {
     logger.info(`Moving the ${filePath} into ${targetDir}.`);
     fs.move(filePath, targetDir, (err) => {
       if (err) return logger.error(`Can not move Test Suite ${err}`);
-      logger.info('Updated script repository with Test Suite from TestOps');
+      logger.info('Updated script repository with extra files from TestOps');
       return true;
     });
   },
