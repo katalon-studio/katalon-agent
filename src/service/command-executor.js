@@ -101,15 +101,16 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
   }
 
   async downloadExtraFiles(extraFiles, ksProjectPath, jLogger) {
-    const extraFileDownloads = [];
-    for (const extraFile of extraFiles) {
-      if ((extraFile.writeMode === 'SKIP_IF_EXISTS' && !utils.checkFileExist(ksProjectPath, extraFile.path)) ||
-        (extraFile.writeMode === 'OVERRIDE')) {
-        const target = path.join(ksProjectPath, extraFile.path);
-        extraFileDownloads.push(file.downloadFromTestOps(extraFile.contentUrl, target, jLogger));
-      }
-    }
-    await Promise.all(extraFileDownloads);
+    await Promise.all(
+      extraFiles
+        .filter((extraFile) =>
+          (extraFile.writeMode === 'SKIP_IF_EXISTS' && !utils.checkFileExist(ksProjectPath, extraFile.path))
+          || (extraFile.writeMode === 'OVERRIDE'))
+        .map((extraFile) => file.downloadFromTestOps(
+          extraFile.contentUrl,
+          path.join(ksProjectPath, extraFile.path),
+          jLogger)),
+    );
   }
 
   async preExecuteHook(logger, ksProjectPath) {
