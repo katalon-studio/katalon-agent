@@ -2,11 +2,14 @@ const fs = require('fs-extra');
 const glob = require('glob');
 const path = require('path');
 
+const _ = require('lodash');
 const config = require('../core/config');
 const genericCommand = require('./generic-command');
 const ks = require('./katalon-studio');
 const properties = require('../core/properties');
 const reportUploader = require('./report-uploader');
+const file = require('../core/file');
+const utils = require('../core/utils');
 
 const PROJECT_FILE_PATTERN = '**/*.prj';
 const TESTOPS_PROPERTIES_FILE = 'com.kms.katalon.integration.analytics.properties';
@@ -72,7 +75,7 @@ class BaseKatalonCommandExecutor {
     const [ksProjectPath] = ksProjectPaths;
 
     if (this.preExecuteHook && typeof this.preExecuteHook === 'function') {
-      this.preExecuteHook(logger, ksProjectPath);
+      await this.preExecuteHook(logger, ksProjectPath);
     }
 
     return ks.execute(
@@ -94,9 +97,23 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     super(info);
     this.teamId = info.teamId;
     this.projectId = info.projectId;
+    this.extraFiles = info.extraFiles;
   }
 
-  preExecuteHook(logger, ksProjectPath) {
+  async downloadExtraFiles(extraFiles, ksProjectPath, jLogger) {
+    await Promise.all(
+      extraFiles
+        .filter((extraFile) =>
+          (extraFile.writeMode === 'SKIP_IF_EXISTS' && !utils.checkFileExist(ksProjectPath, extraFile.path))
+          || (extraFile.writeMode === 'OVERRIDE'))
+        .map((extraFile) => file.downloadFromTestOps(
+          extraFile.contentUrl,
+          path.join(ksProjectPath, extraFile.path),
+          jLogger)),
+    );
+  }
+
+  async preExecuteHook(logger, ksProjectPath) {
     // Manually configure integration settings for KS to upload execution report
     logger.debug('Configure Katalon TestOps integration.');
     const ksProjectDir = path.dirname(ksProjectPath);
@@ -110,6 +127,12 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
       testOpsPropertiesPath,
       buildTestOpsIntegrationProperties(this.teamId, this.projectId),
     );
+
+    // The logic download extra file will run after we manually configure integration settings
+    // if the extraFiles is not provided, the agent will work as normal flow
+    if (_.isArray(this.extraFiles)) {
+      await this.downloadExtraFiles(this.extraFiles, ksProjectDir, logger);
+    }
   }
 }
 

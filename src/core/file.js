@@ -2,6 +2,7 @@ const decompress = require('decompress');
 const path = require('path');
 const simpleGit = require('simple-git/promise')();
 const tmp = require('tmp');
+const fs = require('fs-extra');
 
 const api = require('./api');
 const defaultLogger = require('../config/logger');
@@ -36,6 +37,14 @@ module.exports = {
     });
   },
 
+  move(filePath, targetPath, logger = defaultLogger) {
+    logger.info(`Moving the ${filePath} into ${targetPath}.`);
+    fs.copy(filePath, targetPath, (err) => {
+      if (err) return logger.error(`Can not move ${filePath} into ${targetPath}`, err);
+      return logger.info(`Moved the ${filePath} into ${targetPath}`);
+    });
+  },
+
   downloadAndExtract(url, targetDir, haveFilter = false, logger = defaultLogger) {
     return download(api.download, url, logger).then((filePath) =>
       this.extract(filePath, targetDir, haveFilter, logger),
@@ -45,6 +54,12 @@ module.exports = {
   downloadAndExtractFromTestOps(url, targetDir, haveFilter = false, logger = defaultLogger) {
     return download(api.downloadFromTestOps, url, logger).then((filePath) =>
       this.extract(filePath, targetDir, haveFilter, logger),
+    );
+  },
+
+  downloadFromTestOps(url, targetPath, logger = defaultLogger) {
+    return download(api.downloadFromTestOps, url, logger).then((filePath) =>
+      this.move(filePath, targetPath, logger),
     );
   },
 
