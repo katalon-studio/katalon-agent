@@ -109,3 +109,29 @@ jobs:
           bin/cli-macos-x64
           bin/start.sh
 
+  ### DEPLOY ###
+  deploy:
+    name: Deploy staging cloud agent
+
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: .
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.STAGING_AWS_API_KEY }}
+          aws-secret-access-key: ${{ secrets.STAGING_AWS_SECRET_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy to staging s3
+        run: |
+          ls -laR
+          aws s3 cp katalon-agent-linux-x64-*/cli-linux-x64 s3://katalon-testops-agent-beta/cloud/cli-linux-x64
+
