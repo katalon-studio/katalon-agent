@@ -154,6 +154,8 @@ jobs:
         env:
           GZIP: -9
         run: |
+          set -x
+          
           mkdir -p packages
           ls -la
           zip -9 -j packages/katalon-agent-win-x64-$BUILD_VERSION.zip katalon-agent-win-x64-$BUILD_VERSION/*
