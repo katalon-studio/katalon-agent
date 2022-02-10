@@ -1,6 +1,7 @@
 const moment = require('moment');
 const path = require('path');
 const tmp = require('tmp');
+const fs = require('fs');
 const packageJson = require('../../package.json');
 
 module.exports = {
@@ -46,5 +47,19 @@ module.exports = {
 
   mergeEnvs(envs) {
     return envs.reduce((merged, { name, value }) => ({ ...merged, [name]: value }), {});
+  },
+
+  /**
+   *
+   * @param projectPath: current path
+   * @param relativePath: the new path content file that want to check it exist or not
+   * @returns {boolean}
+   * Example:
+   * projectPath: './Folder1
+   * relativePath: 'TestOps/ New test.ts'
+   */
+  checkFileExist(dirPath, relativePath) {
+    const absPath = path.join(dirPath, relativePath);
+    return fs.existsSync(absPath);
   },
 };

@@ -50,6 +50,7 @@ function createCommandExecutor(
     x11Display,
     xvfbConfiguration,
     env,
+    extraFiles: parameter.extraFiles,
   };
   return new KatalonCommandExecutor(info);
 }

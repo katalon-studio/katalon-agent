@@ -109,3 +109,65 @@ jobs:
           bin/cli-macos-x64
           bin/start.sh
 
+  ### DEPLOY ###
+  deploy:
+    name: Deploy staging cloud agent
+
+    needs: build
+
+    strategy:
+      matrix:
+        node-version:
+          - 10.x
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v2.1.0
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2.1.2
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install packages
+        run: npm install --only dev
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.STAGING_AWS_API_KEY }}
+          aws-secret-access-key: ${{ secrets.STAGING_AWS_SECRET_KEY }}
+          aws-region: us-east-1
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: .
+
+      - name: Add execute permission to downloaded artifacts
+        run: chmod +x katalon-agent-linux-*/* katalon-agent-macos-*/*
+
+      - name: Set BUILD_VERSION environment variable
+        run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
+
+      - name: Package artifacts
+        env:
+          GZIP: -9
+        run: |
+          set -x
+          mkdir -p packages
+          ls -la
+          zip -9 -j packages/katalon-agent-win-x64-$BUILD_VERSION.zip katalon-agent-win-x64-$BUILD_VERSION/*
+          zip -9 -j packages/katalon-agent-win-x86-$BUILD_VERSION.zip katalon-agent-win-x86-$BUILD_VERSION/*
+          zip -9 -j packages/katalon-agent-linux-x64-$BUILD_VERSION.zip katalon-agent-linux-x64-$BUILD_VERSION/*
+          zip -9 -j packages/katalon-agent-macos-x64-$BUILD_VERSION.zip katalon-agent-macos-x64-$BUILD_VERSION/*
+          cd katalon-agent-linux-x64-$BUILD_VERSION
+          tar cvzf ../packages/katalon-agent-linux-x64-$BUILD_VERSION.tar.gz *
+
+          cd ..
+          ls -laR
+          aws s3 cp katalon-agent-linux-x64-$BUILD_VERSION/cli-linux-x64 s3://katalon-testops-agent-beta/cloud/cli-linux-x64 --acl public-read
+          aws s3 sync packages/ s3://katalon-testops-agent-beta/$BUILD_VERSION --acl public-read
