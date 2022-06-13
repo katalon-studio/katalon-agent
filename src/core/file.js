@@ -88,7 +88,7 @@ module.exports = {
     let actualBranch = '';
     const refsHeads = 'refs/heads/';
 
-    if (branch.includes(refsHeads)) {
+    if (branch.startsWith(refsHeads)) {
       actualBranch = branch.replace(refsHeads, '');
     } else {
       actualBranch = branch.split('/').pop();
