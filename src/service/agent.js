@@ -306,7 +306,6 @@ class Agent {
           ksArgs = utils.updateCommand(
             parameter.command,
             { flag: '-apiKey', value: this.apikey },
-            { flag: '-serverUrl', value: config.serverUrl },
           );
         }
 
@@ -397,7 +396,6 @@ class Agent {
         ksArgs = utils.updateCommand(
           parameter.command,
           { flag: '-apiKey', value: this.apikey },
-          { flag: '-serverUrl', value: config.serverUrl },
         );
       }
 
