@@ -61,6 +61,7 @@ COPY --from=build /katalon/bin/cli-linux-x64 *.sh ./
 
 # Setup
 WORKDIR $KATALON_SCRIPT_DIR
+RUN chmod -R 777 ./
 RUN ./setup.sh
 
 # PATH Environment
