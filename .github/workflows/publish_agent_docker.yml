@@ -29,4 +29,4 @@ jobs:
           file: ./Dockerfile
           builder: ${{ steps.buildx.outputs.name }}
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/:${{ inputs.version }}
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/agent:${{ inputs.version }}
