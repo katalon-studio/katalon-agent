@@ -70,7 +70,7 @@ RUN echo "PATH=\"$PATH\"" > /etc/environment
 
 WORKDIR /
 COPY ./docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-
+RUN ["chmod", "+x", "/usr/local/bin/entrypoint.sh"]
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 CMD ["agent.sh", "start-agent"]
