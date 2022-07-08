@@ -85,11 +85,20 @@ module.exports = {
       return opts;
     }, []);
 
+    let actualBranch = '';
+    const refsHeads = 'refs/heads/';
+
+    if (branch.startsWith(refsHeads)) {
+      actualBranch = branch.replace(refsHeads, '');
+    } else {
+      actualBranch = branch.split('/').pop();
+    }
+
     return simpleGit.clone(url, gitTargetDir, [
       '--depth',
       '1',
       '--branch',
-      branch.split('/').pop(),
+      actualBranch,
       ...overrideOpts,
     ]);
   },
