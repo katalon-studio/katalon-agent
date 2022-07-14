@@ -127,12 +127,15 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
       testOpsPropertiesPath,
       buildTestOpsIntegrationProperties(this.teamId, this.projectId),
     );
+    logger.debug('Finish configuring Katalon TestOps integration.');
 
+    logger.debug('Start downloading extra files.');
     // The logic download extra file will run after we manually configure integration settings
     // if the extraFiles is not provided, the agent will work as normal flow
     if (_.isArray(this.extraFiles)) {
       await this.downloadExtraFiles(this.extraFiles, ksProjectDir, logger);
     }
+    logger.debug('Finish downloading extra files.');
   }
 }
 
