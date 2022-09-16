@@ -17,7 +17,7 @@ const GENERIC_COMMAND_OUTPUT_DIR = 'katalon-agent-output';
 const GENERIC_COMMAND_REPORT_DIR_ENV = 'KATALON_AGENT_REPORT_FOLDER';
 const JUNIT_FILE_PATTERN = '**/*.xml';
 
-function buildTestOpsIntegrationProperties(teamId, projectId, gitRepository) {
+function buildTestOpsIntegrationProperties(teamId, projectId, organizationId, gitRepository) {
   const deprecatedProperties = {
     'analytics.server.endpoint': config.serverUrl,
     'analytics.authentication.email': config.email,
@@ -37,7 +37,9 @@ function buildTestOpsIntegrationProperties(teamId, projectId, gitRepository) {
     ...deprecatedProperties,
     'analytics.integration.enable': true,
     'analytics.team': JSON.stringify({ id: teamId.toString() }),
-    'analytics.project': JSON.stringify({ id: projectId.toString() }),
+    'analytics.project': JSON.stringify(
+      { id: projectId.toString(), organizationId: `${organizationId}` },
+    ),
     ...(git && { 'analytics.git': JSON.stringify(git) }),
     ...onPremiseProperties,
   };
@@ -99,6 +101,7 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     super(info);
     this.teamId = info.teamId;
     this.projectId = info.projectId;
+    this.organizationId = info.organizationId;
     this.extraFiles = info.extraFiles;
     this.gitRepository = info.gitRepository;
   }
@@ -128,7 +131,7 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     );
     properties.writeProperties(
       testOpsPropertiesPath,
-      buildTestOpsIntegrationProperties(this.teamId, this.projectId, this.gitRepository),
+      buildTestOpsIntegrationProperties(this.teamId, this.projectId, this.organizationId, this.gitRepository),
     );
     logger.debug('Finish configuring Katalon TestOps integration.');
 
