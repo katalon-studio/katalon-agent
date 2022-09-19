@@ -51,6 +51,8 @@ function createCommandExecutor(
     xvfbConfiguration,
     env,
     extraFiles: parameter.extraFiles,
+    gitRepository: parameter.gitRepositoryResource,
+    organizationId: parameter.organizationId,
   };
   return new KatalonCommandExecutor(info);
 }

@@ -17,7 +17,7 @@ const GENERIC_COMMAND_OUTPUT_DIR = 'katalon-agent-output';
 const GENERIC_COMMAND_REPORT_DIR_ENV = 'KATALON_AGENT_REPORT_FOLDER';
 const JUNIT_FILE_PATTERN = '**/*.xml';
 
-function buildTestOpsIntegrationProperties(teamId, projectId) {
+function buildTestOpsIntegrationProperties(teamId, projectId, organizationId, gitRepository) {
   const deprecatedProperties = {
     'analytics.server.endpoint': config.serverUrl,
     'analytics.authentication.email': config.email,
@@ -32,11 +32,15 @@ function buildTestOpsIntegrationProperties(teamId, projectId) {
     'analytics.onpremise.enable': config.isOnPremise,
     'analytics.onpremise.server': config.serverUrl,
   };
+  const git = _.pick(gitRepository, ['repository', 'branch'])
   return {
     ...deprecatedProperties,
     'analytics.integration.enable': true,
     'analytics.team': JSON.stringify({ id: teamId.toString() }),
-    'analytics.project': JSON.stringify({ id: projectId.toString() }),
+    'analytics.project': JSON.stringify(
+      { id: projectId.toString(), organizationId: `${organizationId}` },
+    ),
+    ...(git && { 'analytics.git': JSON.stringify(git) }),
     ...onPremiseProperties,
   };
 }
@@ -97,7 +101,9 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     super(info);
     this.teamId = info.teamId;
     this.projectId = info.projectId;
+    this.organizationId = info.organizationId;
     this.extraFiles = info.extraFiles;
+    this.gitRepository = info.gitRepository;
   }
 
   async downloadExtraFiles(extraFiles, ksProjectPath, jLogger) {
@@ -125,14 +131,17 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     );
     properties.writeProperties(
       testOpsPropertiesPath,
-      buildTestOpsIntegrationProperties(this.teamId, this.projectId),
+      buildTestOpsIntegrationProperties(this.teamId, this.projectId, this.organizationId, this.gitRepository),
     );
+    logger.debug('Finish configuring Katalon TestOps integration.');
 
+    logger.debug('Start downloading extra files.');
     // The logic download extra file will run after we manually configure integration settings
     // if the extraFiles is not provided, the agent will work as normal flow
     if (_.isArray(this.extraFiles)) {
       await this.downloadExtraFiles(this.extraFiles, ksProjectDir, logger);
     }
+    logger.debug('Finish downloading extra files.');
   }
 }
 
