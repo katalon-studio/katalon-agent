@@ -1,6 +1,7 @@
 const childProcess = require('child_process');
 const os = require('os');
 const tmp = require('tmp');
+const utils = require('./utils');
 
 const defaultLogger = require('../config/logger');
 
@@ -82,7 +83,8 @@ module.exports = {
       tmpDirPath = tmpDir.name;
     }
 
-    logger.info(`Execute "${cmd} ${args.join(' ')}" in ${tmpDirPath}.`);
+    const loggingArgs = utils.markLog(args.join(' '));
+    logger.info(`Execute "${cmd} ${loggingArgs}" in ${tmpDirPath}.`);
     const promise = new Promise((resolve) => {
       const environment = {
         ...process.env,
@@ -100,7 +102,8 @@ module.exports = {
       }
 
       const stdoutStream = cmdProcess.stdout.on('data', (data) => {
-        logger.debug(data.toString());
+        const message = utils.markLog(data.toString());
+        logger.debug(message);
       });
       const stderrStream = cmdProcess.stderr.on('data', (data) => {
         logger.debug(data.toString());
