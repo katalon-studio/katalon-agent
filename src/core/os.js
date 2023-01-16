@@ -83,7 +83,7 @@ module.exports = {
       tmpDirPath = tmpDir.name;
     }
 
-    const loggingArgs = utils.markLog(args.join(' '));
+    const loggingArgs = utils.maskLog(args.join(' '));
     logger.info(`Execute "${cmd} ${loggingArgs}" in ${tmpDirPath}.`);
     const promise = new Promise((resolve) => {
       const environment = {
@@ -102,7 +102,7 @@ module.exports = {
       }
 
       const stdoutStream = cmdProcess.stdout.on('data', (data) => {
-        const message = utils.markLog(data.toString());
+        const message = utils.maskLog(data.toString());
         logger.debug(message);
       });
       const stderrStream = cmdProcess.stderr.on('data', (data) => {

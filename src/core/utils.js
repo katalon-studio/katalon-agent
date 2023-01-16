@@ -69,7 +69,7 @@ module.exports = {
    * @param sensitiveInfos: array contain sensitive info keys that want to hide
    * @returns string new string that is replaced sensitive info to ********
    */
-  markLog(str, sensitiveInfos = ['-apiKey', '-executionUUID']) {
+  maskLog(str, sensitiveInfos = ['-apiKey', '-executionUUID']) {
     const arStr = str.split(' ');
     sensitiveInfos.forEach((item) => {
       const index = arStr.findIndex((t) => t.startsWith(item));
