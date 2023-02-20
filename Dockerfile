@@ -10,7 +10,7 @@ RUN chmod a+x ./docker/scripts/build_agent.sh
 RUN ./docker/scripts/build_agent.sh
 
 # Build docker image
-FROM ubuntu:16.04
+FROM ubuntu:20.04
 
 # Agent arguement
 ARG AGENT_VERSION
