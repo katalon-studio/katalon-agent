@@ -48,7 +48,7 @@ ENV NO_KEEP_FILES=''
 
 
 # Copy script files
-RUN apt update && apt -y install openjdk-8-jdk && update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+RUN apt update && apt -y install openjdk-8-jdk
 
 # Copy script files
 RUN mkdir -p $KATALON_SCRIPT_DIR
