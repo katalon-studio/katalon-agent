@@ -1,13 +1,13 @@
-# Build agent
-FROM node:10 as build
+# # Build agent
+# FROM node:10 as build
 
-ARG KATALON_ROOT_DIR=/katalon
-RUN mkdir -p $KATALON_ROOT_DIR
+# ARG KATALON_ROOT_DIR=/katalon
+# RUN mkdir -p $KATALON_ROOT_DIR
 
-WORKDIR /katalon
-COPY . .
-RUN chmod a+x ./docker/scripts/build_agent.sh
-RUN ./docker/scripts/build_agent.sh
+# WORKDIR /katalon
+# COPY . .
+# RUN chmod a+x ./docker/scripts/build_agent.sh
+# RUN ./docker/scripts/build_agent.sh
 
 # Build docker image
 FROM ubuntu:20.04
@@ -61,7 +61,8 @@ COPY ./docker/scripts/agent.sh agent.sh
 
 # Copy agent
 WORKDIR $KATALON_AGENT_DIR
-COPY --from=build /katalon/bin/cli-linux-x64 *.sh ./
+# COPY --from=build /katalon/bin/cli-linux-x64 *.sh ./
+COPY ./bin/cli-linux-x64 *.sh ./
 
 # Setup
 WORKDIR $KATALON_SCRIPT_DIR
