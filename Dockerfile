@@ -46,6 +46,10 @@ ENV X11_DISPLAY=''
 ENV KEEP_FILES=''
 ENV NO_KEEP_FILES=''
 
+
+# Copy script files
+RUN apt update && apt -y install openjdk-8-jdk && update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+
 # Copy script files
 RUN mkdir -p $KATALON_SCRIPT_DIR
 WORKDIR $KATALON_SCRIPT_DIR
