@@ -1,5 +1,9 @@
 # Katalon TestOps Agent
 
+## Build Katalon Agent docker image
+Run the below command to build the image
+```./buid-image.sh 1.7.6```
+
 ## Start the Katalon Agent
 
 ### Prerequisites
