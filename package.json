@@ -13,7 +13,7 @@
     "buildWin": "npm run build:pkgWin64 && npm run build:pkgWin86 && npm run afterbuild",
     "build:serv": "npm run beforebuild && npm run build:pkg && npm run afterbuild",
     "build:pkg": "pkg --targets node10-linux-x64,node10-macos-x64,node10-win-x64,node10-win-x86 --out-path bin cli.js",
-    "build:pkgLinux": "pkg --targets node10-linux --output bin/cli-linux cli.js",
+    "build:pkgLinux": "pkg --targets node10-linux-arm64 --output bin/cli-linux cli.js",
     "build:pkgLinux64": "pkg --targets node10-linux-x64 --output bin/cli-linux-x64 cli.js",
     "build:pkgMacos64": "pkg --targets node10-macos-x64 --output bin/cli-macos-x64 cli.js",
     "build:pkgWin64": "pkg --targets node10-win-x64 --output bin/cli-win-x64 cli.js",
