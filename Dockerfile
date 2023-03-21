@@ -58,8 +58,8 @@ COPY ./docker/scripts/agent.sh agent.sh
 
 # Copy agent
 WORKDIR $KATALON_AGENT_DIR
-# COPY --from=build /katalon/bin/cli-linux-x64 *.sh ./
-COPY ./bin/cli-linux-x64 *.sh ./
+COPY --from=build /katalon/bin/cli-linux-x64 *.sh ./
+# COPY ./bin/cli-linux-x64 *.sh ./
 
 # Setup
 WORKDIR $KATALON_SCRIPT_DIR
