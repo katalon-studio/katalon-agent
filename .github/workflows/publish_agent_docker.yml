@@ -17,7 +17,7 @@ jobs:
           node-version: 10.x
 
       - name: Install packages
-      run: npm ci
+        run: npm ci
 
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
@@ -46,7 +46,7 @@ jobs:
         with:
           context: ./
           file: ./Dockerfile
-          platforms: 'linux/amd64,linux/arm64/v8'
+          platforms: 'linux/amd64,linux/arm/linux/arm64/v8'
           build-args: AGENT_VERSION=${{ inputs.version }}
           builder: ${{ steps.buildx.outputs.name }}
           push: true
