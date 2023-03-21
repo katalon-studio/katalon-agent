@@ -48,9 +48,6 @@ ENV NO_KEEP_FILES=''
 
 
 # Copy script files
-RUN apt update && apt -y install openjdk-8-jdk
-
-# Copy script files
 RUN mkdir -p $KATALON_SCRIPT_DIR
 WORKDIR $KATALON_SCRIPT_DIR
 COPY ./docker/scripts/wrap_chrome_binary.sh wrap_chrome_binary.sh
