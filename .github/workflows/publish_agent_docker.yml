@@ -11,21 +11,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v2.1.2
-        with:
-          node-version: 10.x
+      # - name: Setup Node.js
+      #   uses: actions/setup-node@v2.1.2
+      #   with:
+      #     node-version: 10.x
 
-      - name: Install packages
-        run: npm ci
+      # - name: Install packages
+      #   run: npm ci
 
-      - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
-        env:
-          CI: true
-        run: |
-          npm run buildLinux --if-present
-          chmod +x bin/cli-linux-x64 *.sh
-          ls -l bin
+      # - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
+      #   env:
+      #     CI: true
+      #   run: |
+      #     npm run buildLinux --if-present
+      #     chmod +x bin/cli-linux-x64 *.sh
+      #     ls -l bin
 
       - name: Login Docker Hub
         uses: docker/login-action@v2
@@ -46,7 +46,7 @@ jobs:
         with:
           context: ./
           file: ./Dockerfile
-          platforms: 'linux/amd64,linux/arm64/v8'
+          platforms: 'linux/amd64,linux/armv7'
           build-args: AGENT_VERSION=${{ inputs.version }}
           builder: ${{ steps.buildx.outputs.name }}
           push: true
