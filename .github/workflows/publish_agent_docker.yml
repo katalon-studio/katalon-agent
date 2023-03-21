@@ -50,4 +50,4 @@ jobs:
           build-args: AGENT_VERSION=${{ inputs.version }}
           builder: ${{ steps.buildx.outputs.name }}
           push: true
-          tags: drag0nfire19/katalon-agent:1.7.6
+          tags: drag0nfire19/katalon-agent:1.7.6,drag0nfire19/katalon-agent:latest
