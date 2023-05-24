@@ -1,0 +1,48 @@
+name: Test all and upload coverage to SonarCloud
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - release
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout Katalon Agent
+        uses: actions/checkout@v3
+
+      - name: Set up Nodejs 10
+        uses: actions/setup-node@v3
+        with:
+          node-version: '10'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Run FrontEnd test
+        run: |
+          npm ci && npm run test:coverage
+          sed -i 's@'$GITHUB_WORKSPACE'@/github/workspace/@g' coverage/lcov.info
+
+      - name: Sonar Cloud Scan
+        uses: SonarSource/sonarcloud-github-action@v1.8
+        with:
+          args: >
+            -Dsonar.verbose=true
+            -X
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Run ESLint check
+        uses: sibiraj-s/action-eslint@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          eslint-args: '-c .eslintrc'
+          extensions: 'js'
+          annotations: true
