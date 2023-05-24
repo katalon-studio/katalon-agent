@@ -27,7 +27,7 @@ jobs:
       - name: Run FrontEnd test
         working-directory: testops/frontend
         run: |
-          npm ci && npm run ci:test
+          npm ci && npm run test:coverage
           sed -i 's@'$GITHUB_WORKSPACE'@/github/workspace/@g' coverage/lcov.info
 
       - name: Sonar Cloud Scan
