@@ -60,9 +60,5 @@
     "jest": "^26.6.3",
     "pkg": "^4.4.9",
     "release-it": "^14.2.2"
-  },
-  "sonarCloud": {
-    "organization": "katalon-studio",
-    "projectKey": "katalon-agent"
   }
 }
