@@ -47,6 +47,6 @@ jobs:
         uses: sibiraj-s/action-eslint@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          eslint-args: '-c .eslintrc'
+          eslint-args: '-c .eslintrc.yml'
           extensions: 'js'
           annotations: true
