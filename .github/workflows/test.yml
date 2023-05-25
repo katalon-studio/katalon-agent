@@ -7,6 +7,10 @@ on:
       - master
       - release
 
+concurrency:
+  group: test-${{ github.head_ref ||  github.sha }}
+  cancel-in-progress: true
+
 jobs:
 
   build:
@@ -26,7 +30,7 @@ jobs:
 
       - name: Run FrontEnd test
         run: |
-          npm ci && npm run test:coverage
+          npm ci && npm run eslint && npm run test:coverage
           sed -i 's@'$GITHUB_WORKSPACE'@/github/workspace/@g' coverage/lcov.info
 
       - name: Sonar Cloud Scan

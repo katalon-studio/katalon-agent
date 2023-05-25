@@ -4,7 +4,7 @@ const path = require('path');
 const ProgressBar = require('progress');
 const { FILTERED_ERROR_CODE } = require('./constants');
 const logger = require('../../config/logger');
-const { getProxy, getIgnoreSsl, getDefaultHttpsAgent } = require('./proxy');
+const { getProxy, getDefaultHttpsAgent } = require('./proxy');
 
 const PROGRESS_RENDER_THROTTLE = 5000;
 

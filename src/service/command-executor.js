@@ -32,7 +32,7 @@ function buildTestOpsIntegrationProperties(teamId, projectId, organizationId, gi
     'analytics.onpremise.enable': config.isOnPremise,
     'analytics.onpremise.server': config.serverUrl,
   };
-  const git = _.pick(gitRepository, ['repository', 'branch'])
+  const git = _.pick(gitRepository, ['repository', 'branch']);
   return {
     ...deprecatedProperties,
     'analytics.integration.enable': true,
@@ -43,12 +43,6 @@ function buildTestOpsIntegrationProperties(teamId, projectId, organizationId, gi
     ...(git && { 'analytics.git': JSON.stringify(git) }),
     ...onPremiseProperties,
   };
-}
-
-function testCopyJUnitReports(outputDir) {
-  const sampleDir = 'C:/Projects/katalon-analytics/misc/sample-junit-reports';
-  const files = ['casperjs.xml', 'sample-junit.xml', 'sample-junit-out.xml'];
-  files.forEach((file) => fs.copyFileSync(path.join(sampleDir, file), path.join(outputDir, file)));
 }
 
 class BaseKatalonCommandExecutor {
@@ -110,8 +104,8 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     await Promise.all(
       extraFiles
         .filter((extraFile) =>
-          (extraFile.writeMode === 'SKIP_IF_EXISTS' && !utils.checkFileExist(ksProjectPath, extraFile.path))
-          || (extraFile.writeMode === 'OVERRIDE'))
+          (extraFile.writeMode === 'SKIP_IF_EXISTS' && !utils.checkFileExist(ksProjectPath, extraFile.path)) ||
+          (extraFile.writeMode === 'OVERRIDE'))
         .map((extraFile) => file.downloadFromTestOps(
           extraFile.contentUrl,
           path.join(ksProjectPath, extraFile.path),
@@ -165,7 +159,6 @@ class GenericCommandExecutor {
       callback,
       this.env,
     );
-    // testCopyJUnitReports(outputDir);
 
     const opts = {
       sessionId: this.sessionId,

@@ -187,7 +187,7 @@ async function executeJob(jobInfo, keepFiles) {
     const status = await executor.execute(jLogger, tmpDirPath, (pid) => {
       processId = pid;
       processController.createController(pid, jobId);
-      updateJobStatus(jobId, JOB_STATUS.RUNNING, processId);
+      updateJobStatus(jobId, JOB_STATUS.RUNNING, processId).catch(() => { /* ignore */ });
     });
 
     if (isCanceled) {
@@ -219,7 +219,7 @@ async function executeJob(jobInfo, keepFiles) {
 
     await uploadLog(jobInfo, logFilePath);
     logger.info('Job execution log uploaded.');
-    notify();
+    notify().catch(() => { /* ignore */ });
     clearInterval(syncJobIntervalID);
 
     processController.killProcessFromJobId(jobId);
@@ -351,7 +351,7 @@ class Agent {
         ip: ip.address(),
         os: os.getVersion(),
         agentVersion: utils.getVersion(),
-      }); // async
+      }).catch(() => { /* ignore */ });
     };
 
     requestAndExecuteJob();

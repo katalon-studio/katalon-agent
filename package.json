@@ -4,7 +4,7 @@
   "description": "",
   "main": "cli.js",
   "scripts": {
-    "start": "node cli.js start-agent",
+    "start": "npm run eslint && node cli.js start-agent",
     "beforebuild": "",
     "build": "npm run build:pkg && npm run afterbuild",
     "buildLinux": "npm run build:pkgLinux64 && npm run afterbuild",
@@ -23,7 +23,9 @@
     "release": "release-it --ci",
     "test:coverage": "jest --passWithNoTests --coverage",
     "test:debug": "jest --passWithNoTests --detectOpenHandles --coverage",
-    "test": "jest --passWithNoTests"
+    "test": "jest --passWithNoTests",
+    "eslint": "eslint -c .eslintrc.yml src --ext .js",
+    "eslint:json": "eslint -c .eslintrc.yml src --ext .js -f json -o reports/eslint-report.json"
   },
   "dependencies": {
     "axios": "^0.21.1",

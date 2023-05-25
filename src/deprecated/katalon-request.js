@@ -1,4 +1,4 @@
-const http = require('../core/http');
+const http = require('../core/api/http');
 const config = require('../core/config');
 
 const TOKEN_URI = '/oauth/token';
