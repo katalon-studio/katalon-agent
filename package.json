@@ -4,7 +4,7 @@
   "description": "",
   "main": "cli.js",
   "scripts": {
-    "start": "node cli.js start-agent",
+    "start": "npm run eslint && node cli.js start-agent",
     "beforebuild": "",
     "build": "npm run build:pkg && npm run afterbuild",
     "buildLinux": "npm run build:pkgLinux64 && npm run afterbuild",
