@@ -25,7 +25,7 @@
     "test:debug": "jest --passWithNoTests --detectOpenHandles --coverage",
     "test": "jest --passWithNoTests",
     "eslint": "eslint -c .eslintrc.yml src --ext .js",
-    "eslint:json": "eslint -c .eslintrc.yml src --ext .js -f json -o reports/report.json"
+    "eslint:json": "eslint -c .eslintrc.yml src --ext .js -f json -o reports/eslint-report.json"
   },
   "dependencies": {
     "axios": "^0.21.1",
