@@ -28,9 +28,12 @@ jobs:
           cache: 'npm'
           cache-dependency-path: package-lock.json
 
-      - name: Run FrontEnd test
+      - name: Run test
         run: |
-          npm ci && npm run eslint && npm run test:coverage
+          npm ci 
+          npm run eslint
+          npm run test:coverage
+          npm run buildLinux --if-present 
           sed -i 's@'$GITHUB_WORKSPACE'@/github/workspace/@g' coverage/lcov.info
 
       - name: Sonar Cloud Scan

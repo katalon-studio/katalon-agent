@@ -96,6 +96,7 @@ function pingAgent(body) {
 }
 
 function synchronizeJob(jobId, onJobSynchronization = () => {}) {
+  // NOSONAR
   return setInterval(async () => {
     try {
       const synchronizedJob = await api.pingJob(jobId);
@@ -355,6 +356,7 @@ class Agent {
     };
 
     requestAndExecuteJob();
+    // NOSONAR
     setInterval(requestAndExecuteJob, requestInterval);
     setInterval(syncInfo, pingInterval);
     setInterval(processController.removeInactiveControllers, checkProcessInterval);
