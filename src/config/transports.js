@@ -18,15 +18,10 @@ class S3FileTransport extends TransportStream {
   }
 
   uploadToS3() {
-    try {
-      return api
-        .uploadFile(this.signedUrl, this.filePath)
-        .then(() => this.afterLog && this.afterLog())
-        .catch((error) => this._handleError(error));
-    } catch (error) {
-      this._handleError(error);
-      return null;
-    }
+    return api
+      .uploadFile(this.signedUrl, this.filePath)
+      .then(() => this.afterLog && this.afterLog())
+      .catch((error) => this._handleError(error));
   }
 
   log(info, callback) {
