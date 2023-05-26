@@ -96,16 +96,18 @@ function pingAgent(body) {
 }
 
 function synchronizeJob(jobId, onJobSynchronization = () => {}) {
-  // BEGIN-NOSCAN
   return setInterval(async () => {
-    try {
-      const synchronizedJob = await api.pingJob(jobId);
-      await onJobSynchronization(synchronizedJob && synchronizedJob.body);
-    } catch (err) {
-      logger.warn('Unable to synchronize job:', jobId, err);
-    }
+    api.pingJob(jobId)
+      .then((synchronizedJob) => {
+        onJobSynchronization(synchronizedJob && synchronizedJob.body)
+          .catch((error) => {
+            logger.warn('Unable to synchronize job:', jobId, error);
+          });
+      })
+      .catch((error) => {
+        logger.warn('Unable to synchronize job:', jobId, error);
+      });
   }, syncJobInterval);
-  // END-NOSCAN
 }
 
 async function executeJob(jobInfo, keepFiles) {
