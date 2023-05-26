@@ -96,7 +96,7 @@ function pingAgent(body) {
 }
 
 function synchronizeJob(jobId, onJobSynchronization = () => {}) {
-  return setInterval(async () => {
+  return setInterval(() => {
     api.pingJob(jobId)
       .then((synchronizedJob) => {
         onJobSynchronization(synchronizedJob && synchronizedJob.body)
