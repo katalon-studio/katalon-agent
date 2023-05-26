@@ -28,7 +28,7 @@
     "eslint:json": "eslint -c .eslintrc.yml src --ext .js -f json -o reports/eslint-report.json"
   },
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios": "^0.21.3",
     "commander": "^7.0.0",
     "cpy-cli": "^3.1.1",
     "decompress": "^4.2.1",
@@ -37,9 +37,9 @@
     "glob": "^7.1.6",
     "ini": "^2.0.0",
     "ip": "^1.1.5",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "log4js": "^6.3.0",
-    "moment": "^2.29.1",
+    "moment": "^2.29.4",
     "progress": "^2.0.3",
     "properties": "^1.2.1",
     "request": "^2.72.0",
