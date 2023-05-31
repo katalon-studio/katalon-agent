@@ -1,37 +1,49 @@
-const { KatalonCommandExecutor } = require('../../src/service/command-executor');
+const { KatalonCommandExecutor, GenericCommandExecutor } = require('../../src/service/command-executor');
 const properties = require('../../src/core/properties');
+const reportUploader = require('../../src/service/report-uploader');
+const ks = require('../../src/service/katalon-studio');
 
 jest.mock('../../src/core/properties');
+jest.mock('../../src/service/report-uploader');
+jest.mock('../../src/service/katalon-studio');
+
+const logger = {
+  info: jest.fn(),
+  debug: jest.fn(),
+  error: jest.fn(),
+};
+
+const props = {
+  'analytics.server.endpoint': undefined,
+  'analytics.authentication.email': undefined,
+  'analytics.authentication.password': undefined,
+  'analytics.authentication.encryptionEnabled': false,
+  'analytics.testresult.autosubmit': true,
+  'analytics.testresult.attach.screenshot': true,
+  'analytics.testresult.attach.log': true,
+  'analytics.testresult.attach.capturedvideos': false,
+  'analytics.integration.enable': true,
+  'analytics.team': '{"id":"123"}',
+  'analytics.project': '{"id":"123","organizationId":"undefined"}',
+  'analytics.git': '{}',
+  'analytics.onpremise.enable': undefined,
+  'analytics.onpremise.server': undefined,
+};
+
+const info = {
+  teamId: 123,
+  projectId: 123,
+  // extraFiles: [{
+  //   path: 'settings/internal/com.kms.katalon.integration.analytics.properties',
+  //   writeMode: 'SKIP_IF_EXISTS',
+  // }],
+};
+
+const ksProjectDir = '/tmp/test project/a.prj';
 
 // Write your test cases here
 describe('KatalonCommandExecutor test', () => {
   it('Test preExecuteHook', async () => {
-    // given
-    const logger = {
-      debug: jest.fn(),
-    };
-    const ksProjectDir = '/tmp/test';
-    const info = {
-      teamId: 123,
-      projectId: 123,
-    };
-    const props = {
-      'analytics.server.endpoint': undefined,
-      'analytics.authentication.email': undefined,
-      'analytics.authentication.password': undefined,
-      'analytics.authentication.encryptionEnabled': false,
-      'analytics.testresult.autosubmit': true,
-      'analytics.testresult.attach.screenshot': true,
-      'analytics.testresult.attach.log': true,
-      'analytics.testresult.attach.capturedvideos': false,
-      'analytics.integration.enable': true,
-      'analytics.team': '{"id":"123"}',
-      'analytics.project': '{"id":"123","organizationId":"undefined"}',
-      'analytics.git': '{}',
-      'analytics.onpremise.enable': undefined,
-      'analytics.onpremise.server': undefined,
-    };
-
     // when
     const executor = new KatalonCommandExecutor(info);
     await executor.preExecuteHook(logger, ksProjectDir);
@@ -40,5 +52,35 @@ describe('KatalonCommandExecutor test', () => {
     expect(properties.writeProperties).toHaveBeenCalledWith(
       expect.stringContaining('settings/internal/com.kms.katalon.integration.analytics.properties'),
       expect.objectContaining(props));
+  });
+
+  it('Test execute', async () => {
+    // given
+    const mockCallback = jest.fn();
+
+    // when
+    const executor = new KatalonCommandExecutor(info);
+    await executor.execute(logger, ksProjectDir, mockCallback);
+
+    // then
+    expect(ks.execute).toHaveBeenCalledTimes(0);
+  });
+
+  it('Test execute GenericCommandExecutor', async () => {
+    // given
+    const ksProjectDir = '/tmp/test project';
+    const mockCallback = jest.fn();
+
+    // when
+    const executor = new GenericCommandExecutor(info);
+    await executor.execute(logger, ksProjectDir, mockCallback);
+
+    // then
+    expect(reportUploader.uploadReports).toHaveBeenCalledWith(
+      123,
+      expect.anything(),
+      'junit',
+      '**/*.xml',
+      expect.anything());
   });
 });
