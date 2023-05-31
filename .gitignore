@@ -67,8 +67,6 @@ typings/
 # Temp
 tmp
 proc
-
-test/*
 !test/core/
 
 .idea
