@@ -2,10 +2,13 @@ const { KatalonCommandExecutor, GenericCommandExecutor } = require('../../src/se
 const properties = require('../../src/core/properties');
 const reportUploader = require('../../src/service/report-uploader');
 const ks = require('../../src/service/katalon-studio');
+const glob = require('glob');
 
 jest.mock('../../src/core/properties');
 jest.mock('../../src/service/report-uploader');
 jest.mock('../../src/service/katalon-studio');
+jest.mock('../../src/core/file');
+jest.mock('glob');
 
 const logger = {
   info: jest.fn(),
@@ -30,23 +33,23 @@ const props = {
   'analytics.onpremise.server': undefined,
 };
 
-const info = {
-  teamId: 123,
-  projectId: 123,
-  // extraFiles: [{
-  //   path: 'settings/internal/com.kms.katalon.integration.analytics.properties',
-  //   writeMode: 'SKIP_IF_EXISTS',
-  // }],
-};
-
-const ksProjectDir = '/tmp/test project/a.prj';
+const ksProjectDir = '/tmp/test-project';
+const ksProjectPath = `${ksProjectDir}/test-project.prj`;
 
 // Write your test cases here
 describe('KatalonCommandExecutor test', () => {
   it('Test preExecuteHook', async () => {
     // when
+    const info = {
+      teamId: 123,
+      projectId: 123,
+      extraFiles: [{
+        path: 'settings/internal/com.kms.katalon.integration.analytics.properties',
+        writeMode: 'SKIP_IF_EXISTS',
+      }],
+    };
     const executor = new KatalonCommandExecutor(info);
-    await executor.preExecuteHook(logger, ksProjectDir);
+    await executor.preExecuteHook(logger, ksProjectPath);
 
     // then
     expect(properties.writeProperties).toHaveBeenCalledWith(
@@ -54,9 +57,18 @@ describe('KatalonCommandExecutor test', () => {
       expect.objectContaining(props));
   });
 
-  it('Test execute', async () => {
+  it('Test KatalonCommandExecutor execute - Cannot find KS project', async () => {
     // given
+    const info = {
+      teamId: 123,
+      projectId: 123,
+      extraFiles: [{
+        path: 'settings/internal/com.kms.katalon.integration.analytics.properties',
+        writeMode: 'SKIP_IF_EXISTS',
+      }],
+    };
     const mockCallback = jest.fn();
+    glob.sync.mockReturnValueOnce([]);
 
     // when
     const executor = new KatalonCommandExecutor(info);
@@ -66,8 +78,54 @@ describe('KatalonCommandExecutor test', () => {
     expect(ks.execute).toHaveBeenCalledTimes(0);
   });
 
-  it('Test execute GenericCommandExecutor', async () => {
+  it('Test KatalonCommandExecutor execute - Multiple KS projects', async () => {
     // given
+    const info = {
+      teamId: 123,
+      projectId: 123,
+      extraFiles: [{
+        path: 'settings/internal/com.kms.katalon.integration.analytics.properties',
+        writeMode: 'SKIP_IF_EXISTS',
+      }],
+    };
+    const mockCallback = jest.fn();
+    glob.sync.mockReturnValueOnce(['', '']);
+
+    // when
+    const executor = new KatalonCommandExecutor(info);
+    await executor.execute(logger, ksProjectDir, mockCallback);
+
+    // then
+    expect(ks.execute).toHaveBeenCalledTimes(0);
+  });
+
+  it('Test KatalonCommandExecutor execute successfully', async () => {
+    // given
+    const info = {
+      teamId: 123,
+      projectId: 123,
+      extraFiles: [{
+        path: 'settings/internal/com.kms.katalon.integration.analytics.properties',
+        writeMode: 'SKIP_IF_EXISTS',
+      }],
+    };
+    const mockCallback = jest.fn();
+    glob.sync.mockReturnValueOnce([ksProjectPath]);
+
+    // when
+    const executor = new KatalonCommandExecutor(info);
+    await executor.execute(logger, ksProjectDir, mockCallback);
+
+    // then
+    expect(ks.execute).toHaveBeenCalledTimes(1);
+  });
+
+  it('Test GenericCommandExecutor execute successfully', async () => {
+    // given
+    const info = {
+      teamId: 123,
+      projectId: 123,
+    };
     const ksProjectDir = '/tmp/test project';
     const mockCallback = jest.fn();
 
