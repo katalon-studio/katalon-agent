@@ -1,8 +1,8 @@
+const glob = require('glob');
 const { KatalonCommandExecutor, GenericCommandExecutor } = require('../../src/service/command-executor');
 const properties = require('../../src/core/properties');
 const reportUploader = require('../../src/service/report-uploader');
 const ks = require('../../src/service/katalon-studio');
-const glob = require('glob');
 
 jest.mock('../../src/core/properties');
 jest.mock('../../src/service/report-uploader');
@@ -104,10 +104,20 @@ describe('KatalonCommandExecutor test', () => {
     const info = {
       teamId: 123,
       projectId: 123,
-      extraFiles: [{
-        path: 'settings/internal/com.kms.katalon.integration.analytics.properties',
-        writeMode: 'SKIP_IF_EXISTS',
-      }],
+      extraFiles: [
+        {
+          path: 'settings/internal/com.kms.katalon.integration.analytics.properties',
+          writeMode: 'OVERRIDE',
+        },
+        {
+          path: '.gitignore',
+          writeMode: 'SKIP_IF_EXISTS',
+        },
+        {
+          path: 'settings/internal/com.kms.katalon.integration.analytics.properties',
+          writeMode: 'SKIP_IF_EXISTS',
+        },
+      ],
     };
     const mockCallback = jest.fn();
     glob.sync.mockReturnValueOnce([ksProjectPath]);
