@@ -21,7 +21,7 @@
     "copyService": "cpy nssm.exe service.bat service.sh bin",
     "copyStart": "cpy start.bat start.sh bin",
     "release": "release-it --ci",
-    "test:coverage": "jest --passWithNoTests --coverage",
+    "test:coverage": "jest --passWithNoTests --coverage --forceExit",
     "test:debug": "jest --passWithNoTests --detectOpenHandles --coverage",
     "test": "jest --passWithNoTests",
     "eslint": "eslint -c .eslintrc.yml src --ext .js",
