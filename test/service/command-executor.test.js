@@ -135,6 +135,7 @@ describe('KatalonCommandExecutor test', () => {
     const info = {
       teamId: 123,
       projectId: 123,
+      commands: 'katalonc -noSplash -runMode=console -projectPath="/tmp/test project/test-project.prj"',
     };
     const ksProjectDir = '/tmp/test project';
     const mockCallback = jest.fn();
