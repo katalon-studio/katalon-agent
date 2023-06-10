@@ -135,6 +135,7 @@ describe('KatalonCommandExecutor test', () => {
     const info = {
       teamId: 123,
       projectId: 123,
+      commands: 'ls -al',
     };
     const ksProjectDir = '/tmp/test project';
     const mockCallback = jest.fn();
