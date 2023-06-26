@@ -23,7 +23,7 @@ cd $KATALON_AGENT_DIR
     --no-keep-files "$NO_KEEP_FILES"
 args=("./cli-linux-x64" "$@")
 
-xvfb-run -s "-screen 0 $DISPLAY_CONFIGURATION" "${args[@]}"
+xvfb-run -e /dev/stdout -s "-screen 0 $DISPLAY_CONFIGURATION" -a "${args[@]}"
 ret_code=$?
 
 exit $ret_code

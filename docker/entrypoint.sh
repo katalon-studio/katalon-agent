@@ -4,6 +4,9 @@ set -xe
 
 echo "Entrypoint"
 
+if [ "$AUTO_UPGRADE_ENVIRONMENT" = true ]; then
+    /katalon/scripts/upgrade_environment.sh || true
+fi
 if [ -z "$KATALON_USER_ID" ]; then
     exec "$@"
 else

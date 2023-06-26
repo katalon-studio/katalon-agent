@@ -10,7 +10,7 @@ RUN chmod a+x ./docker/scripts/build_agent.sh
 RUN ./docker/scripts/build_agent.sh
 
 # Build docker image
-FROM ubuntu:20.04
+FROM katalonstudio/katalon:8.6.5
 
 # Agent arguement
 ARG AGENT_VERSION
@@ -45,34 +45,29 @@ ENV XVFB_RUN=''
 ENV X11_DISPLAY=''
 ENV KEEP_FILES=''
 ENV NO_KEEP_FILES=''
-
-
-# Copy script files
-RUN apt update && apt -y install openjdk-8-jdk && update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
-
-# Copy script files
-RUN mkdir -p $KATALON_SCRIPT_DIR
-WORKDIR $KATALON_SCRIPT_DIR
-COPY ./docker/scripts/wrap_chrome_binary.sh wrap_chrome_binary.sh
-COPY ./docker/scripts/setup_environment.sh setup_environment.sh
-COPY ./docker/scripts/setup_agent.sh setup_agent.sh
-COPY ./docker/scripts/setup.sh setup.sh
-COPY ./docker/scripts/agent.sh agent.sh
-
-# Copy agent
-WORKDIR $KATALON_AGENT_DIR
-COPY --from=build /katalon/bin/cli-linux-x64 *.sh ./
-
-# Setup
-WORKDIR $KATALON_SCRIPT_DIR
-RUN chmod -R 777 ./
-RUN ./setup.sh
+ENV AUTO_UPGRADE_ENVIRONMENT=false
 
 # PATH Environment
 ENV PATH "$PATH:$KATALON_SCRIPT_DIR:$KATALON_AGENT_DIR:$GRADLE_BIN"
 RUN echo "PATH=\"$PATH\"" > /etc/environment
 
-WORKDIR /
+# Copy agent
+WORKDIR $KATALON_AGENT_DIR
+COPY --from=build /katalon/bin/cli-linux-x64 *.sh ./
+
+# Copy script files
+# RUN apt update && apt -y install openjdk-8-jdk && update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+
+# Copy script files and setup
+WORKDIR $KATALON_SCRIPT_DIR
+# COPY ./docker/scripts/wrap_chrome_binary.sh wrap_chrome_binary.sh
+# COPY ./docker/scripts/setup_environment.sh setup_environment.sh
+COPY ./docker/scripts/upgrade_environment.sh upgrade_environment.sh
+COPY ./docker/scripts/setup_agent.sh setup_agent.sh
+COPY ./docker/scripts/setup.sh setup.sh
+COPY ./docker/scripts/agent.sh agent.sh
+RUN ./setup.sh
+
 COPY ./docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN ["chmod", "+x", "/usr/local/bin/entrypoint.sh"]
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
