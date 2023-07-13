@@ -39,6 +39,7 @@
     "lodash": "^4.17.21",
     "log4js": "^6.9.1",
     "moment": "^2.29.4",
+    "native-dns": "^0.7.0",
     "progress": "^2.0.3",
     "properties": "^1.2.1",
     "simple-git": "^3.19.0",
