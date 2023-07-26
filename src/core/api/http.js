@@ -2,11 +2,71 @@ const axios = require('axios').default;
 const fs = require('fs');
 const path = require('path');
 const ProgressBar = require('progress');
+const dns = require('native-dns');
+const net = require('net');
+const URL = require('url');
 const { FILTERED_ERROR_CODE } = require('./constants');
 const logger = require('../../config/logger');
 const { getProxy, getIgnoreSsl, getDefaultHttpsAgent } = require('./proxy');
 
 const PROGRESS_RENDER_THROTTLE = 5000;
+
+const dnsCache = {};
+
+// Wraps native-dns in a Promise
+// we have this exposed in a separate module
+function resolveARecord(hostname) {
+  return new Promise((resolve, reject) => {
+    const question = dns.Question({
+      name: hostname,
+      type: 'A',
+    });
+    const request = dns.Request({
+      question,
+      server: { address: '8.8.8.8', port: 53, type: 'udp' },
+      timeout: 5000,
+    });
+    request.on('timeout', () => {
+      if (dnsCache[hostname]) {
+        resolve(dnsCache[hostname]);
+      } else {
+        reject(new Error('Timeout in making request'));
+      }
+    });
+    request.on('message', (err, response) => {
+      // Resolve using the first populated A record
+      for (const i in response.answer) {
+        if (response.answer[i].address) {
+          dnsCache[hostname] = response.answer[i];
+          resolve(response.answer[i]);
+          break;
+        }
+      }
+    });
+    request.on('end', () => {
+      reject(new Error('Unable to resolve hostname'));
+    });
+    request.send();
+  });
+}
+
+axios.interceptors.request.use((config) => {
+  const url = URL.parse(config.url);
+  if (net.isIP(url.hostname)) {
+    // Skip
+    return config;
+  }
+  return resolveARecord(url.hostname).then((response) => {
+    config.headers = config.headers || {};
+    config.headers.Host = url.hostname; // put original hostname in Host header
+
+    url.hostname = response.address;
+    delete url.host; // clear hostname cache
+    config.url = URL.format(url);
+
+    return config;
+  });
+});
 
 axios.interceptors.request.use((config) => {
   logger.trace('REQUEST:', config);
