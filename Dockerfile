@@ -6,11 +6,9 @@ RUN mkdir -p $KATALON_ROOT_DIR
 
 WORKDIR /katalon
 COPY . .
-RUN chmod a+x ./docker/scripts/build_agent.sh
-RUN ./docker/scripts/build_agent.sh
 
 # Build docker image
-FROM katalonstudio/katalon:8.6.5
+FROM katalonstudio/katalon:8.6.8
 
 # Agent arguement
 ARG AGENT_VERSION
