@@ -8,7 +8,7 @@ WORKDIR /katalon
 COPY . .
 
 # Build docker image
-FROM katalonstudio/katalon:8.6.8
+FROM katalonstudio/katalon:8.6.5
 
 # Agent arguement
 ARG AGENT_VERSION
