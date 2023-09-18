@@ -1,4 +1,4 @@
-const { KS_RELEASES_URL, PATHS, REPORT_TYPE } = require('./constants');
+const { KS_RELEASES_URL, PATHS, REPORT_TYPE, KS_OLD_RELEASES_URL } = require('./constants');
 const { buildUrl } = require('./utils');
 
 module.exports = {
@@ -92,6 +92,10 @@ module.exports = {
 
   updateNodeStatus() {
     return buildUrl({}, PATHS.JOB, 'node-status');
+  },
+
+  ksReleasesOldLink() {
+    return buildUrl({ baseUrl: KS_OLD_RELEASES_URL });
   },
 
   ksReleases() {
