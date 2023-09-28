@@ -6,7 +6,7 @@ Run the following command with the version to build the image
 ./buid-image.sh 1.7.6
 ```
 
-## Start the Katalon Agent
+## Start the Katalon Agents
 
 ### Prerequisites
 - Node.js >= 10.x
