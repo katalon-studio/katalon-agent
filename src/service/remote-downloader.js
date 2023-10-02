@@ -34,7 +34,6 @@ class GitDownloader {
   }
 }
 
-
 module.exports.KatalonStudioDownloader = KatalonStudioDownloader;
 module.exports.KatalonTestProjectDownloader = KatalonTestProjectDownloader;
 module.exports.GitDownloader = GitDownloader;

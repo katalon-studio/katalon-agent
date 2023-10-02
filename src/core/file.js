@@ -1,6 +1,6 @@
 const decompress = require('decompress');
 const path = require('path');
-const simpleGit = require('simple-git/promise')();
+const simpleGit = require('simple-git')();
 const tmp = require('tmp');
 const fs = require('fs-extra');
 

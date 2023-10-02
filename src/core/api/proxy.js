@@ -47,5 +47,5 @@ function getDefaultHttpsAgent() {
 module.exports = {
   getProxy,
   getIgnoreSsl,
-  getDefaultHttpsAgent
+  getDefaultHttpsAgent,
 };

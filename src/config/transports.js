@@ -17,16 +17,11 @@ class S3FileTransport extends TransportStream {
     this.uploadToS3Throttled = _.throttle(this.uploadToS3, this.wait, { trailing: false });
   }
 
-  uploadToS3(info, callback) {
-    try {
-      return api
-        .uploadFile(this.signedUrl, this.filePath)
-        .then(() => this.afterLog && this.afterLog())
-        .catch((error) => this._handleError(error));
-    } catch (error) {
-      this._handleError(error);
-      return null;
-    }
+  uploadToS3() {
+    return api
+      .uploadFile(this.signedUrl, this.filePath)
+      .then(() => this.afterLog && this.afterLog())
+      .catch((error) => this._handleError(error));
   }
 
   log(info, callback) {

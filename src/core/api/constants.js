@@ -36,8 +36,11 @@ const OAUTH2_GRANT_TYPES = {
 
 const FILTERED_ERROR_CODE = new Set([400, 401, 403, 404, 500, 502, 503, 504]);
 
-const KS_RELEASES_URL =
+const KS_OLD_RELEASES_URL =
   'https://raw.githubusercontent.com/katalon-studio/katalon-studio/master/releases.json';
+
+const KS_RELEASES_URL =
+  'https://download.katalon.com/katalon-studio/releases.json';
 
 module.exports = {
   TESTOPS_BASE_URL,
@@ -46,5 +49,6 @@ module.exports = {
   OAUTH2_CLIENT,
   OAUTH2_GRANT_TYPES,
   FILTERED_ERROR_CODE,
+  KS_OLD_RELEASES_URL,
   KS_RELEASES_URL,
 };

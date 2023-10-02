@@ -1,5 +1,5 @@
 # Build agent
-FROM node:10 as build
+FROM node:14 as build
 
 ARG KATALON_ROOT_DIR=/katalon
 RUN mkdir -p $KATALON_ROOT_DIR
@@ -10,7 +10,7 @@ RUN chmod a+x ./docker/scripts/build_agent.sh
 RUN ./docker/scripts/build_agent.sh
 
 # Build docker image
-FROM katalonstudio/katalon:8.6.5
+FROM katalonstudio/katalon:8.6.8
 
 # Agent arguement
 ARG AGENT_VERSION
@@ -60,7 +60,7 @@ COPY --from=build /katalon/bin/cli-linux-x64 *.sh ./
 
 # Copy script files and setup
 WORKDIR $KATALON_SCRIPT_DIR
-# COPY ./docker/scripts/wrap_chrome_binary.sh wrap_chrome_binary.sh
+COPY ./docker/scripts/wrap_chrome_binary.sh wrap_chrome_binary.sh
 # COPY ./docker/scripts/setup_environment.sh setup_environment.sh
 COPY ./docker/scripts/upgrade_environment.sh upgrade_environment.sh
 COPY ./docker/scripts/setup_agent.sh setup_agent.sh
