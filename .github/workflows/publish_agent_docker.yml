@@ -1,4 +1,4 @@
-name: Publish Agent Docker
+name: Publish Docker Agent 
 on:
   workflow_dispatch:
     inputs:
