@@ -137,7 +137,7 @@ jobs:
 
       - name: Install packages
         if: steps.cache-packages.outputs.cache-hit != 'true'
-        run: npm install --only dev
+        run: npm ci
 
       - name: Download artifacts
         uses: actions/download-artifact@v2
