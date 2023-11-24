@@ -4,6 +4,13 @@ const http = require('./http');
 const httpInternal = require('./http-testops');
 const urlParam = require('./url-param');
 const { getBasicAuthHeader } = require('./utils');
+const { getAuth } = require('../auth');
+
+function withAuthorization(apiKey) {
+  return {
+    Authorization: getBasicAuthHeader(getAuth(apiKey)),
+  };
+}
 
 module.exports = {
   requestToken(email, password) {
@@ -29,8 +36,8 @@ module.exports = {
     return httpInternal.post(urlParam.accessToken(), data);
   },
 
-  getUploadInfo(projectId) {
-    return httpInternal.get(urlParam.getUploadInfo(projectId));
+  getUploadInfo(projectId, apiKey) {
+    return httpInternal.get(urlParam.getUploadInfo(projectId), withAuthorization(apiKey));
   },
 
   uploadFile(uploadUrl, filePath) {
@@ -46,6 +53,7 @@ module.exports = {
     isEnd,
     reportType,
     extraParams = {},
+    apiKey,
   ) {
     return httpInternal.post(
       urlParam.uploadFileInfo(
@@ -58,6 +66,8 @@ module.exports = {
         reportType,
         extraParams,
       ),
+      null,
+      this.withAuthorization(apiKey),
     );
   },
 
@@ -65,36 +75,36 @@ module.exports = {
     return httpInternal.post(urlParam.pingAgent(), body);
   },
 
-  pingJob(jobId) {
-    return httpInternal.patch(urlParam.pingJob(jobId));
+  pingJob(jobId, apiKey) {
+    return httpInternal.patch(urlParam.pingJob(jobId), null, withAuthorization(apiKey));
   },
 
-  requestJob(uuid, teamId) {
-    return httpInternal.get(urlParam.requestJob(uuid, teamId));
+  requestJob(uuid, organizationId) {
+    return httpInternal.get(urlParam.requestJob(uuid, organizationId));
   },
 
-  updateJob(body) {
-    return httpInternal.post(urlParam.updateJob(), body);
+  updateJob(body, apiKey) {
+    return httpInternal.post(urlParam.updateJob(), body, withAuthorization(apiKey));
   },
 
-  saveJobLog(jobInfo, batch, fileName) {
-    return httpInternal.post(urlParam.saveJobLog(jobInfo, batch, fileName));
+  saveJobLog(jobInfo, batch, fileName, apiKey) {
+    return httpInternal.post(urlParam.saveJobLog(jobInfo, batch, fileName), null, withAuthorization(apiKey));
   },
 
-  notifyJob(jobId, projectId) {
-    return httpInternal.post(urlParam.notifyJob(jobId, projectId));
+  notifyJob(jobId, projectId, apiKey) {
+    return httpInternal.post(urlParam.notifyJob(jobId, projectId), null, withAuthorization(apiKey));
   },
 
   getBuildInfo() {
     return httpInternal.get(urlParam.getBuildInfo());
   },
 
-  updateNodeStatus(jobId, nodeStatus) {
+  updateNodeStatus(jobId, nodeStatus, apiKey) {
     const data = {
       id: jobId,
       nodeStatus,
     };
-    return httpInternal.put(urlParam.updateNodeStatus(), data);
+    return httpInternal.put(urlParam.updateNodeStatus(), data, withAuthorization(apiKey));
   },
 
   getKSReleases() {
@@ -105,7 +115,7 @@ module.exports = {
     return http.stream(urlParam.download(url), filePath);
   },
 
-  downloadFromTestOps(url, filePath) {
-    return httpInternal.stream(urlParam.download(url), filePath);
+  downloadFromTestOps(url, filePath, apiKey) {
+    return httpInternal.stream(urlParam.download(url), filePath, withAuthorization(apiKey));
   },
 };

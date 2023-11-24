@@ -4,7 +4,7 @@ const { getBasicAuthHeader } = require('./utils');
 
 function withAuthorization(current = {}) {
   return {
-    Authorization: getBasicAuthHeader(getAuth()),
+    Authorization: (current && current.Authorization) ? current.Authorization : getBasicAuthHeader(getAuth()),
     ...current,
   };
 }

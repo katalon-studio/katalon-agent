@@ -17,11 +17,11 @@ const GENERIC_COMMAND_OUTPUT_DIR = 'katalon-agent-output';
 const GENERIC_COMMAND_REPORT_DIR_ENV = 'KATALON_AGENT_REPORT_FOLDER';
 const JUNIT_FILE_PATTERN = '**/*.xml';
 
-function buildTestOpsIntegrationProperties(teamId, projectId, organizationId, gitRepository) {
+function buildTestOpsIntegrationProperties(teamId, projectId, organizationId, gitRepository, apiKey) {
   const deprecatedProperties = {
     'analytics.server.endpoint': config.serverUrl,
     'analytics.authentication.email': config.email,
-    'analytics.authentication.password': config.apikey,
+    'analytics.authentication.password': apiKey,
     'analytics.authentication.encryptionEnabled': false,
     'analytics.testresult.autosubmit': true,
     'analytics.testresult.attach.screenshot': true,
@@ -55,7 +55,7 @@ class BaseKatalonCommandExecutor {
     this.env = info.env;
   }
 
-  async execute(logger, execDirPath, callback) {
+  async execute(logger, execDirPath, callback, apiKey) {
     // Find project file inside project directory
     const projectPathPattern = path.resolve(execDirPath, PROJECT_FILE_PATTERN);
     const ksProjectPaths = glob.sync(projectPathPattern, { nodir: true });
@@ -73,7 +73,7 @@ class BaseKatalonCommandExecutor {
     const [ksProjectPath] = ksProjectPaths;
 
     if (this.preExecuteHook && typeof this.preExecuteHook === 'function') {
-      await this.preExecuteHook(logger, ksProjectPath);
+      await this.preExecuteHook(logger, ksProjectPath, apiKey);
     }
 
     return ks.execute(
@@ -100,7 +100,7 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     this.gitRepository = info.gitRepository;
   }
 
-  async downloadExtraFiles(extraFiles, ksProjectPath, jLogger) {
+  async downloadExtraFiles(extraFiles, ksProjectPath, jLogger, apiKey) {
     await Promise.all(
       extraFiles
         .filter((extraFile) =>
@@ -109,11 +109,12 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
         .map((extraFile) => file.downloadFromTestOps(
           extraFile.contentUrl,
           path.join(ksProjectPath, extraFile.path),
-          jLogger)),
+          jLogger,
+          apiKey)),
     );
   }
 
-  async preExecuteHook(logger, ksProjectPath) {
+  async preExecuteHook(logger, ksProjectPath, apiKey) {
     // Manually configure integration settings for KS to upload execution report
     logger.debug('Configure Katalon TestOps integration.');
     const ksProjectDir = path.dirname(ksProjectPath);
@@ -125,7 +126,7 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     );
     properties.writeProperties(
       testOpsPropertiesPath,
-      buildTestOpsIntegrationProperties(this.teamId, this.projectId, this.organizationId, this.gitRepository),
+      buildTestOpsIntegrationProperties(this.teamId, this.projectId, this.organizationId, this.gitRepository, apiKey),
     );
     logger.debug('Finish configuring Katalon TestOps integration.');
 
@@ -133,7 +134,7 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     // The logic download extra file will run after we manually configure integration settings
     // if the extraFiles is not provided, the agent will work as normal flow
     if (_.isArray(this.extraFiles)) {
-      await this.downloadExtraFiles(this.extraFiles, ksProjectDir, logger);
+      await this.downloadExtraFiles(this.extraFiles, ksProjectDir, logger, apiKey);
     }
     logger.debug('Finish downloading extra files.');
   }
@@ -147,7 +148,7 @@ class GenericCommandExecutor {
     this.env = info.env;
   }
 
-  async execute(logger, execDirPath, callback) {
+  async execute(logger, execDirPath, callback, apiKey) {
     const outputDir = path.join(execDirPath, GENERIC_COMMAND_OUTPUT_DIR);
     fs.ensureDirSync(outputDir);
 
@@ -178,6 +179,7 @@ class GenericCommandExecutor {
       'junit',
       JUNIT_FILE_PATTERN,
       opts,
+      apiKey,
     );
     logger.info('All JUnit reports successfully uploaded.');
     return status;
