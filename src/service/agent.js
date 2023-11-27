@@ -233,8 +233,7 @@ async function executeJob(jobInfo, keepFiles) {
 
 function validateField(configs, propertyName, configFile = defaultConfigFile) {
   if (!configs[propertyName]) {
-    logger.error(`Please specify '${propertyName}' property in ${path.basename(configFile)}.`);
-    return false;
+    throw new Error(`Please specify '${propertyName}' property in ${path.basename(configFile)}.`);
   }
   return true;
 }
