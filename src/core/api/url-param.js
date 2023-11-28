@@ -53,10 +53,10 @@ module.exports = {
     return buildUrl({}, PATHS.JOB, jobId);
   },
 
-  requestJob(uuid, teamId) {
+  requestJob(uuid, organizationId) {
     const params = {
       uuid,
-      teamId,
+      organizationId,
     };
     return buildUrl({ params }, PATHS.JOB, 'get-job');
   },

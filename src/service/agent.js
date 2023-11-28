@@ -27,16 +27,17 @@ const pingInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 1000;
 const checkProcessInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 5 * 1000;
 const syncJobInterval = NODE_ENV === 'debug' ? 15 * 1000 : 30 * 1000;
 const sendLogWaitInterval = 10 * 1000;
+const jobApiKeyEnv = 'TESTOPS_JOB_API_KEY';
 
-function updateJobStatus(jobId, jobStatus, processId = null) {
+function updateJobStatus(jobId, jobStatus, processId = null, apiKey) {
   const body = buildUpdateJobBody(jobId, jobStatus, processId);
-  return api.updateJob(body);
+  return api.updateJob(body, apiKey);
 }
 
-async function uploadLog(jobInfo, filePath) {
+async function uploadLog(jobInfo, filePath, apiKey) {
   logger.info('Uploading job execution log...');
   // Request upload URL
-  const response = await api.getUploadInfo(jobInfo.projectId);
+  const response = await api.getUploadInfo(jobInfo.projectId, apiKey);
   if (!response || !response.body) {
     return null;
   }
@@ -58,7 +59,7 @@ async function uploadLog(jobInfo, filePath) {
   const fileName = path.basename(filePath);
 
   // Update job's upload file
-  return api.saveJobLog(jobInfo, batch, fileName);
+  return api.saveJobLog(jobInfo, batch, fileName, apiKey);
 }
 
 async function getProfiles() {
@@ -82,9 +83,9 @@ function isOnPremiseProfile(profiles) {
   return null;
 }
 
-function notifyJob(jobId, projectId) {
+function notifyJob(jobId, projectId, apiKey) {
   return api
-    .notifyJob(jobId, projectId)
+    .notifyJob(jobId, projectId, apiKey)
     .catch((error) => logger.warn('Unable to send job notification:', error));
 }
 
@@ -95,11 +96,11 @@ function pingAgent(body) {
     .catch((err) => logger.error('Cannot send agent info to server:', err));
 }
 
-function synchronizeJob(jobId, onJobSynchronization = () => {}) {
+function synchronizeJob(jobId, onJobSynchronization = () => {}, apiKey) {
   // NOSONAR
   return setInterval(async () => {
     try {
-      const synchronizedJob = await api.pingJob(jobId);
+      const synchronizedJob = await api.pingJob(jobId, apiKey);
       await onJobSynchronization(synchronizedJob && synchronizedJob.body);
     } catch (err) {
       logger.warn('Unable to synchronize job:', jobId, err);
@@ -108,15 +109,15 @@ function synchronizeJob(jobId, onJobSynchronization = () => {}) {
 }
 
 async function executeJob(jobInfo, keepFiles) {
-  const { jobId, projectId } = jobInfo;
-  const notify = () => notifyJob(jobId, projectId);
+  const { jobId, projectId, apiKey } = jobInfo;
+  const notify = () => notifyJob(jobId, projectId, apiKey);
   let isCanceled = false;
   let jLogger;
 
   // Update job status to running
   // Take the job even if the subsequent setup steps fail
   // Prevent the job to be queued forever
-  await updateJobStatus(jobId, JOB_STATUS.RUNNING);
+  await updateJobStatus(jobId, JOB_STATUS.RUNNING, null, apiKey);
   const syncJobIntervalID = synchronizeJob(jobId, async (synchronizedJob) => {
     const { status, id, nodeStatus, processId } = synchronizedJob;
     if (status === JOB_STATUS.CANCELED && nodeStatus === NODE_STATUS.PENDING_CANCELED) {
@@ -125,13 +126,13 @@ async function executeJob(jobInfo, keepFiles) {
         if (processId) {
           processController.killProcessFromJobId(id);
         }
-        await api.updateNodeStatus(id, NODE_STATUS.CANCELED);
+        await api.updateNodeStatus(id, NODE_STATUS.CANCELED, apiKey);
       } catch (err) {
         logger.error(`Error when canceling job ${id}:`, err);
       }
       logger.info(`Job ${jobId} is canceled.`);
     }
-  });
+  }, apiKey);
 
   // Create directory where temporary files are contained
   const tmpRoot = path.resolve(global.appRoot, 'tmp/');
@@ -151,7 +152,7 @@ async function executeJob(jobInfo, keepFiles) {
 
     // Upload log and add new transport to stream log content to s3
     // Everytime a new log entry is written to file
-    await uploadLog(jobInfo, logFilePath);
+    await uploadLog(jobInfo, logFilePath, apiKey);
     jLogger.add(
       new S3FileTransport(
         {
@@ -188,8 +189,8 @@ async function executeJob(jobInfo, keepFiles) {
     const status = await executor.execute(jLogger, tmpDirPath, (pid) => {
       processId = pid;
       processController.createController(pid, jobId);
-      updateJobStatus(jobId, JOB_STATUS.RUNNING, processId).catch(() => { /* ignore */ });
-    });
+      updateJobStatus(jobId, JOB_STATUS.RUNNING, processId, apiKey).catch(() => { /* ignore */ });
+    }, apiKey);
 
     if (isCanceled) {
       jLogger.debug(`Job ${jobId} is canceled.`);
@@ -201,9 +202,9 @@ async function executeJob(jobInfo, keepFiles) {
 
     // Update job status after execution
     const jobStatus = status === 0 ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
-
+    await uploadLog(jobInfo, logFilePath, apiKey);
     logger.debug(`Update job with status '${jobStatus}.'`);
-    await updateJobStatus(jobId, jobStatus, processId);
+    await updateJobStatus(jobId, jobStatus, processId, apiKey);
     logger.info('Job execution has been completed.');
   } catch (err) {
     logger.error(`${executeJob.name}:`, err);
@@ -213,14 +214,13 @@ async function executeJob(jobInfo, keepFiles) {
     // NOTE: Job status is set FAILED might not be because of a failed execution
     // but because of other reasons such as cannot remove tmp directory or cannot upload log
     const jobStatus = JOB_STATUS.FAILED;
+    await uploadLog(jobInfo, logFilePath, apiKey);
     logger.debug(`Error caught during job execution! Update job with status '${jobStatus}'`);
-    await updateJobStatus(jobId, jobStatus);
+    await updateJobStatus(jobId, jobStatus, apiKey);
   } finally {
     jLogger.close();
 
-    await uploadLog(jobInfo, logFilePath);
     logger.info('Job execution log uploaded.');
-    notify().catch(() => { /* ignore */ });
     clearInterval(syncJobIntervalID);
 
     processController.killProcessFromJobId(jobId);
@@ -233,8 +233,7 @@ async function executeJob(jobInfo, keepFiles) {
 
 function validateField(configs, propertyName, configFile = defaultConfigFile) {
   if (!configs[propertyName]) {
-    logger.error(`Please specify '${propertyName}' property in ${path.basename(configFile)}.`);
-    return false;
+    throw new Error(`Please specify '${propertyName}' property in ${path.basename(configFile)}.`);
   }
   return true;
 }
@@ -249,10 +248,10 @@ class Agent {
     validateField(config, 'email', configFile);
     validateField(config, 'apikey', configFile);
     validateField(config, 'serverUrl', configFile);
-    validateField(config, 'teamId', configFile);
+    validateField(config, 'organizationId', configFile);
 
     this.configFile = configFile;
-    this.teamId = config.teamId;
+    this.organizationId = config.organizationId;
     this.apikey = config.apikey;
   }
 
@@ -280,7 +279,7 @@ class Agent {
         setLogLevel(logLevel);
 
         // Agent is not executing job, request new job
-        const requestJobResponse = await api.requestJob(uuid, this.teamId);
+        const requestJobResponse = await api.requestJob(uuid, this.organizationId);
         if (
           !requestJobResponse ||
           !requestJobResponse.body ||
@@ -291,6 +290,9 @@ class Agent {
           return;
         }
         const jobBody = requestJobResponse.body;
+        const jobApiKey = requestJobResponse.body.parameter.environmentVariables
+          .find((item) => item.name === jobApiKeyEnv);
+        const apiKey = jobApiKey ? jobApiKey.value : this.apikey;
         const {
           id: jobId,
           parameter,
@@ -301,19 +303,18 @@ class Agent {
         if (config.isOnPremise) {
           ksArgs = utils.updateCommand(parameter.command, {
             flag: '-apiKeyOnPremise',
-            value: this.apikey,
+            value: apiKey,
           });
         } else {
           ksArgs = utils.updateCommand(
             parameter.command,
-            { flag: '-apiKey', value: this.apikey },
+            { flag: '-apiKey', value: apiKey },
           );
         }
 
         const downloader = createDownloader(parameter);
         const executor = createCommandExecutor(
           projectId,
-          this.teamId,
           ksArgs,
           x11Display,
           xvfbRun,
@@ -325,7 +326,7 @@ class Agent {
           executor,
           jobId,
           projectId,
-          teamId: this.teamId,
+          apiKey,
         };
 
         await executeJob(jobInfo, keepFiles);
@@ -347,7 +348,7 @@ class Agent {
       pingAgent({
         uuid: configs.uuid,
         name: configs.agentName,
-        teamId: this.teamId,
+        organizationId: this.organizationId,
         hostname: os.getHostName(),
         ip: ip.address(),
         os: os.getVersion(),
@@ -387,24 +388,26 @@ class Agent {
         parameter,
         testProject: { projectId },
       } = jobBody;
+      const jobApiKey = parameter.environmentVariables
+        .find((item) => item.name === jobApiKeyEnv);
+      const apiKey = jobApiKey ? jobApiKey.value : this.apikey;
 
       let ksArgs;
       if (config.isOnPremise) {
         ksArgs = utils.updateCommand(parameter.command, {
           flag: '-apiKeyOnPremise',
-          value: this.apikey,
+          value: apiKey,
         });
       } else {
         ksArgs = utils.updateCommand(
           parameter.command,
-          { flag: '-apiKey', value: this.apikey },
+          { flag: '-apiKey', value: apiKey },
         );
       }
 
       const downloader = createDownloader(parameter);
       const executor = createCommandExecutor(
         projectId,
-        this.teamId,
         ksArgs,
         x11Display,
         xvfbRun,
@@ -416,7 +419,7 @@ class Agent {
         executor,
         jobId,
         projectId,
-        teamId: this.teamId,
+        apiKey,
       };
 
       await executeJob(jobInfo, keepFiles);

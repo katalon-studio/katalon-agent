@@ -7,7 +7,7 @@ const fs = require('fs-extra');
 const api = require('./api');
 const defaultLogger = require('../config/logger');
 
-function download(downloadMethod, url, logger = defaultLogger) {
+function download(downloadMethod, url, logger = defaultLogger, apiKey) {
   logger.info(`Downloading from ${url}. It may take a few minutes.`);
   const file = tmp.fileSync();
   const filePath = file.name;
@@ -19,7 +19,7 @@ function download(downloadMethod, url, logger = defaultLogger) {
     }
     return Promise.reject(new Error(`Unable to download from ${url} to ${filePath}`));
   };
-  return downloadMethod(url, filePath)
+  return downloadMethod(url, filePath, apiKey)
     .then(verifyDownloadedFile);
 }
 
@@ -57,8 +57,8 @@ module.exports = {
     );
   },
 
-  downloadFromTestOps(url, targetPath, logger = defaultLogger) {
-    return download(api.downloadFromTestOps, url, logger).then((filePath) =>
+  downloadFromTestOps(url, targetPath, apiKey, logger = defaultLogger) {
+    return download(api.downloadFromTestOps, url, logger, apiKey).then((filePath) =>
       this.move(filePath, targetPath, logger),
     );
   },

@@ -24,7 +24,6 @@ function buildUpdateJobBody(jobId, jobStatus, processId) {
 
 function createCommandExecutor(
   projectId,
-  teamId,
   ksArgs,
   x11Display,
   xvfbConfiguration,
@@ -42,7 +41,7 @@ function createCommandExecutor(
   }
 
   const info = {
-    teamId,
+    teamId: parameter.teamId,
     projectId,
     ksVersionNumber: parameter.ksVersion,
     ksLocation: parameter.ksLocation,
