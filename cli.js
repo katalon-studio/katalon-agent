@@ -68,7 +68,7 @@ program
       serverUrl: command.serverUrl,
       email: command.username,
       apikey: command.apikey,
-      teamId: command.organizationid,
+      organizationId: command.organizationid,
       agentName: command.agentName,
       configPath: command.config,
       proxy: command.proxy,
