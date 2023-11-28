@@ -51,13 +51,13 @@ module.exports = {
     );
   },
 
-  downloadAndExtractFromTestOps(url, targetDir, haveFilter = false, logger = defaultLogger, apiKey) {
-    return download(api.downloadFromTestOps, url, logger, apiKey).then((filePath) =>
+  downloadAndExtractFromTestOps(url, targetDir, haveFilter = false, logger = defaultLogger) {
+    return download(api.downloadFromTestOps, url, logger).then((filePath) =>
       this.extract(filePath, targetDir, haveFilter, logger),
     );
   },
 
-  downloadFromTestOps(url, targetPath, logger = defaultLogger, apiKey) {
+  downloadFromTestOps(url, targetPath, apiKey, logger = defaultLogger) {
     return download(api.downloadFromTestOps, url, logger, apiKey).then((filePath) =>
       this.move(filePath, targetPath, logger),
     );

@@ -26,8 +26,8 @@ function uploadFile(projectId, batch, folderName, filePath, isEnd, reportType, o
         uploadPath,
         isEnd,
         reportType,
-        opts,
         apiKey,
+        opts,
       );
     });
   });

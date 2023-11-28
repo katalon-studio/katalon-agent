@@ -109,8 +109,8 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
         .map((extraFile) => file.downloadFromTestOps(
           extraFile.contentUrl,
           path.join(ksProjectPath, extraFile.path),
-          jLogger,
-          apiKey)),
+          apiKey,
+          jLogger)),
     );
   }
 

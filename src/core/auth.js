@@ -1,9 +1,9 @@
 const config = require('./config');
 
-function getAuth(password) {
+function getAuth(apikey) {
   return {
     username: '',
-    password: password || config.apikey,
+    password: apikey || config.apikey,
   };
 }
 

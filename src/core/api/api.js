@@ -52,8 +52,8 @@ module.exports = {
     uploadedPath,
     isEnd,
     reportType,
-    extraParams = {},
     apiKey,
+    extraParams = {},
   ) {
     return httpInternal.post(
       urlParam.uploadFileInfo(
