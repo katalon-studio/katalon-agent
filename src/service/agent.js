@@ -245,7 +245,7 @@ class Agent {
     config.update(commandLineConfigs, configFile);
     setLogLevel(config.logLevel);
 
-    validateField(config, 'email', configFile);
+    // validateField(config, 'email', configFile);
     validateField(config, 'apikey', configFile);
     validateField(config, 'serverUrl', configFile);
     validateField(config, 'organizationId', configFile);
