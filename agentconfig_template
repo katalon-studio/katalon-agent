@@ -3,6 +3,6 @@ agentName=
 email=
 apikey=
 serverUrl=
-teamId=
+organizationId=
 keepFiles=false
 logLevel=INFO

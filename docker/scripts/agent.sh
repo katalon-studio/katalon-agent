@@ -11,9 +11,8 @@ cd $KATALON_AGENT_DIR
 
 ./cli-linux-x64 config \
     --server-url "$SERVER_URL" \
-    --username "$KATALON_USERNAME" \
     --apikey "$KATALON_API_KEY" \
-    --teamid "$TEAM_ID" \
+    --organizationid "$ORGANIZATION_ID" \
     --agent-name "$AGENT_NAME" \
     --proxy "$PROXY" \
     --log-level "$LOG_LEVEL" \

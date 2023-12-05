@@ -26,7 +26,7 @@ program
   .option('-s, --server-url <value>', 'Katalon Analytics URL')
   .option('-u, --username <value>', 'Email')
   .option('-p, --apikey <value>', 'API key')
-  .option('-t, --teamid <value>', 'Team ID')
+  .option('-t, --organizationid <value>', 'Organization ID')
   .option('-a, --agent-name <value>', 'Agent name')
   .option('-c, --config <value>', 'Configuration file path')
   .option('-x, --proxy <value>', 'HTTTP/HTTPS Proxy')
@@ -40,7 +40,7 @@ program
       serverUrl: command.serverUrl,
       email: command.username,
       apikey: command.apikey,
-      teamId: command.teamid,
+      organizationId: command.organizationid,
       agentName: command.agentName,
       configPath: command.config,
       proxy: command.proxy,
@@ -58,7 +58,7 @@ program
   .option('-s, --server-url <value>', 'Katalon Analytics URL')
   .option('-u, --username <value>', 'Email')
   .option('-p, --apikey <value>', 'API key')
-  .option('-t, --teamid <value>', 'Team ID')
+  .option('-t, --organizationid <value>', 'Organization ID')
   .option('-a, --agent-name <value>', 'Agent name')
   .option('-c, --config <value>', 'Configuration file path')
   .option('-x, --proxy <value>', 'HTTTP/HTTPS Proxy')
@@ -68,7 +68,7 @@ program
       serverUrl: command.serverUrl,
       email: command.username,
       apikey: command.apikey,
-      teamId: command.teamid,
+      organizationId: command.organizationid,
       agentName: command.agentName,
       configPath: command.config,
       proxy: command.proxy,

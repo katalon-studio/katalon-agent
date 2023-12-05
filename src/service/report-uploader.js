@@ -11,8 +11,8 @@ class Report {
   }
 }
 
-function uploadFile(projectId, batch, folderName, filePath, isEnd, reportType, opts = {}) {
-  return api.getUploadInfo(projectId).then(({ body }) => {
+function uploadFile(projectId, batch, folderName, filePath, isEnd, reportType, opts = {}, apiKey) {
+  return api.getUploadInfo(projectId, apiKey).then(({ body }) => {
     const { uploadUrl } = body;
     const uploadPath = body.path;
 
@@ -26,6 +26,7 @@ function uploadFile(projectId, batch, folderName, filePath, isEnd, reportType, o
         uploadPath,
         isEnd,
         reportType,
+        apiKey,
         opts,
       );
     });
@@ -45,7 +46,7 @@ function collectReports(folderPaths = [], reportPattern = '*') {
 }
 
 module.exports = {
-  uploadReports(projectId, folderPaths, reportType, reportPattern, opts = {}) {
+  uploadReports(projectId, folderPaths, reportType, reportPattern, opts = {}, apiKey) {
     const reports = collectReports(folderPaths, reportPattern);
     const [first, ...rest] = reports;
     if (!first) {
@@ -55,11 +56,11 @@ module.exports = {
     const batch = `${new Date().getTime()}-${uuidv4()}`;
 
     const uploadPromises = rest.map((report) =>
-      uploadFile(projectId, batch, report.dirName, report.path, false, reportType, opts),
+      uploadFile(projectId, batch, report.dirName, report.path, false, reportType, opts, apiKey),
     );
 
     return Promise.all(uploadPromises).then(() =>
-      uploadFile(projectId, batch, first.dirName, first.path, true, reportType, opts),
+      uploadFile(projectId, batch, first.dirName, first.path, true, reportType, opts, apiKey),
     );
   },
 };
