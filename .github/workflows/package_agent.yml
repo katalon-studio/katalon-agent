@@ -160,6 +160,7 @@ jobs:
           set -x
           mkdir -p packages
           ls -la
+          cp katalon-agent-linux-x64-$BUILD_VERSION/cli-linux-x64 packages/cli-linux-x64
           zip -9 -j packages/katalon-agent-win-x64-$BUILD_VERSION.zip katalon-agent-win-x64-$BUILD_VERSION/*
           zip -9 -j packages/katalon-agent-win-x86-$BUILD_VERSION.zip katalon-agent-win-x86-$BUILD_VERSION/*
           zip -9 -j packages/katalon-agent-linux-x64-$BUILD_VERSION.zip katalon-agent-linux-x64-$BUILD_VERSION/*
@@ -169,5 +170,4 @@ jobs:
 
           cd ..
           ls -laR
-          aws s3 cp katalon-agent-linux-x64-$BUILD_VERSION/cli-linux-x64 s3://katalon-testops-agent-beta/cloud/cli-linux-x64 --acl public-read
           aws s3 sync packages/ s3://katalon-testops-agent-beta/$BUILD_VERSION --acl public-read
