@@ -194,4 +194,4 @@ jobs:
       - name: Deploy to s3
         run: |
           ls -laR
-          aws s3 cp katalon-agent-linux-x64-*/cli-linux-x64 s3://${{ secrets.AWS_S3_BUCKET }}
+          aws s3 cp katalon-agent-linux-x64-*/cli-linux-x64 s3://${{ secrets.AWS_S3_BUCKET }}/katalon-agent/$BUILD_VERSION/cli-linux-x64
