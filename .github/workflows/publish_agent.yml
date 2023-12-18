@@ -15,6 +15,13 @@ permissions:
   id-token: write # This is required for requesting the JWT
   contents: read  # This is required for actions/checkout      
 jobs:
+
+  ### SET ENV ###
+  set_env:
+    runs-on: ubuntu-latest
+    name: Set Environment
+    outputs:
+      ENV: ${{ inputs.environment }}
   ### BUILD ###
   build:
     name: Build
@@ -184,6 +191,7 @@ jobs:
   ### DEPLOY ###
   deploy:
     name: Deploy cloud agent
+    environment: ${{ needs.set_env.outputs.ENV }}
 
     needs: build
 
