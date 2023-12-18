@@ -17,15 +17,15 @@ permissions:
 jobs:
 
   ### SET ENV ###
-  set_env:
-    runs-on: ubuntu-latest
-    name: Set Environment
-    steps:
-      - name: Set environment base on branch
-        id: set_env
-        uses: katalon-studio/katalon-base-actions/actions/get-env@v1.0.0
-    outputs:
-      ENV: ${{ inputs.environment || steps.set_env.outputs.ENV }}
+  # set_env:
+  #   runs-on: ubuntu-latest
+  #   name: Set Environment
+  #   steps:
+  #     - name: Set environment base on branch
+  #       id: set_env
+  #       uses: katalon-studio/katalon-base-actions/actions/get-env@v1.0.0
+  #   outputs:
+  #     ENV: ${{ inputs.environment || steps.set_env.outputs.ENV }}
   ### BUILD ###
   build:
     name: Build
@@ -195,7 +195,7 @@ jobs:
   ### DEPLOY ###
   deploy:
     name: Deploy cloud agent
-    environment: ${{ needs.set_env.outputs.ENV }}
+    environment: ${{ inputs.environment }}
 
     needs: build
 
