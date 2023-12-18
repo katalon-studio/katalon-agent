@@ -197,7 +197,7 @@ jobs:
     name: Deploy cloud agent
     environment: ${{ needs.set_env.outputs.ENV }}
 
-    needs: build
+    needs: [set_env, build]
 
     runs-on: ubuntu-latest
 
