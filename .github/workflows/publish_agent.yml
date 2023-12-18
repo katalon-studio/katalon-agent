@@ -4,7 +4,7 @@ on:
    workflow_dispatch:
     inputs:
       environment:
-        description: "Manual environment to run (qa | staging | prod)"
+        description: "Manual environment to run (staging | prod)"
         required: false
         type: string
     branches:
@@ -17,15 +17,15 @@ permissions:
 jobs:
 
   ### SET ENV ###
-  # set_env:
-  #   runs-on: ubuntu-latest
-  #   name: Set Environment
-  #   steps:
-  #     - name: Set environment base on branch
-  #       id: set_env
-  #       uses: katalon-studio/katalon-base-actions/actions/get-env@v1.0.0
-  #   outputs:
-  #     ENV: ${{ inputs.environment || steps.set_env.outputs.ENV }}
+  set_env:
+    runs-on: ubuntu-latest
+    name: Set Environment
+    steps:
+      - name: Set environment base on input
+        id: set_env
+        run: echo "Exposing environment vars to reusable workflow"
+    outputs:
+      ENV: ${{ inputs.environment }}
   ### BUILD ###
   build:
     name: Build
@@ -195,7 +195,7 @@ jobs:
   ### DEPLOY ###
   deploy:
     name: Deploy cloud agent
-    environment: ${{ inputs.environment }}
+    environment: ${{ needs.set_env.outputs.ENV }}
 
     needs: build
 
@@ -232,7 +232,14 @@ jobs:
       - name: Set BUILD_VERSION environment variable
         run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
 
-      - name: Deploy to s3
+      - name: Deploy to s3 staging
+        if: ${{  needs.set_env.outputs.ENV == 'staging' }}      
+        run: |
+          ls -laR
+          aws s3 cp katalon-agent-linux-x64-*/cli-linux-x64 s3://katalon-testops-agent-beta/$BUILD_VERSION
+
+      - name: Deploy to s3 prod
+        if: ${{  needs.set_env.outputs.ENV == 'prod' }}      
         run: |
           ls -laR
           aws s3 cp katalon-agent-linux-x64-*/cli-linux-x64 s3://${{ secrets.AWS_S3_BUCKET }}/katalon-agent/$BUILD_VERSION/cli-linux-x64
