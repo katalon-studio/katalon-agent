@@ -41,6 +41,24 @@ module.exports = {
     }, command);
   },
 
+  overrideCommand(command, ...options) {
+    return options.reduce((cmd, option) => {
+      const { flag, value } = option;
+      if (value) {
+        if (cmd.includes(flag)) {
+          const arStr = cmd.split(' ');
+          const index = arStr.findIndex((t) => t.startsWith(flag));
+          if (index >= 0) {
+            arStr[index] = arStr[index].replace(/=.*/, `="${value}"`);
+            return arStr.join(' ');
+          }
+        }
+        return `${cmd} ${flag}="${value}"`;
+      }
+      return cmd;
+    }, command);
+  },
+
   getVersion() {
     return packageJson.version;
   },
