@@ -22,7 +22,7 @@ class S3FileTransport extends TransportStream {
     this.uploadToS3Throttled = _.throttle(this.uploadToS3, this.wait, { trailing: false });
   }
 
-  uploadToS3() {
+  async uploadToS3() {
     const parsedUrl = new URL(this.signedUrl);
     const params = new URLSearchParams(parsedUrl.search);
 
@@ -47,7 +47,7 @@ class S3FileTransport extends TransportStream {
         const fileName = path.basename(this.filePath);
         return api.saveJobLog(this.jobInfo, batch, fileName, this.apiKey);
       };
-      requestGetUploadInfo();
+      await requestGetUploadInfo();
     }
 
     return api
