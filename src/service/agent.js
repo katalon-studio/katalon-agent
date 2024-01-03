@@ -156,6 +156,8 @@ async function executeJob(jobInfo, keepFiles) {
     jLogger.add(
       new S3FileTransport(
         {
+          jobInfo,
+          apiKey,
           filePath: logFilePath,
           signedUrl: jobInfo.uploadUrl,
           logger,
