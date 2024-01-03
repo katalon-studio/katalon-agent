@@ -28,7 +28,7 @@
     "eslint:json": "eslint -c .eslintrc.yml src --ext .js -f json -o reports/eslint-report.json"
   },
   "dependencies": {
-    "axios": "^0.27.2",
+    "axios": "^1.6.0",
     "commander": "^7.0.0",
     "decompress": "^4.2.1",
     "find": "^0.3.0",
