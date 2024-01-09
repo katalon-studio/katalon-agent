@@ -32,6 +32,8 @@ class S3FileTransport extends TransportStream {
     const dateFormart = 'YYYYMMDDTHHmmss[Z]';
     const dateExpires = moment.utc(amzDate, dateFormart).toDate();
     dateExpires.setSeconds(dateExpires.getSeconds(), amzExpires * 1000);
+    //  Minus more 2 minutes to ensure regenerate presigned url
+    dateExpires.setSeconds(dateExpires.getSeconds(), -(2 * 60 * 1000));
 
     const now = new Date();
     if (dateExpires < now) {
