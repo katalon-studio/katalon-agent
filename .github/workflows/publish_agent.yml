@@ -7,6 +7,10 @@ on:
         description: "Manual environment to run (staging | prod)"
         required: false
         type: string
+      agent_version:
+        description: "Build version"
+        required: true
+        type: string
     branches:
       # - main
       # - release
@@ -29,7 +33,6 @@ jobs:
   ### BUILD ###
   build:
     name: Build
-
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -87,8 +90,12 @@ jobs:
         run: npm run buildWin --if-present
 
       - name: Set BUILD_VERSION environment variable
-        run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
+        run: | 
+         echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
+         sed -i '' 's/$GITHUB_ENV/$AGENT_VERSION/g' package.json
         shell: bash
+        env:
+          AGENT_VERSION: ${{ inputs.agent_version }}
 
       - name: Upload Windows x64 artifact
         uses: actions/upload-artifact@v2
