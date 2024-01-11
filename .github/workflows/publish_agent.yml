@@ -175,7 +175,13 @@ jobs:
 
       - name: Add execute permission to downloaded artifacts
         run: chmod +x katalon-agent-linux-*/* katalon-agent-macos-*/*
+        
+      - name: Set BUILD_VERSION environment variable
+        run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
 
+      - name: Change Package.json version for release
+        run:  sed -i '' "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
+        
       - name: Package artifacts for release
         env:
           GZIP: -9
