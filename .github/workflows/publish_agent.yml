@@ -137,7 +137,8 @@ jobs:
   ### RELEASE ###
   release:
     name: Release
-
+    env:
+      AGENT_VERSION: ${{ inputs.agent_version }}
     needs: build
 
     runs-on: ubuntu-latest
@@ -175,23 +176,20 @@ jobs:
       - name: Add execute permission to downloaded artifacts
         run: chmod +x katalon-agent-linux-*/* katalon-agent-macos-*/*
 
-      - name: Set BUILD_VERSION environment variable
-        run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
-
       - name: Package artifacts for release
         env:
           GZIP: -9
         run: |
           set -x
-          
+          cat package.json
           mkdir -p packages
           ls -la
-          zip -9 -j packages/katalon-agent-win-x64-$BUILD_VERSION.zip katalon-agent-win-x64-$BUILD_VERSION/*
-          zip -9 -j packages/katalon-agent-win-x86-$BUILD_VERSION.zip katalon-agent-win-x86-$BUILD_VERSION/*
-          zip -9 -j packages/katalon-agent-linux-x64-$BUILD_VERSION.zip katalon-agent-linux-x64-$BUILD_VERSION/*
-          zip -9 -j packages/katalon-agent-macos-x64-$BUILD_VERSION.zip katalon-agent-macos-x64-$BUILD_VERSION/*
-          cd katalon-agent-linux-x64-$BUILD_VERSION
-          tar cvzf ../packages/katalon-agent-linux-x64-$BUILD_VERSION.tar.gz *
+          zip -9 -j packages/katalon-agent-win-x64-$AGENT_VERSION.zip katalon-agent-win-x64-$AGENT_VERSION/*
+          zip -9 -j packages/katalon-agent-win-x86-$AGENT_VERSION.zip katalon-agent-win-x86-$AGENT_VERSION/*
+          zip -9 -j packages/katalon-agent-linux-x64-$AGENT_VERSION.zip katalon-agent-linux-x64-$AGENT_VERSION/*
+          zip -9 -j packages/katalon-agent-macos-x64-$AGENT_VERSION.zip katalon-agent-macos-x64-$AGENT_VERSION/*
+          cd katalon-agent-linux-x64-$AGENT_VERSION
+          tar cvzf ../packages/katalon-agent-linux-x64-$AGENT_VERSION.tar.gz *
 
       - name: Release
         env:
