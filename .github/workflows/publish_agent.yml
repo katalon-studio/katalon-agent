@@ -8,7 +8,7 @@ on:
         required: false
         type: string
       agent_version:
-        description: "Build version example: 2.0.2"
+        description: "Build version example: v2.0.2"
         required: true
         type: string
     branches:
@@ -34,7 +34,8 @@ jobs:
   build:
     name: Build
     runs-on: ${{ matrix.os }}
-
+    env:
+      AGENT_VERSION: ${{ inputs.agent_version }}
     strategy:
       fail-fast: true
       matrix:
@@ -64,6 +65,9 @@ jobs:
       - name: Install packages
         if: steps.cache-packages.outputs.cache-hit != 'true'
         run: npm ci
+      
+      - name: Set BUILD_VERSION environment variable
+        run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
 
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
@@ -73,6 +77,7 @@ jobs:
           npm run buildLinux --if-present
           chmod +x bin/cli-linux-x64 *.sh
           ls -l bin
+          sed -i "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
 
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
@@ -82,23 +87,14 @@ jobs:
           npm run buildMacos --if-present
           chmod +x bin/cli-macos-x64 *.sh
           ls -l bin
+          sed -i '' "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
 
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
           CI: true
         if: ${{ matrix.os == 'windows-latest' }}
         run: npm run buildWin --if-present
-      - name: Set BUILD_VERSION environment variable
-        run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
-      - name: Change version in package.json file and by inputting
-        working-directory: .
-        run: | 
-         ls
-         echo $BUILD_VERSION
-         sed -i '' '/version/s/[^.]*$/'"${AGENT_VERSION}\",/" package.json
-        shell: bash
-        env:
-          AGENT_VERSION: ${{ inputs.agent_version }}
+
 
       - name: Upload Windows x64 artifact
         uses: actions/upload-artifact@v2
