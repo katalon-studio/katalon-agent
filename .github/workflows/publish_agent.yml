@@ -180,7 +180,7 @@ jobs:
         run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
 
       - name: Change Package.json version for release
-        run:  sed -i '' "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
+        run:  sed -i "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
         
       - name: Package artifacts for release
         env:
