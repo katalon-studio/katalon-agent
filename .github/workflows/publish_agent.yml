@@ -137,12 +137,13 @@ jobs:
   ### RELEASE ###
   release:
     name: Release
+    environment: ${{ needs.set_env.outputs.ENV }}    
     env:
       AGENT_VERSION: ${{ inputs.agent_version }}
-    needs: build
+    needs: [set_env, build]
 
+    if: ${{  needs.set_env.outputs.ENV == 'prod' }}      
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         node-version:
