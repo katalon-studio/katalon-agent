@@ -90,7 +90,10 @@ jobs:
         run: npm run buildWin --if-present
 
       - name: Set BUILD_VERSION environment variable
+        working-directory: .
         run: | 
+         pwd
+         ls
          echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
          sed -i '' 's/$GITHUB_ENV/$AGENT_VERSION/g' package.json
         shell: bash
