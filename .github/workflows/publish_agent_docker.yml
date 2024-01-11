@@ -34,4 +34,4 @@ jobs:
           build-args: AGENT_VERSION=2.0.1
           builder: ${{ steps.buildx.outputs.name }}
           push: true
-          tags: lykatalon-agent:2.0.2
+          tags: lydoanndev/katalon-agent:2.0.2
