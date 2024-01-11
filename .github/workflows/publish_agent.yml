@@ -48,7 +48,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2.1.0
+        uses: actions/checkout@v3
 
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2.1.2
@@ -151,7 +151,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2.1.0
+        uses: actions/checkout@v3
 
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2.1.2
@@ -214,7 +214,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2.1.0
+        uses: actions/checkout@v3
 
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2.1.2
@@ -246,3 +246,28 @@ jobs:
         run: |
           ls -laR
           aws s3 cp katalon-agent-linux-x64-*/cli-linux-x64 s3://${{ secrets.AWS_S3_BUCKET }}/katalon-agent/$AGENT_VERSION/cli-linux-x64
+
+  commit:
+    runs-on: ubuntu-latest
+    needs: [set_env, build, release, deploy]
+    name: Commit Code
+    env:
+      AGENT_VERSION: ${{ inputs.agent_version }}    
+    environment: ${{ needs.set_env.outputs.ENV }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+            token: ${{ secrets.GH_TOKEN }}
+      - name: Set BUILD_VERSION environment variable
+        run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
+      - name: Change Package.json version for release
+        run:  sed -i "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
+        ### Commit code
+      - name: Deploy to GitOps 
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Update version to ${{ needs.build.outputs.VERSION }}
+          # Optional commit user and author settings
+          commit_user_name: github-cloudops-bot # defaults to "github-actions[bot]"
+          commit_user_email: github-cloudops-bot@katalon.com # defaults to "41898282+github-actions[bot]@users.noreply.github.com"
+          commit_author: Author <github-cloudops-bot@katalon.com> # defaults to author of the commit that triggered the run
