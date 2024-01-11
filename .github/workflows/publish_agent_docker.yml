@@ -19,6 +19,9 @@ jobs:
           username: ${{ secrets.A }}
           password: ${{ secrets.B }}
 
+      - name: log secret
+        run: echo "docker hub $secrets.A $secrets.B"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
@@ -31,4 +34,4 @@ jobs:
           build-args: AGENT_VERSION=2.0.1
           builder: ${{ steps.buildx.outputs.name }}
           push: true
-          tags: drag0nfire24/katalon-agent:2.0.2
+          tags: lykatalon-agent:2.0.2
