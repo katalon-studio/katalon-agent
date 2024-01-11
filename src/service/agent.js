@@ -156,6 +156,8 @@ async function executeJob(jobInfo, keepFiles) {
     jLogger.add(
       new S3FileTransport(
         {
+          jobInfo,
+          apiKey,
           filePath: logFilePath,
           signedUrl: jobInfo.uploadUrl,
           logger,
@@ -301,12 +303,12 @@ class Agent {
 
         let ksArgs;
         if (config.isOnPremise) {
-          ksArgs = utils.updateCommand(parameter.command, {
+          ksArgs = utils.overrideCommand(parameter.command, {
             flag: '-apiKeyOnPremise',
             value: apiKey,
           });
         } else {
-          ksArgs = utils.updateCommand(
+          ksArgs = utils.overrideCommand(
             parameter.command,
             { flag: '-apiKey', value: apiKey },
           );
@@ -394,12 +396,12 @@ class Agent {
 
       let ksArgs;
       if (config.isOnPremise) {
-        ksArgs = utils.updateCommand(parameter.command, {
+        ksArgs = utils.overrideCommand(parameter.command, {
           flag: '-apiKeyOnPremise',
           value: apiKey,
         });
       } else {
-        ksArgs = utils.updateCommand(
+        ksArgs = utils.overrideCommand(
           parameter.command,
           { flag: '-apiKey', value: apiKey },
         );
