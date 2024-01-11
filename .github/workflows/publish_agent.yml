@@ -88,12 +88,11 @@ jobs:
           CI: true
         if: ${{ matrix.os == 'windows-latest' }}
         run: npm run buildWin --if-present
-
       - name: Set BUILD_VERSION environment variable
+        run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
+      - name: Change version in package.json file and by inputting
         working-directory: .
         run: | 
-         echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
-         echo $GITHUB_ENV
          echo $BUILD_VERSION
          sed -i '' "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
         shell: bash
