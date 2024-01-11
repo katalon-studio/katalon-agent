@@ -29,9 +29,9 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./
-          platforms: linux/amd64, linux/arm64
+#          platforms: linux/amd64, linux/arm64
           file: ./Dockerfile
-          build-args: AGENT_VERSION=2.0.1
+          build-args: AGENT_VERSION=2.0.3
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           tags: lydoanndev/katalon-agent:2.0.3
