@@ -93,8 +93,9 @@ jobs:
       - name: Change version in package.json file and by inputting
         working-directory: .
         run: | 
+         ls
          echo $BUILD_VERSION
-         sed -i '' "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
+         sed -i '' "s/$BUILD_VERSION/$AGENT_VERSION/g" ./package.json
         shell: bash
         env:
           AGENT_VERSION: ${{ inputs.agent_version }}
