@@ -95,7 +95,7 @@ jobs:
          pwd
          ls
          echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
-         sed -i "s/$GITHUB_ENV/$AGENT_VERSION/g" package.json
+         sed -i '' "s/$GITHUB_ENV/$AGENT_VERSION/g" package.json
         shell: bash
         env:
           AGENT_VERSION: ${{ inputs.agent_version }}
