@@ -2,7 +2,7 @@
 
 set -xe
 
-npm ci
+npm i
 npm run buildLinux --if-present
 chmod +x bin/cli-linux-x64 *.sh
 
