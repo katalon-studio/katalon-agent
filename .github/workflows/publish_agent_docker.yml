@@ -33,6 +33,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./
+          platforms: linux/arm64
           file: ./Dockerfile
           build-args: AGENT_VERSION=2.0.3
           builder: ${{ steps.buildx.outputs.name }}
