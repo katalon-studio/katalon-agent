@@ -7,6 +7,10 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [ linux/amd64, linux/arm64 ]
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,7 +33,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./
-          platforms: linux/arm64
           file: ./Dockerfile
           build-args: AGENT_VERSION=2.0.3
           builder: ${{ steps.buildx.outputs.name }}
