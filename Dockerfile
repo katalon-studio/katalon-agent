@@ -1,5 +1,5 @@
 # Build agent
-FROM node:14 as build
+FROM node:20 as build
 
 ARG KATALON_ROOT_DIR=/katalon
 RUN mkdir -p $KATALON_ROOT_DIR
