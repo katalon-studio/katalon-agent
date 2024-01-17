@@ -4,6 +4,7 @@ name: Package Agent
     branches:
       - master
       - release
+      - CO-2241
 jobs:
   build:
     name: Build
