@@ -11,10 +11,7 @@ on:
         description: "Build version example: v2.0.2"
         required: true
         type: string
-    branches:
-      # - main
-      # - release
-      - CO-2241
+
 permissions:
   id-token: write # This is required for requesting the JWT
   contents: write  # This is required for actions/checkout      

@@ -4,7 +4,6 @@ name: Package Agent
     branches:
       - master
       - release
-      - CO-2241
 permissions:
   id-token: write # This is required for requesting the JWT
   contents: write  # This is required for actions/checkout           
