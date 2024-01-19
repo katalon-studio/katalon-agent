@@ -10,6 +10,7 @@ const properties = require('../core/properties');
 const reportUploader = require('./report-uploader');
 const file = require('../core/file');
 const utils = require('../core/utils');
+const os = require('../core/os');
 
 const PROJECT_FILE_PATTERN = '**/*.prj';
 const TESTOPS_PROPERTIES_FILE = 'com.kms.katalon.integration.analytics.properties';
@@ -98,6 +99,9 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     this.organizationId = info.organizationId;
     this.extraFiles = info.extraFiles;
     this.gitRepository = info.gitRepository;
+    this.preExecuteCommand = info.preExecuteCommand;
+    this.x11Display = info.x11Display;
+    this.env = info.env;
   }
 
   async downloadExtraFiles(extraFiles, ksProjectPath, jLogger, apiKey) {
@@ -137,6 +141,18 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
       await this.downloadExtraFiles(this.extraFiles, ksProjectDir, logger, apiKey);
     }
     logger.debug('Finish downloading extra files.');
+
+    if (this.preExecuteCommand) {
+      logger.debug('Start pre-execute command.');
+      await os.runCommand(this.preExecuteCommand, {
+        x11Display: this.x11Display,
+        xvfbConfiguration: this.xvfbConfiguration,
+        logger,
+        tmpDirPath: ksProjectDir,
+        env: this.env,
+      });
+      logger.debug('End pre-execute command.');
+    }
   }
 }
 
@@ -146,11 +162,25 @@ class GenericCommandExecutor {
     this.projectId = info.projectId;
     this.sessionId = info.sessionId;
     this.env = info.env;
+    this.xvfbConfiguration = info.xvfbConfiguration;
+    this.x11Display = info.x11Display;
+    this.preExecuteCommand = info.preExecuteCommand;
   }
 
   async execute(logger, execDirPath, callback, apiKey) {
     const outputDir = path.join(execDirPath, GENERIC_COMMAND_OUTPUT_DIR);
     fs.ensureDirSync(outputDir);
+    if (this.preExecuteCommand) {
+      logger.debug('Start pre-execute command.');
+      await os.runCommand(this.preExecuteCommand, {
+        x11Display: this.x11Display,
+        xvfbConfiguration: this.xvfbConfiguration,
+        logger,
+        tmpDirPath: execDirPath,
+        env: this.env,
+      });
+      logger.debug('End pre-execute command.');
+    }
 
     const status = await genericCommand.executeCommands(
       this.commands,
