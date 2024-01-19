@@ -33,8 +33,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: '17'
-          distribution: 'corretto'
-          cache: 'maven'
+          distribution: 'adopt'
 
       - name: Run test
         run: |
