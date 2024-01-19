@@ -6,6 +6,7 @@ on:
     branches:
       - master
       - release
+      - TES-5726
 
 concurrency:
   group: test-${{ github.head_ref ||  github.sha }}
@@ -28,6 +29,13 @@ jobs:
           cache: 'npm'
           cache-dependency-path: package-lock.json
 
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+          cache: 'maven'
+
       - name: Run test
         run: |
           npm ci 
@@ -37,7 +45,7 @@ jobs:
           sed -i 's@'$GITHUB_WORKSPACE'@/github/workspace/@g' coverage/lcov.info
 
       - name: Sonar Cloud Scan
-        uses: SonarSource/sonarcloud-github-action@v1.8
+        uses: SonarSource/sonarcloud-github-action@v2.1.1
         with:
           args: >
             -Dsonar.verbose=true
