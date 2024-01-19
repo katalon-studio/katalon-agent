@@ -149,7 +149,6 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
         xvfbConfiguration: this.xvfbConfiguration,
         logger,
         tmpDirPath: ksProjectDir,
-        undefined,
         env: this.env,
       });
       logger.debug('End pre-execute command.');
@@ -178,7 +177,6 @@ class GenericCommandExecutor {
         xvfbConfiguration: this.xvfbConfiguration,
         logger,
         tmpDirPath: execDirPath,
-        undefined,
         env: this.env,
       });
       logger.debug('End pre-execute command.');
