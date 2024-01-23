@@ -1,15 +1,38 @@
 name: Publish Agent
 
 on:
-  workflow_dispatch:
+   workflow_dispatch:
+    inputs:
+      environment:
+        description: "Manual environment to run (staging | prod)"
+        required: false
+        type: string
+      agent_version:
+        description: "Build version example: v2.0.2"
+        required: true
+        type: string
 
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: write  # This is required for actions/checkout      
 jobs:
+
+  ### SET ENV ###
+  set_env:
+    runs-on: ubuntu-latest
+    name: Set Environment
+    steps:
+      - name: Set environment base on input
+        id: set_env
+        run: echo "Exposing environment vars to reusable workflow"
+    outputs:
+      ENV: ${{ inputs.environment }}
   ### BUILD ###
   build:
     name: Build
-
     runs-on: ${{ matrix.os }}
-
+    env:
+      AGENT_VERSION: ${{ inputs.agent_version }}
     strategy:
       fail-fast: true
       matrix:
@@ -22,7 +45,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2.1.0
+        uses: actions/checkout@v3
 
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2.1.2
@@ -39,6 +62,9 @@ jobs:
       - name: Install packages
         if: steps.cache-packages.outputs.cache-hit != 'true'
         run: npm ci
+      
+      - name: Set BUILD_VERSION environment variable
+        run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
 
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
@@ -48,6 +74,7 @@ jobs:
           npm run buildLinux --if-present
           chmod +x bin/cli-linux-x64 *.sh
           ls -l bin
+          sed -i "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
 
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
@@ -57,6 +84,7 @@ jobs:
           npm run buildMacos --if-present
           chmod +x bin/cli-macos-x64 *.sh
           ls -l bin
+          sed -i '' "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
 
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
@@ -64,15 +92,12 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         run: npm run buildWin --if-present
 
-      - name: Set BUILD_VERSION environment variable
-        run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
-        shell: bash
 
       - name: Upload Windows x64 artifact
         uses: actions/upload-artifact@v2
         if: ${{ matrix.os == 'windows-latest' }}
         with:
-          name: katalon-agent-win-x64-${{ env.BUILD_VERSION }}
+          name: katalon-agent-win-x64-${{ env.AGENT_VERSION }}
           path: |
             bin/cli-win-x64.exe
             bin/nssm.exe
@@ -82,7 +107,7 @@ jobs:
         uses: actions/upload-artifact@v2
         if: ${{ matrix.os == 'windows-latest' }}
         with:
-          name: katalon-agent-win-x86-${{ env.BUILD_VERSION }}
+          name: katalon-agent-win-x86-${{ env.AGENT_VERSION }}
           path: |
             bin/cli-win-x86.exe
             bin/nssm.exe
@@ -92,7 +117,7 @@ jobs:
         uses: actions/upload-artifact@v2
         if: ${{ matrix.os == 'ubuntu-latest' }}
         with:
-          name: katalon-agent-linux-x64-${{ env.BUILD_VERSION }}
+          name: katalon-agent-linux-x64-${{ env.AGENT_VERSION }}
           path: |
             bin/cli-linux-x64
             bin/*.sh
@@ -101,7 +126,7 @@ jobs:
         uses: actions/upload-artifact@v2
         if: ${{ matrix.os == 'macos-latest' }}
         with:
-          name: katalon-agent-macos-x64-${{ env.BUILD_VERSION }}
+          name: katalon-agent-macos-x64-${{ env.AGENT_VERSION }}
           path: |
             bin/cli-macos-x64
             bin/start.sh
@@ -109,11 +134,13 @@ jobs:
   ### RELEASE ###
   release:
     name: Release
+    environment: ${{ needs.set_env.outputs.ENV }}    
+    env:
+      AGENT_VERSION: ${{ inputs.agent_version }}
+    needs: [set_env, build]
 
-    needs: build
-
+    if: ${{  needs.set_env.outputs.ENV == 'prod' }}      
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         node-version:
@@ -121,7 +148,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2.1.0
+        uses: actions/checkout@v3
 
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2.1.2
@@ -146,24 +173,26 @@ jobs:
 
       - name: Add execute permission to downloaded artifacts
         run: chmod +x katalon-agent-linux-*/* katalon-agent-macos-*/*
-
+        
       - name: Set BUILD_VERSION environment variable
         run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
 
+      - name: Change Package.json version for release
+        run:  sed -i "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
+        
       - name: Package artifacts for release
         env:
           GZIP: -9
         run: |
           set -x
-          
           mkdir -p packages
           ls -la
-          zip -9 -j packages/katalon-agent-win-x64-$BUILD_VERSION.zip katalon-agent-win-x64-$BUILD_VERSION/*
-          zip -9 -j packages/katalon-agent-win-x86-$BUILD_VERSION.zip katalon-agent-win-x86-$BUILD_VERSION/*
-          zip -9 -j packages/katalon-agent-linux-x64-$BUILD_VERSION.zip katalon-agent-linux-x64-$BUILD_VERSION/*
-          zip -9 -j packages/katalon-agent-macos-x64-$BUILD_VERSION.zip katalon-agent-macos-x64-$BUILD_VERSION/*
-          cd katalon-agent-linux-x64-$BUILD_VERSION
-          tar cvzf ../packages/katalon-agent-linux-x64-$BUILD_VERSION.tar.gz *
+          zip -9 -j packages/katalon-agent-win-x64-$AGENT_VERSION.zip katalon-agent-win-x64-$AGENT_VERSION/*
+          zip -9 -j packages/katalon-agent-win-x86-$AGENT_VERSION.zip katalon-agent-win-x86-$AGENT_VERSION/*
+          zip -9 -j packages/katalon-agent-linux-x64-$AGENT_VERSION.zip katalon-agent-linux-x64-$AGENT_VERSION/*
+          zip -9 -j packages/katalon-agent-macos-x64-$AGENT_VERSION.zip katalon-agent-macos-x64-$AGENT_VERSION/*
+          cd katalon-agent-linux-x64-$AGENT_VERSION
+          tar cvzf ../packages/katalon-agent-linux-x64-$AGENT_VERSION.tar.gz *
 
       - name: Release
         env:
@@ -173,14 +202,16 @@ jobs:
   ### DEPLOY ###
   deploy:
     name: Deploy cloud agent
-
-    needs: build
+    environment: ${{ needs.set_env.outputs.ENV }}
+    env:
+      AGENT_VERSION: ${{ inputs.agent_version }}
+    needs: [set_env, build]
 
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2.1.0
+        uses: actions/checkout@v3
 
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2.1.2
@@ -190,12 +221,13 @@ jobs:
       - name: Install packages
         run: npm install --only dev
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_API_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
-          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/katalon-github-oidc-federation
+          role-session-name: github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+          mask-aws-account-id: 'no'
 
       - name: Download artifacts
         uses: actions/download-artifact@v2
@@ -205,10 +237,34 @@ jobs:
       - name: Add execute permission to downloaded artifacts
         run: chmod +x katalon-agent-linux-*/* katalon-agent-macos-*/*
 
-      - name: Set BUILD_VERSION environment variable
-        run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
 
-      - name: Deploy to s3
+      - name: Deploy to s3 prod
+        if: ${{  needs.set_env.outputs.ENV == 'prod' }}      
         run: |
           ls -laR
-          aws s3 cp katalon-agent-linux-x64-*/cli-linux-x64 s3://${{ secrets.AWS_S3_BUCKET }}/katalon-agent/$BUILD_VERSION/cli-linux-x64
+          aws s3 cp katalon-agent-linux-x64-*/cli-linux-x64 s3://${{ secrets.AWS_S3_BUCKET }}/katalon-agent/$AGENT_VERSION/cli-linux-x64
+
+  commit:
+    runs-on: ubuntu-latest
+    needs: [set_env, build, deploy, release]
+    name: Commit Code
+    env:
+      AGENT_VERSION: ${{ inputs.agent_version }}    
+    environment: ${{ needs.set_env.outputs.ENV }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+            token: ${{ secrets.GH_TOKEN }}
+      - name: Set BUILD_VERSION environment variable
+        run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
+      - name: Change Package.json version for release
+        run:  sed -i "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
+        ### Commit code
+      - name: Deploy to GitOps 
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Update version to ${{ env.AGENT_VERSION }}
+          # Optional commit user and author settings
+          commit_user_name: github-cloudops-bot # defaults to "github-actions[bot]"
+          commit_user_email: github-cloudops-bot@katalon.com # defaults to "41898282+github-actions[bot]@users.noreply.github.com"
+          commit_author: Author <github-cloudops-bot@katalon.com> # defaults to author of the commit that triggered the run

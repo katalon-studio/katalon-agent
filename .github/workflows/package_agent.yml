@@ -1,18 +1,16 @@
 name: Package Agent
-
-on:
+'on':
   push:
     branches:
       - master
       - release
-
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: write  # This is required for actions/checkout           
 jobs:
-  ### BUILD ###
   build:
     name: Build
-
     runs-on: ${{ matrix.os }}
-
     strategy:
       fail-fast: true
       matrix:
@@ -22,137 +20,113 @@ jobs:
           - windows-latest
         node-version:
           - 14.x
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2.1.0
-
-    - name: Setup Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v2.1.2
-      with:
-        node-version: ${{ matrix.node-version }}
-
-    - name: Cache
-      id: cache-packages
-      uses: actions/cache@v2.1.4
-      with:
-        path: node_modules
-        key: ${{ runner.os }}-node${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
-
-    - name: Install packages
-      if: steps.cache-packages.outputs.cache-hit != 'true'
-      run: npm ci
-
-    - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
-      env:
-        CI: true
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-      run: |
-        npm run buildLinux --if-present
-        chmod +x bin/cli-linux-x64 *.sh
-        ls -l bin
-
-    - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
-      env:
-        CI: true
-      if: ${{ matrix.os == 'macos-latest' }}
-      run: |
-        npm run buildMacos --if-present
-        chmod +x bin/cli-macos-x64 *.sh
-        ls -l bin
-
-    - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
-      env:
-        CI: true
-      if: ${{ matrix.os == 'windows-latest' }}
-      run: npm run buildWin --if-present
-
-    - name: Set BUILD_VERSION environment variable
-      run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
-      shell: bash
-
-    - name: Upload Windows x64 artifact
-      uses: actions/upload-artifact@v2
-      if: ${{ matrix.os == 'windows-latest' }}
-      with:
-        name: katalon-agent-win-x64-${{ env.BUILD_VERSION }}
-        path: |
-          bin/cli-win-x64.exe
-          bin/nssm.exe
-          bin/*.bat
-
-    - name: Upload Windows x86 artifact
-      uses: actions/upload-artifact@v2
-      if: ${{ matrix.os == 'windows-latest' }}
-      with:
-        name: katalon-agent-win-x86-${{ env.BUILD_VERSION }}
-        path: |
-          bin/cli-win-x86.exe
-          bin/nssm.exe
-          bin/*.bat
-
-    - name: Upload Linux x64 artifact
-      uses: actions/upload-artifact@v2
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-      with:
-        name: katalon-agent-linux-x64-${{ env.BUILD_VERSION }}
-        path: |
-          bin/cli-linux-x64
-          bin/*.sh
-
-    - name: Upload MacOS x64 artifact
-      uses: actions/upload-artifact@v2
-      if: ${{ matrix.os == 'macos-latest' }}
-      with:
-        name: katalon-agent-macos-x64-${{ env.BUILD_VERSION }}
-        path: |
-          bin/cli-macos-x64
-          bin/start.sh
-
-  ### DEPLOY ###
-  deploy:
-    name: Deploy staging cloud agent
-
-    needs: build
-
-    strategy:
-      matrix:
-        node-version:
-          - 10.x
-
-    runs-on: ubuntu-latest
-
-    steps:
-
       - name: Checkout code
         uses: actions/checkout@v2.1.0
-
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2.1.2
         with:
           node-version: ${{ matrix.node-version }}
-
+      - name: Cache
+        id: cache-packages
+        uses: actions/cache@v2.1.4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
+      - name: Install packages
+        if: steps.cache-packages.outputs.cache-hit != 'true'
+        run: npm ci
+      - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
+        env:
+          CI: true
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          npm run buildLinux --if-present
+          chmod +x bin/cli-linux-x64 *.sh
+          ls -l bin
+      - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
+        env:
+          CI: true
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          npm run buildMacos --if-present
+          chmod +x bin/cli-macos-x64 *.sh
+          ls -l bin
+      - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
+        env:
+          CI: true
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: npm run buildWin --if-present
+      - name: Set BUILD_VERSION environment variable
+        run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
+        shell: bash
+      - name: Upload Windows x64 artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ matrix.os == 'windows-latest' }}
+        with:
+          name: katalon-agent-win-x64-${{ env.BUILD_VERSION }}
+          path: |
+            bin/cli-win-x64.exe
+            bin/nssm.exe
+            bin/*.bat
+      - name: Upload Windows x86 artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ matrix.os == 'windows-latest' }}
+        with:
+          name: katalon-agent-win-x86-${{ env.BUILD_VERSION }}
+          path: |
+            bin/cli-win-x86.exe
+            bin/nssm.exe
+            bin/*.bat
+      - name: Upload Linux x64 artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        with:
+          name: katalon-agent-linux-x64-${{ env.BUILD_VERSION }}
+          path: |
+            bin/cli-linux-x64
+            bin/*.sh
+      - name: Upload MacOS x64 artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ matrix.os == 'macos-latest' }}
+        with:
+          name: katalon-agent-macos-x64-${{ env.BUILD_VERSION }}
+          path: |
+            bin/cli-macos-x64
+            bin/start.sh
+  deploy:
+    name: Deploy staging cloud agent
+    environment: staging 
+    needs: build
+    strategy:
+      matrix:
+        node-version:
+          - 10.x
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2.1.0
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2.1.2
+        with:
+          node-version: ${{ matrix.node-version }}
       - name: Install packages
         run: npm install --only dev
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ secrets.STAGING_AWS_API_KEY }}
-          aws-secret-access-key: ${{ secrets.STAGING_AWS_SECRET_KEY }}
-          aws-region: us-east-1
-
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/katalon-github-oidc-federation
+          role-session-name: github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+          mask-aws-account-id: 'no'
       - name: Download artifacts
         uses: actions/download-artifact@v2
         with:
           path: .
-
       - name: Add execute permission to downloaded artifacts
         run: chmod +x katalon-agent-linux-*/* katalon-agent-macos-*/*
-
       - name: Set BUILD_VERSION environment variable
         run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
-
       - name: Package artifacts
         env:
           GZIP: -9
@@ -167,7 +141,6 @@ jobs:
           zip -9 -j packages/katalon-agent-macos-x64-$BUILD_VERSION.zip katalon-agent-macos-x64-$BUILD_VERSION/*
           cd katalon-agent-linux-x64-$BUILD_VERSION
           tar cvzf ../packages/katalon-agent-linux-x64-$BUILD_VERSION.tar.gz *
-
           cd ..
           ls -laR
           aws s3 sync packages/ s3://katalon-testops-agent-beta/$BUILD_VERSION --acl public-read

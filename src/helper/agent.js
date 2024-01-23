@@ -36,6 +36,9 @@ function createCommandExecutor(
       projectId,
       sessionId: parameter.sessionId,
       env,
+      x11Display,
+      xvfbConfiguration,
+      preExecuteCommand: parameter.preExecuteCommand,
     };
     return new GenericCommandExecutor(info);
   }
@@ -52,6 +55,7 @@ function createCommandExecutor(
     extraFiles: parameter.extraFiles,
     gitRepository: parameter.gitRepositoryResource,
     organizationId: parameter.organizationId,
+    preExecuteCommand: parameter.preExecuteCommand,
   };
   return new KatalonCommandExecutor(info);
 }
