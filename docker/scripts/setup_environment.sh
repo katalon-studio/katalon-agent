@@ -51,7 +51,7 @@ echo "$(google-chrome --version)" >> $KATALON_VERSION_FILE || true
 ./wrap_chrome_binary.sh && rm -rfv ./wrap_chrome_binary.sh
 
 echo "Install Gradle"
-gradle_version='5.4.1'
+gradle_version='7.6.3'
 gradle_package="gradle-$gradle_version-bin.zip"
 gradle_unzipped_package="gradle-$gradle_version"
 wget https://downloads.gradle.org/distributions/gradle-$gradle_version-bin.zip
