@@ -47,7 +47,7 @@ ENV NO_KEEP_FILES=''
 ENV AUTO_UPGRADE_ENVIRONMENT=false
 
 # PATH Environment
-ENV PATH "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/katalon/scripts:/opt/katalonstudio:$KATALON_SCRIPT_DIR:$KATALON_AGENT_DIR:$GRADLE_BIN"
+ENV PATH "$GRADLE_BIN:$PATH:$KATALON_AGENT_DIR"
 RUN echo "PATH=\"$PATH\"" > /etc/environment
 
 # Copy agent
