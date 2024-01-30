@@ -60,8 +60,6 @@ unzip $gradle_package
 ls
 rm $gradle_package
 mv $gradle_unzipped_package /opt/gradle-7
-export GRADLE_HOME=/opt/gradle-7
-ls $GRADLE_HOME
 
 chmod -R 777 $KATALON_ROOT_DIR
 chmod -R 777 $KATALON_SOFTWARE_DIR
