@@ -4,7 +4,8 @@ on:
   pull_request:
   push:
     branches:
-      - TES-5825
+      - master
+      - release
 
 concurrency:
   group: test-${{ github.head_ref ||  github.sha }}
