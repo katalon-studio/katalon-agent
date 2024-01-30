@@ -17,3 +17,5 @@ else
     chown -R $KATALON_USER_ID $KATALON_SOFTWARE_DIR
     exec gosu $username "$@"
 fi
+echo "GRADLE_HOME: $GRADLE_HOME"
+gradle -v
