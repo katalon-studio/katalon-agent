@@ -64,6 +64,7 @@ COPY ./docker/scripts/wrap_chrome_binary.sh wrap_chrome_binary.sh
 COPY ./docker/scripts/upgrade_environment.sh upgrade_environment.sh
 COPY ./docker/scripts/setup_agent.sh setup_agent.sh
 COPY ./docker/scripts/setup.sh setup.sh
+COPY ./docker/scripts/setup_environment.sh setup_environment.sh
 COPY ./docker/scripts/agent.sh agent.sh
 RUN ./setup.sh
 
