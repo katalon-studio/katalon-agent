@@ -8,7 +8,7 @@ on:
         required: false
         type: string
       agent_version:
-        description: "Build version example: v2.0.2"
+        description: "Build version example: v2.0.3"
         required: true
         type: string
 
