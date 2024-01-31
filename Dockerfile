@@ -10,7 +10,7 @@ RUN chmod a+x ./docker/scripts/build_agent.sh
 RUN ./docker/scripts/build_agent.sh
 
 # Build docker image
-FROM katalonstudio/katalon:8.6.8
+FROM katalonstudio/katalon:9.2.0
 
 # Agent arguement
 ARG AGENT_VERSION
