@@ -23,7 +23,7 @@ ARG KATALON_SOFTWARE_DIR=/opt
 # System Environment
 ENV KATALON_VERSION_FILE=$KATALON_ROOT_DIR/version
 ENV KATALON_AGENT_DIR=$KATALON_ROOT_DIR/agent
-ENV GRADLE_HOME=$KATALON_SOFTWARE_DIR/gradle
+ENV GRADLE_HOME=$KATALON_SOFTWARE_DIR/gradle-7
 ENV GRADLE_BIN=$GRADLE_HOME/bin
 
 # Katalon Environment
@@ -47,7 +47,7 @@ ENV NO_KEEP_FILES=''
 ENV AUTO_UPGRADE_ENVIRONMENT=false
 
 # PATH Environment
-ENV PATH "$PATH:$KATALON_SCRIPT_DIR:$KATALON_AGENT_DIR:$GRADLE_BIN"
+ENV PATH "$GRADLE_BIN:$PATH:$KATALON_AGENT_DIR"
 RUN echo "PATH=\"$PATH\"" > /etc/environment
 
 # Copy agent
@@ -60,7 +60,7 @@ COPY --from=build /katalon/bin/cli-linux-x64 *.sh ./
 # Copy script files and setup
 WORKDIR $KATALON_SCRIPT_DIR
 COPY ./docker/scripts/wrap_chrome_binary.sh wrap_chrome_binary.sh
-# COPY ./docker/scripts/setup_environment.sh setup_environment.sh
+COPY ./docker/scripts/setup_environment.sh setup_environment.sh
 COPY ./docker/scripts/upgrade_environment.sh upgrade_environment.sh
 COPY ./docker/scripts/setup_agent.sh setup_agent.sh
 COPY ./docker/scripts/setup.sh setup.sh
