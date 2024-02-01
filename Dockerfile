@@ -52,7 +52,7 @@ RUN echo "PATH=\"$PATH\"" > /etc/environment
 
 # Copy agent
 WORKDIR $KATALON_AGENT_DIR
-COPY --from=build /katalon/bin/cli-linux-x64 *.sh ./
+COPY --from=build /katalon/bin/cli-linux-x64 /katalon/bin/cli-linux-arm64 *.sh ./
 
 # Copy script files
 # RUN apt update && apt -y install openjdk-8-jdk && update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
