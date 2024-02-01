@@ -42,6 +42,8 @@ const KS_OLD_RELEASES_URL =
 const KS_RELEASES_URL =
   'https://download.katalon.com/katalon-studio/releases.json';
 
+const KRE_LATEST_OPTION_VALUE = 'latest';
+
 module.exports = {
   TESTOPS_BASE_URL,
   PATHS,
@@ -51,4 +53,5 @@ module.exports = {
   FILTERED_ERROR_CODE,
   KS_OLD_RELEASES_URL,
   KS_RELEASES_URL,
+  KRE_LATEST_OPTION_VALUE,
 };
