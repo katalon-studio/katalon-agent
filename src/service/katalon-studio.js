@@ -50,6 +50,7 @@ function getKsLocation(ksVersionNumber, ksLocation) {
     if (ksVersionNumber === KRE_LATEST_OPTION_VALUE) {
       const kreOsVersions = filter(body, ({ os }) => os === osVersion);
       ksVersion = maxBy(kreOsVersions, 'version');
+      ksVersionNumber = ksVersion.version;
     } else {
       ksVersion = body.find((item) => item.version === ksVersionNumber && item.os === osVersion);
     }

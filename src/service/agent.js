@@ -1,6 +1,7 @@
 const fs = require('fs-extra');
 const ip = require('ip');
 const path = require('path');
+const childProcess = require('child_process');
 
 const {
   buildUpdateJobBody,
@@ -240,6 +241,15 @@ function validateField(configs, propertyName, configFile = defaultConfigFile) {
   return true;
 }
 
+function runCommand(command, args, options = {}) {
+  const result = childProcess.spawnSync(command, args, options);
+  if (result.status !== 0) {
+    throw new Error(result.stderr.toString());
+  }
+  return result;
+}
+
+
 class Agent {
   constructor(commandLineConfigs = {}) {
     const configFile = commandLineConfigs.configPath || defaultConfigFile;
@@ -300,6 +310,34 @@ class Agent {
           parameter,
           testProject: { projectId },
         } = jobBody;
+
+        if (process.env.IS_DOCKER_AGENT) {
+          if (parameter.ksVersion === 'latest') {
+            runCommand(
+              'update-alternatives',
+              [
+                '--set',
+                'java',
+                '/usr/lib/jvm/java-17-openjdk-amd64/bin/java',
+              ],
+              {
+                stdio: 'inherit',
+              },
+            );
+          } else {
+            runCommand(
+              'update-alternatives',
+              [
+                '--set',
+                'java',
+                '/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java',
+              ],
+              {
+                stdio: 'inherit',
+              },
+            );
+          }
+        }
 
         let ksArgs;
         if (config.isOnPremise) {

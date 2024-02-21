@@ -12,6 +12,9 @@ RUN ./docker/scripts/build_agent.sh
 # Build docker image
 FROM katalonstudio/katalon:9.2.0
 
+RUN apt-get update && \
+    apt -y install openjdk-8-jdk
+
 # Agent arguement
 ARG AGENT_VERSION
 
@@ -45,6 +48,7 @@ ENV X11_DISPLAY=''
 ENV KEEP_FILES=''
 ENV NO_KEEP_FILES=''
 ENV AUTO_UPGRADE_ENVIRONMENT=false
+ENV IS_DOCKER_AGENT=true
 
 # PATH Environment
 ENV PATH "$PATH:$KATALON_SCRIPT_DIR:$KATALON_AGENT_DIR:$GRADLE_BIN"
