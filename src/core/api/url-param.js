@@ -99,7 +99,7 @@ module.exports = {
   },
 
   ksReleases() {
-    return buildUrl({ baseUrl: KS_RELEASES_URL });
+    return buildUrl({ baseUrl: KS_OLD_RELEASES_URL });
   },
 
   download(url) {
