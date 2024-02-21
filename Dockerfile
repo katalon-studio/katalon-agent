@@ -12,6 +12,7 @@ RUN ./docker/scripts/build_agent.sh
 # Build docker image
 FROM katalonstudio/katalon:9.2.0
 
+#Install java 8
 RUN apt-get update && \
     apt -y install openjdk-8-jdk
 
