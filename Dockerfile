@@ -14,8 +14,8 @@ RUN ./docker/scripts/build_agent.sh
 FROM katalonstudio/katalon:9.2.0
 
 # Install java version 8
-RUN apt-get update && \
-    apt-get -y install openjdk-8-jdk
+# RUN apt-get update && \
+#     apt-get -y install openjdk-8-jdk
 
 # Agent arguement
 ARG AGENT_VERSION
@@ -61,7 +61,7 @@ WORKDIR $KATALON_AGENT_DIR
 COPY --from=build /katalon/bin/cli-linux-x64 *.sh ./
 
 # Copy script files
-# RUN apt update && apt -y install openjdk-8-jdk && update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+RUN apt update && apt -y install openjdk-8-jdk
 
 # Copy script files and setup
 WORKDIR $KATALON_SCRIPT_DIR
