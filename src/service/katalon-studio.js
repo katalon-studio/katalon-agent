@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 const _ = require('lodash');
 const fs = require('fs');
 const path = require('path');
@@ -50,6 +51,7 @@ function getKsLocation(ksVersionNumber, ksLocation) {
     if (ksVersionNumber === KRE_LATEST_OPTION_VALUE) {
       const kreOsVersions = filter(body, ({ os }) => os === osVersion);
       ksVersion = maxBy(kreOsVersions, 'version');
+      ksVersionNumber = ksVersion.version;
     } else {
       ksVersion = body.find((item) => item.version === ksVersionNumber && item.os === osVersion);
     }
@@ -88,6 +90,11 @@ module.exports = {
   ) {
     return getKsLocation(ksVersionNumber, ksLocation).then(({ ksLocationParentDir }) => {
       logger.info(`Katalon Folder: ${ksLocationParentDir}`);
+
+      if (process.env.IS_DOCKER_AGENT) {
+        logger.info(`Check and switch java version for Docker mode to compitable KRE version: ${ksVersionNumber}`);
+        utils.switchJavaVersion(ksVersionNumber);
+      }
 
       let ksExecutable =
         find(ksLocationParentDir, /katalonc$|katalonc\.exe$/) ||

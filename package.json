@@ -31,6 +31,7 @@
     "axios": "^0.27.2",
     "commander": "^7.0.0",
     "decompress": "^4.2.1",
+    "compare-versions": "^6.1.0",
     "find": "^0.3.0",
     "fs-extra": "^9.1.0",
     "glob": "^7.2.3",

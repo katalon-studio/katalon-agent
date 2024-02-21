@@ -10,7 +10,13 @@ RUN chmod a+x ./docker/scripts/build_agent.sh
 RUN ./docker/scripts/build_agent.sh
 
 # Build docker image
+# Install and inherit java version 17 from katalonstudio/katalon:9.2.0
 FROM katalonstudio/katalon:9.2.0
+
+# Install java version 8
+RUN apt-get update && \
+    apt-get -y install openjdk-8-jdk --no-install-recommends && \
+    apt-get clean
 
 # Agent arguement
 ARG AGENT_VERSION
@@ -45,6 +51,7 @@ ENV X11_DISPLAY=''
 ENV KEEP_FILES=''
 ENV NO_KEEP_FILES=''
 ENV AUTO_UPGRADE_ENVIRONMENT=false
+ENV IS_DOCKER_AGENT=true
 
 # PATH Environment
 ENV PATH "$GRADLE_BIN:$PATH:$KATALON_AGENT_DIR"
