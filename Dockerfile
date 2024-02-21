@@ -10,6 +10,7 @@ RUN chmod a+x ./docker/scripts/build_agent.sh
 RUN ./docker/scripts/build_agent.sh
 
 # Build docker image
+# Build docker image
 # Install and inherit java version 17 from katalonstudio/katalon:9.2.0
 FROM katalonstudio/katalon:9.2.0
 
