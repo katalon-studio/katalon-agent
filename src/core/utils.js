@@ -2,8 +2,8 @@ const moment = require('moment');
 const path = require('path');
 const tmp = require('tmp');
 const fs = require('fs');
-const packageJson = require('../../package.json');
 const childProcess = require('child_process');
+const packageJson = require('../../package.json');
 
 module.exports = {
   getPath(relativePath) {
@@ -118,7 +118,7 @@ module.exports = {
       javaPath = java8Path;
     }
 
-    runCommand(
+    this.runCommand(
       'update-alternatives',
       [
         '--set',
@@ -129,5 +129,5 @@ module.exports = {
         stdio: 'inherit',
       },
     );
-  }
+  },
 };
