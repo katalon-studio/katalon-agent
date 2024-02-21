@@ -28,7 +28,7 @@ jobs:
         with:
           context: ./
           file: ./Dockerfile
-          build-args: AGENT_VERSION=5.0
+          build-args: AGENT_VERSION=5.1
           builder: ${{ steps.buildx.outputs.name }}
           push: true
-          tags: htuan/testagent:5.0
+          tags: htuan/testagent:5.1
