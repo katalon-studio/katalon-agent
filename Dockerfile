@@ -15,7 +15,8 @@ FROM katalonstudio/katalon:9.2.0
 
 # Install java version 8
 RUN apt-get update && \
-    apt-get -y install openjdk-8-jdk
+    apt-get -y install openjdk-8-jdk --no-install-recommends && \
+    apt-get clean
 
 # Agent arguement
 ARG AGENT_VERSION
