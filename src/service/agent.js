@@ -249,7 +249,6 @@ function runCommand(command, args, options = {}) {
   return result;
 }
 
-
 class Agent {
   constructor(commandLineConfigs = {}) {
     const configFile = commandLineConfigs.configPath || defaultConfigFile;
@@ -311,32 +310,30 @@ class Agent {
           testProject: { projectId },
         } = jobBody;
 
-        if (process.env.IS_DOCKER_AGENT) {
-          if (parameter.ksVersion === 'latest') {
-            runCommand(
-              'update-alternatives',
-              [
-                '--set',
-                'java',
-                '/usr/lib/jvm/java-17-openjdk-amd64/bin/java',
-              ],
-              {
-                stdio: 'inherit',
-              },
-            );
-          } else {
-            runCommand(
-              'update-alternatives',
-              [
-                '--set',
-                'java',
-                '/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java',
-              ],
-              {
-                stdio: 'inherit',
-              },
-            );
-          }
+        if (parameter.ksVersion === 'latest') {
+          runCommand(
+            'update-alternatives',
+            [
+              '--set',
+              'java',
+              '/usr/lib/jvm/java-17-openjdk-amd64/bin/java',
+            ],
+            {
+              stdio: 'inherit',
+            },
+          );
+        } else {
+          runCommand(
+            'update-alternatives',
+            [
+              '--set',
+              'java',
+              '/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java',
+            ],
+            {
+              stdio: 'inherit',
+            },
+          );
         }
 
         let ksArgs;
