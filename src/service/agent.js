@@ -1,7 +1,6 @@
 const fs = require('fs-extra');
 const ip = require('ip');
 const path = require('path');
-const childProcess = require('child_process');
 
 const {
   buildUpdateJobBody,
@@ -33,14 +32,6 @@ const jobApiKeyEnv = 'TESTOPS_JOB_API_KEY';
 function updateJobStatus(jobId, jobStatus, processId = null, apiKey) {
   const body = buildUpdateJobBody(jobId, jobStatus, processId);
   return api.updateJob(body, apiKey);
-}
-
-function runCommand(command, args, options = {}) {
-  const result = childProcess.spawnSync(command, args, options);
-  if (result.status !== 0) {
-    throw new Error(result.stderr.toString());
-  }
-  return result;
 }
 
 async function uploadLog(jobInfo, filePath, apiKey) {
@@ -309,30 +300,6 @@ class Agent {
           parameter,
           testProject: { projectId },
         } = jobBody;
-
-        if (process.env.IS_DOCKER_AGENT) {
-          let javaPath;
-          const java17Path = '/usr/lib/jvm/java-17-openjdk-amd64/bin/java';
-          const java8Path = '/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java';
-
-          if (parameter.ksVersion === 'latest') {
-            javaPath = java17Path;
-          } else {
-            javaPath = java8Path;
-          }
-
-          runCommand(
-            'update-alternatives',
-            [
-              '--set',
-              'java',
-              javaPath,
-            ],
-            {
-              stdio: 'inherit',
-            },
-          );
-        }
 
         let ksArgs;
         if (config.isOnPremise) {

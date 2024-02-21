@@ -90,6 +90,11 @@ module.exports = {
     return getKsLocation(ksVersionNumber, ksLocation).then(({ ksLocationParentDir }) => {
       logger.info(`Katalon Folder: ${ksLocationParentDir}`);
 
+      logger.info(`Check and switch java version for Docker mode to compitable KRE version: ${ksVersionNumber}`);
+      if (process.env.IS_DOCKER_AGENT) {
+        utils.switchJavaVersion(ksVersionNumber);
+      }
+
       let ksExecutable =
         find(ksLocationParentDir, /katalonc$|katalonc\.exe$/) ||
         find(ksLocationParentDir, /katalon$|katalon\.exe$/);

@@ -3,6 +3,7 @@ const path = require('path');
 const tmp = require('tmp');
 const fs = require('fs');
 const packageJson = require('../../package.json');
+const childProcess = require('child_process');
 
 module.exports = {
   getPath(relativePath) {
@@ -97,4 +98,36 @@ module.exports = {
     });
     return arStr.join(' ');
   },
+
+  runCommand(command, args, options = {}) {
+    const result = childProcess.spawnSync(command, args, options);
+    if (result.status !== 0) {
+      throw new Error(result.stderr.toString());
+    }
+    return result;
+  },
+
+  switchJavaVersion(ksVersionNumber) {
+    let javaPath;
+    const java17Path = '/usr/lib/jvm/java-17-openjdk-amd64/bin/java';
+    const java8Path = '/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java';
+
+    if (ksVersionNumber === 'latest') {
+      javaPath = java17Path;
+    } else {
+      javaPath = java8Path;
+    }
+
+    runCommand(
+      'update-alternatives',
+      [
+        '--set',
+        'java',
+        javaPath,
+      ],
+      {
+        stdio: 'inherit',
+      },
+    );
+  }
 };
