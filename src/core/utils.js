@@ -3,8 +3,9 @@ const path = require('path');
 const tmp = require('tmp');
 const fs = require('fs');
 const childProcess = require('child_process');
-
 const { compare } = require('compare-versions');
+const { KRE_LATEST_OPTION_VALUE } = require('./api/constants');
+
 const packageJson = require('../../package.json');
 
 module.exports = {
@@ -114,7 +115,7 @@ module.exports = {
     const java17Path = '/usr/lib/jvm/java-17-openjdk-amd64/bin/java';
     const java8Path = '/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java';
 
-    if (ksVersionNumber === 'latest' || compare(ksVersionNumber, '9.0.0', '>=')) {
+    if (ksVersionNumber === KRE_LATEST_OPTION_VALUE || compare(ksVersionNumber, '9.0.0', '>=')) {
       javaPath = java17Path;
     } else {
       javaPath = java8Path;
