@@ -3,7 +3,7 @@ name: Publish Docker Agent Draft
 on:
   push:
     branches:
-      - TES-5830
+      - test
 
 jobs:
   docker:
