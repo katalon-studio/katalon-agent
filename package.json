@@ -30,6 +30,7 @@
   "dependencies": {
     "axios": "^0.27.2",
     "commander": "^7.0.0",
+    "compare-versions": "^6.1.0",
     "decompress": "^4.2.1",
     "find": "^0.3.0",
     "fs-extra": "^9.1.0",
@@ -53,13 +54,13 @@
   "author": "katalon",
   "license": "ISC",
   "devDependencies": {
+    "cpy-cli": "^4.2.0",
     "eslint": "^7.18.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-jest": "^24.1.3",
     "jest": "^26.6.3",
     "pkg": "^4.4.9",
-    "release-it": "^14.14.3",
-    "cpy-cli": "^4.2.0"
+    "release-it": "^14.14.3"
   }
 }
