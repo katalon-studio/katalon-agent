@@ -1,4 +1,5 @@
 const decompress = require('decompress');
+const childProcess = require('child_process');
 const path = require('path');
 const simpleGit = require('simple-git')();
 const tmp = require('tmp');
@@ -64,7 +65,7 @@ module.exports = {
   },
 
   clone(gitRepository, targetDir, cloneOpts = {}, logger = defaultLogger) {
-    const { repository, branch, username, password } = gitRepository || {};
+    const { repository, branch, username, password, targetDirectory } = gitRepository || {};
 
     const repoURL = new URL(repository);
     repoURL.username = username;
@@ -94,12 +95,24 @@ module.exports = {
       actualBranch = branch.split('/').pop();
     }
 
-    return simpleGit.clone(url, gitTargetDir, [
+    const options = [
       '--depth',
       '1',
       '--branch',
       actualBranch,
       ...overrideOpts,
-    ]);
+    ];
+    if (targetDirectory && targetDirectory !== '') {
+      options.push('--sparse');
+    }
+    const result = simpleGit.clone(url, gitTargetDir, options);
+    if (targetDirectory && targetDirectory !== '') {
+      simpleGit.exec(() => childProcess
+        .spawnSync('git', ['sparse-checkout', 'set', targetDirectory], {
+          stdio: 'inherit',
+          cwd: gitTargetDir,
+        }));
+    }
+    return result;
   },
 };

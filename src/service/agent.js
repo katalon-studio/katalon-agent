@@ -109,7 +109,7 @@ function synchronizeJob(jobId, onJobSynchronization = () => {}, apiKey) {
 }
 
 async function executeJob(jobInfo, keepFiles) {
-  const { jobId, projectId, apiKey } = jobInfo;
+  const { jobId, projectId, apiKey, targetDirectory } = jobInfo;
   const notify = () => notifyJob(jobId, projectId, apiKey);
   let isCanceled = false;
   let jLogger;
@@ -140,7 +140,7 @@ async function executeJob(jobInfo, keepFiles) {
 
   // Create temporary directory to keep extracted project
   const tmpDir = utils.createTempDir(tmpRoot, { postfix: jobId });
-  const tmpDirPath = tmpDir.name;
+  let tmpDirPath = tmpDir.name;
   logger.info('Download test project to temp directory:', tmpDirPath);
 
   // Create job logger
@@ -188,6 +188,9 @@ async function executeJob(jobInfo, keepFiles) {
 
     logger.info(`Create controller for job ID: ${jobId}`);
     let processId = null;
+    if (targetDirectory && targetDirectory !== '') {
+      tmpDirPath += `/${targetDirectory}`;
+    }
     const status = await executor.execute(jLogger, tmpDirPath, (pid) => {
       processId = pid;
       processController.createController(pid, jobId);
@@ -298,7 +301,7 @@ class Agent {
         const {
           id: jobId,
           parameter,
-          testProject: { projectId },
+          testProject: { projectId, targetDirectory },
         } = jobBody;
 
         let ksArgs;
@@ -329,6 +332,7 @@ class Agent {
           jobId,
           projectId,
           apiKey,
+          targetDirectory,
         };
 
         await executeJob(jobInfo, keepFiles);
