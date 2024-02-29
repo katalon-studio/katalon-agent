@@ -23,14 +23,15 @@ class KatalonTestProjectDownloader {
 }
 
 class GitDownloader {
-  constructor(logger, gitRepository, cloneOpts = {}) {
+  constructor(logger, gitRepository, targetDirectory, cloneOpts = {}) {
     this.logger = logger;
     this.gitRepository = gitRepository;
     this.cloneOpts = cloneOpts;
+    this.targetDirectory = targetDirectory;
   }
 
-  download(targetDir) {
-    return file.clone(this.gitRepository, targetDir, this.cloneOpts, this.logger);
+  download(downloadDir) {
+    return file.clone(this.gitRepository, this.targetDirectory, downloadDir, this.cloneOpts, this.logger);
   }
 }
 

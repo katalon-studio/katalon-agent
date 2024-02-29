@@ -64,18 +64,17 @@ module.exports = {
     );
   },
 
-  clone(gitRepository, targetDir, cloneOpts = {}, logger = defaultLogger) {
-    const { repository, branch, username, password, targetDirectory } = gitRepository || {};
-
+  clone(gitRepository, targetDir, downloadDir, cloneOpts = {}, logger = defaultLogger) {
+    const { repository, branch, username, password } = gitRepository || {};
     const repoURL = new URL(repository);
     repoURL.username = username;
     repoURL.password = password;
     const url = repoURL.href;
 
     const dirName = url.split('/').pop();
-    const gitTargetDir = path.join(targetDir, dirName);
+    const gitDownloadDir = path.join(downloadDir, dirName);
     logger.info(
-      `Cloning from ${repository} (${branch}) into ${gitTargetDir}. It may take a few minutes.`,
+      `Cloning from ${repository} (${branch}) into ${gitDownloadDir}. It may take a few minutes.`,
     );
 
     const overrideOpts = Object.entries(cloneOpts).reduce((opts, [k, v]) => {
@@ -94,25 +93,48 @@ module.exports = {
     } else {
       actualBranch = branch.split('/').pop();
     }
-
-    const options = [
-      '--depth',
-      '1',
-      '--branch',
-      actualBranch,
-      ...overrideOpts,
-    ];
-    if (targetDirectory && targetDirectory !== '') {
-      options.push('--sparse');
+    if (!targetDir) {
+      return simpleGit.clone(url, gitDownloadDir, [
+        '--depth',
+        '1',
+        '--branch',
+        actualBranch,
+        ...overrideOpts,
+      ]);
     }
-    const result = simpleGit.clone(url, gitTargetDir, options);
-    if (targetDirectory && targetDirectory !== '') {
-      simpleGit.exec(() => childProcess
-        .spawnSync('git', ['sparse-checkout', 'set', targetDirectory], {
-          stdio: 'inherit',
-          cwd: gitTargetDir,
-        }));
+    const result = childProcess.spawnSync('git',
+      [
+        'clone',
+        '--no-tags',
+        '--single-branch',
+        '--branch',
+        actualBranch,
+        '--depth',
+        '1',
+        '--no-checkout',
+        '--sparse',
+        url,
+        gitDownloadDir,
+      ],
+      {
+        stdio: 'inherit',
+      });
+    if (result.status !== 0) {
+      logger.error(result);
     }
-    return result;
+    childProcess.spawnSync('git', ['config', 'core.ignorecase', 'false'], {
+      stdio: 'inherit',
+      cwd: gitDownloadDir,
+    });
+    childProcess.spawnSync('git', ['sparse-checkout', 'set', targetDir], {
+      stdio: 'inherit',
+      cwd: gitDownloadDir,
+    });
+    childProcess.spawnSync('git', ['checkout', branch], {
+      stdio: 'inherit',
+      cwd: gitDownloadDir,
+    });
+    logger.info('Repository cloned successfully with sparse-checkout.');
+    return gitDownloadDir;
   },
 };
