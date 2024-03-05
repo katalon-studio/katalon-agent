@@ -2,6 +2,10 @@ const moment = require('moment');
 const path = require('path');
 const tmp = require('tmp');
 const fs = require('fs');
+const childProcess = require('child_process');
+const { compare } = require('compare-versions');
+const { KRE_LATEST_OPTION_VALUE } = require('./api/constants');
+
 const packageJson = require('../../package.json');
 
 module.exports = {
@@ -96,5 +100,37 @@ module.exports = {
       }
     });
     return arStr.join(' ');
+  },
+
+  runCommand(command, args, options = {}) {
+    const result = childProcess.spawnSync(command, args, options);
+    if (result.status !== 0) {
+      throw new Error(result.stderr.toString());
+    }
+    return result;
+  },
+
+  switchJavaVersion(ksVersionNumber) {
+    let javaPath;
+    const java17Path = '/usr/lib/jvm/java-17-openjdk-amd64/bin/java';
+    const java8Path = '/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java';
+
+    if (ksVersionNumber === KRE_LATEST_OPTION_VALUE || compare(ksVersionNumber, '9.0.0', '>=')) {
+      javaPath = java17Path;
+    } else {
+      javaPath = java8Path;
+    }
+
+    this.runCommand(
+      'update-alternatives',
+      [
+        '--set',
+        'java',
+        javaPath,
+      ],
+      {
+        stdio: 'inherit',
+      },
+    );
   },
 };

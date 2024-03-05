@@ -1,12 +1,15 @@
+/* eslint-disable no-param-reassign */
 const _ = require('lodash');
 const fs = require('fs');
 const path = require('path');
+const { filter, maxBy } = require('lodash');
 
 const api = require('../core/api');
 const defaultLogger = require('../config/logger');
 const os = require('../core/os');
 const { KatalonStudioDownloader } = require('./remote-downloader');
 const utils = require('../core/utils');
+const { KRE_LATEST_OPTION_VALUE } = require('../core/api/constants');
 
 function find(startPath, filter, callback) {
   if (!fs.existsSync(startPath)) {
@@ -43,9 +46,15 @@ function getKsLocation(ksVersionNumber, ksLocation) {
 
   return api.getKSReleases().then(({ body }) => {
     const osVersion = os.getVersion();
-    const ksVersion = body.find(
-      (item) => item.version === ksVersionNumber && item.os === osVersion,
-    );
+    let ksVersion;
+
+    if (ksVersionNumber === KRE_LATEST_OPTION_VALUE) {
+      const kreOsVersions = filter(body, ({ os }) => os === osVersion);
+      ksVersion = maxBy(kreOsVersions, 'version');
+      ksVersionNumber = ksVersion.version;
+    } else {
+      ksVersion = body.find((item) => item.version === ksVersionNumber && item.os === osVersion);
+    }
 
     const userhome = os.getUserHome();
     const ksLocationParentDir = path.join(userhome, '.katalon', ksVersionNumber);
@@ -81,6 +90,11 @@ module.exports = {
   ) {
     return getKsLocation(ksVersionNumber, ksLocation).then(({ ksLocationParentDir }) => {
       logger.info(`Katalon Folder: ${ksLocationParentDir}`);
+
+      if (process.env.IS_DOCKER_AGENT) {
+        logger.info(`Check and switch java version for Docker mode to compitable KRE version: ${ksVersionNumber}`);
+        utils.switchJavaVersion(ksVersionNumber);
+      }
 
       let ksExecutable =
         find(ksLocationParentDir, /katalonc$|katalonc\.exe$/) ||
