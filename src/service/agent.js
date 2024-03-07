@@ -1,6 +1,7 @@
 const fs = require('fs-extra');
 const ip = require('ip');
 const path = require('path');
+const { existsSync, rmSync } = require('fs');
 
 const {
   buildUpdateJobBody,
@@ -108,6 +109,19 @@ function synchronizeJob(jobId, onJobSynchronization = () => {}, apiKey) {
   }, syncJobInterval);
 }
 
+function removeDirectory(directory) {
+  if (existsSync(directory)) {
+    try {
+      rmSync(directory, {
+        recursive: true,
+        force: true,
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }
+}
+
 async function executeJob(jobInfo, keepFiles) {
   const { jobId, projectId, apiKey } = jobInfo;
   const notify = () => notifyJob(jobId, projectId, apiKey);
@@ -140,6 +154,8 @@ async function executeJob(jobInfo, keepFiles) {
 
   // Create temporary directory to keep extracted project
   const tmpDir = utils.createTempDir(tmpRoot, { postfix: jobId });
+  logger.info('Removing test project to temp directory:', tmpDir);
+
   const tmpDirPath = tmpDir.name;
   logger.info('Download test project to temp directory:', tmpDirPath);
 
@@ -228,7 +244,8 @@ async function executeJob(jobInfo, keepFiles) {
     processController.killProcessFromJobId(jobId);
     // Remove temporary directory when `keepFiles` is false
     if (!keepFiles) {
-      tmpDir.removeCallback();
+      logger.info('Removing test project to temp directory:', tmpDir);
+      removeDirectory(tmpDir.name);
     }
   }
 }
