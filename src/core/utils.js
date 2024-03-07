@@ -19,7 +19,6 @@ module.exports = {
   createTempDir(tmpRoot, options) {
     const tmpPrefix = moment(new Date()).format('YYYY.MM.DD-H.m-');
     const tmpDir = tmp.dirSync({
-      unsafeCleanup: true,
       keep: true,
       tmpdir: tmpRoot,
       prefix: tmpPrefix,
