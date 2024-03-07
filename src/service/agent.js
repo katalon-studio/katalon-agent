@@ -1,8 +1,6 @@
 const fs = require('fs-extra');
 const ip = require('ip');
 const path = require('path');
-const fs = require('fs');
-
 const {
   buildUpdateJobBody,
   createCommandExecutor,
