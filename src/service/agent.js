@@ -1,6 +1,7 @@
 const fs = require('fs-extra');
 const ip = require('ip');
 const path = require('path');
+const fs = require('fs');
 
 const {
   buildUpdateJobBody,
@@ -228,7 +229,14 @@ async function executeJob(jobInfo, keepFiles) {
     processController.killProcessFromJobId(jobId);
     // Remove temporary directory when `keepFiles` is false
     if (!keepFiles) {
-      tmpDir.removeCallback();
+      // tmpDir.removeCallback();
+      logger.info('Removing test project to temp directory:', tmpDir);
+      if (fs.existsSync(tmpDir.name)) {
+        fs.rmSync(tmpDir.name, {
+          recursive: true,
+          force: true,
+        });
+      }
     }
   }
 }
