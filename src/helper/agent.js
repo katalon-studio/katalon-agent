@@ -60,9 +60,9 @@ function createCommandExecutor(
   return new KatalonCommandExecutor(info);
 }
 
-function createDownloader(parameter) {
+function createDownloader(parameter, targetDirectory) {
   if (parameter.type === 'GIT') {
-    return new GitDownloader(logger, parameter.gitRepositoryResource);
+    return new GitDownloader(logger, parameter.gitRepositoryResource, targetDirectory);
   }
 
   const downloadUrl = parameter.testOpsDownloadUrl || parameter.downloadUrl;

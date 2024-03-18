@@ -298,7 +298,7 @@ class Agent {
         const {
           id: jobId,
           parameter,
-          testProject: { projectId },
+          testProject: { projectId, targetDirectory },
         } = jobBody;
 
         let ksArgs;
@@ -314,7 +314,7 @@ class Agent {
           );
         }
 
-        const downloader = createDownloader(parameter);
+        const downloader = createDownloader(parameter, targetDirectory);
         const executor = createCommandExecutor(
           projectId,
           ksArgs,
