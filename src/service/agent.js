@@ -181,33 +181,33 @@ async function executeJob(jobInfo, keepFiles) {
     downloader.logger = jLogger;
     await downloader.download(tmpDirPath);
 
-    if (isCanceled) {
-      jLogger.debug(`Job ${jobId} is canceled. Stop command execution.`);
-      return;
-    }
+    // if (isCanceled) {
+    //   jLogger.debug(`Job ${jobId} is canceled. Stop command execution.`);
+    //   return;
+    // }
 
-    logger.info(`Create controller for job ID: ${jobId}`);
-    let processId = null;
-    const status = await executor.execute(jLogger, tmpDirPath, (pid) => {
-      processId = pid;
-      processController.createController(pid, jobId);
-      updateJobStatus(jobId, JOB_STATUS.RUNNING, processId, apiKey).catch(() => { /* ignore */ });
-    }, apiKey);
+    // logger.info(`Create controller for job ID: ${jobId}`);
+    // let processId = null;
+    // const status = await executor.execute(jLogger, tmpDirPath, (pid) => {
+    //   processId = pid;
+    //   processController.createController(pid, jobId);
+    //   updateJobStatus(jobId, JOB_STATUS.RUNNING, processId, apiKey).catch(() => { /* ignore */ });
+    // }, apiKey);
 
-    if (isCanceled) {
-      jLogger.debug(`Job ${jobId} is canceled.`);
-      return;
-    }
+    // if (isCanceled) {
+    //   jLogger.debug(`Job ${jobId} is canceled.`);
+    //   return;
+    // }
 
-    logger.info('Job execution finished.');
-    logger.debug('JOB FINISHED WITH STATUS:', status);
+    // logger.info('Job execution finished.');
+    // logger.debug('JOB FINISHED WITH STATUS:', status);
 
-    // Update job status after execution
-    const jobStatus = status === 0 ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
-    await uploadLog(jobInfo, logFilePath, apiKey);
-    logger.debug(`Update job with status '${jobStatus}.'`);
-    await updateJobStatus(jobId, jobStatus, processId, apiKey);
-    logger.info('Job execution has been completed.');
+    // // Update job status after execution
+    // const jobStatus = status === 0 ? JOB_STATUS.SUCCESS : JOB_STATUS.FAILED;
+    // await uploadLog(jobInfo, logFilePath, apiKey);
+    // logger.debug(`Update job with status '${jobStatus}.'`);
+    // await updateJobStatus(jobId, jobStatus, processId, apiKey);
+    // logger.info('Job execution has been completed.');
   } catch (err) {
     logger.error(`${executeJob.name}:`, err);
     jLogger.error(err);
@@ -228,7 +228,14 @@ async function executeJob(jobInfo, keepFiles) {
     processController.killProcessFromJobId(jobId);
     // Remove temporary directory when `keepFiles` is false
     if (!keepFiles) {
-      tmpDir.removeCallback();
+      logger.info(`Removing folder ${tmpDirPath}.`);
+      fs.rm(tmpDirPath, {
+        recursive: true,
+        force: true,
+      })
+        .then(() => {
+          logger.info(`Foloder ${tmpDirPath} has been removed successfully.`);
+        });
     }
   }
 }
