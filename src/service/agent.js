@@ -229,13 +229,7 @@ async function executeJob(jobInfo, keepFiles) {
     // Remove temporary directory when `keepFiles` is false
     if (!keepFiles) {
       logger.info(`Removing folder ${tmpDirPath}.`);
-      fs.rm(tmpDirPath, {
-        recursive: true,
-        force: true,
-      })
-        .then(() => {
-          logger.info(`Foloder ${tmpDirPath} has been removed successfully.`);
-        });
+      fs.removeSync(tmpDirPath);
     }
   }
 }
