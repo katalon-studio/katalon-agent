@@ -1,5 +1,4 @@
 const decompress = require('decompress');
-const childProcess = require('child_process');
 const path = require('path');
 const simpleGit = require('simple-git')();
 const tmp = require('tmp');
@@ -52,6 +51,38 @@ module.exports = {
     );
   },
 
+  generateSparseCheckoutContent(targetDirectory) {
+    const splittedTargetDir = targetDirectory.split('/');
+    let result = '/*\n!/*/';
+    let dir = null;
+    for (let i = 0; i < splittedTargetDir.length; i++) {
+      if (dir !== null) {
+        dir += `/${splittedTargetDir[i]}`;
+      } else {
+        dir = `${splittedTargetDir}`;
+      }
+      result += `\n/${dir}/`;
+      if (i !== splittedTargetDir.length - 1) {
+        result += `\n!/${dir}/*/`;
+      }
+    }
+    return result;
+  },
+
+  sparseCheckout(scriptRepoDir, targetDirectory, logger = defaultLogger) {
+    const gitConfigFolder = `${scriptRepoDir}/.git`;
+    const sparseCheckoutFile = `${gitConfigFolder}/info/sparse-checkout`;
+    const configWorktreeFile = `${gitConfigFolder}/config.worktree`;
+    const configWorktreeContent = '[core]\n' +
+      '\tsparseCheckout = true\n' +
+      '\tsparseCheckoutCone = true';
+    logger.info('Creating file config.worktree...');
+    fs.appendFile(configWorktreeFile, configWorktreeContent);
+    logger.info('Creating file sparse-checkout...');
+    const spareCheckoutContent = this.generateSparseCheckoutContent(targetDirectory);
+    fs.appendFile(sparseCheckoutFile, spareCheckoutContent);
+  },
+
   downloadAndExtractFromTestOps(url, targetDir, haveFilter = false, logger = defaultLogger) {
     return download(api.downloadFromTestOps, url, logger).then((filePath) =>
       this.extract(filePath, targetDir, haveFilter, logger),
@@ -102,9 +133,9 @@ module.exports = {
         ...overrideOpts,
       ]);
     }
-    const result = childProcess.spawnSync('git',
+    const result = simpleGit.clone(url,
+      gitDownloadDir,
       [
-        'clone',
         '--no-tags',
         '--single-branch',
         '--branch',
@@ -113,27 +144,13 @@ module.exports = {
         '1',
         '--no-checkout',
         '--sparse',
-        url,
-        gitDownloadDir,
-      ],
-      {
-        stdio: 'inherit',
-      });
+      ]);
     if (result.status !== 0) {
       logger.error(result);
     }
-    childProcess.spawnSync('git', ['config', 'core.ignorecase', 'false'], {
-      stdio: 'inherit',
-      cwd: gitDownloadDir,
-    });
-    childProcess.spawnSync('git', ['sparse-checkout', 'set', targetDir], {
-      stdio: 'inherit',
-      cwd: gitDownloadDir,
-    });
-    childProcess.spawnSync('git', ['checkout', branch], {
-      stdio: 'inherit',
-      cwd: gitDownloadDir,
-    });
+    simpleGit.addConfig('core.ignorecase', 'false');
+    this.sparseCheckout(gitDownloadDir, targetDir, logger);
+    simpleGit.checkout();
     logger.info('Repository cloned successfully with sparse-checkout.');
     return gitDownloadDir;
   },
