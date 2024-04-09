@@ -228,7 +228,8 @@ async function executeJob(jobInfo, keepFiles) {
     processController.killProcessFromJobId(jobId);
     // Remove temporary directory when `keepFiles` is false
     if (!keepFiles) {
-      tmpDir.removeCallback();
+      // tmpDir.removeCallback();
+      fs.rmSync(tmpDirPath, { recursive: true, force: true });
     }
   }
 }
