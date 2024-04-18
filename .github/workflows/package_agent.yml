@@ -101,8 +101,7 @@ jobs:
         with:
           name: katalon-agent-macos-x64-${{ env.BUILD_VERSION }}
           path: |
-            agent
-            bin/start.sh
+            agents
   # deploy:
   #   name: Deploy staging cloud agent
   #   environment: staging 
