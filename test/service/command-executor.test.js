@@ -150,6 +150,7 @@ describe('KatalonCommandExecutor test', () => {
       expect.anything(),
       'junit',
       '**/*.xml',
-      expect.anything());
+      expect.anything(),
+      undefined);
   });
 });

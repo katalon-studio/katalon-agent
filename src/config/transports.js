@@ -7,7 +7,7 @@ const { generateUuid } = require('../helper/agent');
 const api = require('../core/api');
 
 class S3FileTransport extends TransportStream {
-  constructor(options = {}, afterLog) {
+  constructor(options = {}, afterLog = () => {}) {
     super(options);
     this.jobInfo = options.jobInfo;
     this.apiKey = options.apiKey;

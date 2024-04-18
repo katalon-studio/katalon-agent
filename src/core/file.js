@@ -8,7 +8,7 @@ const fs = require('fs-extra');
 const api = require('./api');
 const defaultLogger = require('../config/logger');
 
-function download(downloadMethod, url, logger = defaultLogger, apiKey) {
+function download(downloadMethod, url, logger = defaultLogger, apiKey = null) {
   logger.info(`Downloading from ${url}. It may take a few minutes.`);
   const file = tmp.fileSync();
   const filePath = file.name;

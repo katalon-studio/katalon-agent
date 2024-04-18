@@ -41,7 +41,7 @@ jobs:
           - macos-latest
           - windows-latest
         node-version:
-          - 14.x
+          - 20.9.0
 
     steps:
       - name: Checkout code
@@ -52,15 +52,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Cache
-        id: cache-packages
-        uses: actions/cache@v2.1.4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
-
       - name: Install packages
-        if: steps.cache-packages.outputs.cache-hit != 'true'
         run: npm ci
       
       - name: Set BUILD_VERSION environment variable
@@ -71,26 +63,58 @@ jobs:
           CI: true
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
-          npm run buildLinux --if-present
-          chmod +x bin/cli-linux-x64 *.sh
-          ls -l bin
-          sed -i "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
+          npm run build
+          node --experimental-sea-config sea-config.json 
+          cp $(command -v node) agent 
+          npx postject agent NODE_SEA_BLOB agent.blob \
+            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
 
+          chmod +x agent
+          mkdir bin
+          mv agent bin/cli-linux-x64  
+          npm run afterbuild
+          ls -al bin
+      
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
           CI: true
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
-          npm run buildMacos --if-present
-          chmod +x bin/cli-macos-x64 *.sh
-          ls -l bin
-          sed -i '' "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
+          npm run build
+          node --experimental-sea-config sea-config.json 
+          cp $(command -v node) agent 
+          codesign --remove-signature agent 
+          npx postject agent NODE_SEA_BLOB agent.blob \
+            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 \
+            --macho-segment-name NODE_SEA 
+          # codesign --sign - agent
 
+          mkdir bin
+          chmod +x agent
+          mv agent bin/cli-macos-x64  
+          npm run afterbuild
+          ls -al bin 
+      
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
           CI: true
         if: ${{ matrix.os == 'windows-latest' }}
-        run: npm run buildWin --if-present
+        run: |
+          npm run build
+          node --experimental-sea-config sea-config.json 
+          node -e "require('fs').copyFileSync(process.execPath, 'agent.exe')"  
+          # $signtool = "C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe"
+          # $signtool remove /s agent.exe  
+          npx postject agent.exe NODE_SEA_BLOB agent.blob `
+            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2   
+          # $signtool sign /fd SHA256 agent.exe 
+
+          # chmod +x agent
+          md bin -ea 0
+          cp agent.exe bin/cli-win-x64.exe
+          cp agent.exe bin/cli-win-x86.exe  
+          npm run afterbuild
+          # ls -al
 
 
       - name: Upload Windows x64 artifact
@@ -144,7 +168,7 @@ jobs:
     strategy:
       matrix:
         node-version:
-          - 10.x
+          - 20.9.0
 
     steps:
       - name: Checkout code
@@ -155,15 +179,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Cache
-        id: cache-packages
-        uses: actions/cache@v2.1.4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
-
       - name: Install packages
-        if: steps.cache-packages.outputs.cache-hit != 'true'
         run: npm ci
 
       - name: Download artifacts
@@ -255,10 +271,13 @@ jobs:
       - uses: actions/checkout@v3
         with:
             token: ${{ secrets.GH_TOKEN }}
+
       - name: Set BUILD_VERSION environment variable
         run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
+
       - name: Change Package.json version for release
         run:  sed -i "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
+        
         ### Commit code
       - name: Deploy to GitOps 
         uses: stefanzweifel/git-auto-commit-action@v4

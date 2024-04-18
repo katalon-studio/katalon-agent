@@ -18,7 +18,7 @@ const OPTIONS = {
   serverUrl: 'https://localhost.katalon.com',
   email: 'email@katalon.com',
   apikey: 'apikey',
-  teamId: 12312,
+  organizationId: 12312,
   agentName: 'Agent Name',
 };
 
