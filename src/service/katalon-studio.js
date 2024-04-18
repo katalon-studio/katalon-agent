@@ -85,7 +85,7 @@ module.exports = {
     x11Display,
     xvfbConfiguration,
     logger = defaultLogger,
-    callback,
+    callback = () => { },
     env = {},
   ) {
     return getKsLocation(ksVersionNumber, ksLocation).then(({ ksLocationParentDir }) => {
