@@ -5,8 +5,9 @@
   "main": "cli.js",
   "scripts": {
     "start": "npm run eslint && node cli.js start-agent",
-    "beforebuild": "",
+    
     "build": "esbuild cli.js --bundle --platform=node --outfile=test.js",
+    
     "buildLinux": "npm run build:pkgLinux64 && npm run afterbuild",
     "buildMacos": "npm run build:pkgMacos64 && npm run afterbuild",
     "buildWin": "npm run build:pkgWin64 && npm run build:pkgWin86 && npm run afterbuild",
@@ -20,7 +21,9 @@
     "copyConfig": "cpy agentconfig_template bin --rename agentconfig",
     "copyService": "cpy nssm.exe service.bat service.sh bin",
     "copyStart": "cpy start.bat start.sh bin",
+    
     "release": "release-it --ci",
+    
     "test:coverage": "jest --passWithNoTests --coverage --forceExit",
     "test:debug": "jest --passWithNoTests --detectOpenHandles --coverage",
     "test": "jest --passWithNoTests",
@@ -55,13 +58,12 @@
   "author": "katalon",
   "license": "ISC",
   "devDependencies": {
-    "cpy-cli": "^4.2.0",
-    "eslint": "^7.18.0",
-    "eslint-config-airbnb-base": "^14.2.1",
+    "cpy-cli": "^5.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-jest": "^24.1.3",
-    "jest": "^26.6.3",
-    "pkg": "^4.4.9",
-    "release-it": "^14.14.3"
+    "eslint-plugin-jest": "^28.2.0",
+    "jest": "^29.7.0",
+    "release-it": "^17.2.0"
   }
 }
