@@ -37,14 +37,17 @@ jobs:
       - name: Install packages
         if: steps.cache-packages.outputs.cache-hit != 'true'
         run: npm ci
-      # - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
-      #   env:
-      #     CI: true
-      #   if: ${{ matrix.os == 'ubuntu-latest' }}
-      #   run: |
-      #     npm run buildLinux --if-present
-      #     chmod +x bin/*
-      #     ls -l bin
+      - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
+        env:
+          CI: true
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          npm run build
+          node --experimental-sea-config sea-config.json 
+          cp $(command -v node) agent 
+          npx postject agent NODE_SEA_BLOB agent.blob \
+            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 
+          ls -al
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
           CI: true
@@ -87,21 +90,20 @@ jobs:
       #       bin/cli-win-x86.exe
       #       bin/nssm.exe
       #       bin/*.bat
-      # - name: Upload Linux x64 artifact
-      #   uses: actions/upload-artifact@v2
-      #   if: ${{ matrix.os == 'ubuntu-latest' }}
-      #   with:
-      #     name: katalon-agent-linux-x64-${{ env.BUILD_VERSION }}
-      #     path: |
-      #       bin/cli-linux-x64
-      #       bin/*.sh
+      - name: Upload Linux x64 artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        with:
+          name: katalon-agent-linux-x64-${{ env.BUILD_VERSION }}
+          path: |
+            agent
       - name: Upload MacOS x64 artifact
         uses: actions/upload-artifact@v2
         if: ${{ matrix.os == 'macos-latest' }}
         with:
           name: katalon-agent-macos-x64-${{ env.BUILD_VERSION }}
           path: |
-            agents
+            agent
   # deploy:
   #   name: Deploy staging cloud agent
   #   environment: staging 
