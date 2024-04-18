@@ -53,6 +53,7 @@ jobs:
             --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
 
           chmod +x agent
+          mkdir bin
           mv agent bin/cli-linux-x64  
           npm run afterbuild
           ls -al bin
@@ -71,6 +72,7 @@ jobs:
             --macho-segment-name NODE_SEA 
           codesign --sign - agent
 
+          mkdir bin
           chmod +x agent
           mv agent bin/cli-macos-x64  
           npm run afterbuild
