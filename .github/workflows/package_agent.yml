@@ -4,6 +4,7 @@ name: Package Agent
     branches:
       - master
       - release
+      - asdasd
 
 permissions:
   id-token: write # This is required for requesting the JWT
@@ -54,7 +55,7 @@ jobs:
 
           chmod +x agent
           mkdir bin
-          mv agent bin/cli-linux-x64  
+          cp agent bin/cli-linux-x64  
           npm run afterbuild
           ls -al bin
       
@@ -74,7 +75,7 @@ jobs:
 
           mkdir bin
           chmod +x agent
-          mv agent bin/cli-macos-x64  
+          cp agent bin/cli-macos-x64  
           npm run afterbuild
           ls -al bin 
       
