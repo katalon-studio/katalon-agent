@@ -4,7 +4,7 @@ name: Package Agent
     branches:
       - master
       - release
-      - qqq
+
 permissions:
   id-token: write # This is required for requesting the JWT
   contents: write  # This is required for actions/checkout           
@@ -148,17 +148,20 @@ jobs:
     strategy:
       matrix:
         node-version:
-          - 10.x
+          - 20.9.0
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2.1.0
+
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2.1.2
         with:
           node-version: ${{ matrix.node-version }}
+
       - name: Install packages
         run: npm install --only dev
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -166,14 +169,18 @@ jobs:
           role-session-name: github-actions
           aws-region: ${{ vars.AWS_REGION }}
           mask-aws-account-id: 'no'
+
       - name: Download artifacts
         uses: actions/download-artifact@v2
         with:
           path: .
+
       - name: Add execute permission to downloaded artifacts
         run: chmod +x katalon-agent-linux-*/* katalon-agent-macos-*/*
+
       - name: Set BUILD_VERSION environment variable
         run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
+        
       - name: Package artifacts
         env:
           GZIP: -9
