@@ -8,7 +8,7 @@
     "eslint": "eslint -c .eslintrc.yml src --ext .js",
     "eslint:json": "eslint -c .eslintrc.yml src --ext .js -f json -o reports/eslint-report.json",
     
-    "build": "esbuild cli.js --bundle --platform=node --outfile=test.js",
+    "build": "esbuild cli.js --bundle --platform=node --outfile=agent-bundle.js",
     
     "buildLinux": "npm run build:pkgLinux64 && npm run afterbuild",
     "buildMacos": "npm run build:pkgMacos64 && npm run afterbuild",
