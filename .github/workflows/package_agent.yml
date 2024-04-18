@@ -94,7 +94,7 @@ jobs:
 
           # chmod +x agent
           md bin -ea 0
-          mv agent bin/cli-win-x64  
+          mv agent.exe bin/cli-win-x64.exe  
           npm run afterbuild
           # ls -al
       
