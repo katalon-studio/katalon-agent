@@ -231,6 +231,7 @@ async function executeJob(jobInfo, keepFiles) {
       // tmpDir.removeCallback();
       try {
         console.log('QQQQQQ1 tmpDirPath', tmpDirPath);
+        console.log('QQQQQQ1 fs', fs);
         fs.rmSync(tmpDirPath, { recursive: true, force: true });
         console.log('QQQQQQ2 tmpDirPath', tmpDirPath);
       } catch (err) {
