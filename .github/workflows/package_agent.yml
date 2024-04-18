@@ -52,9 +52,9 @@ jobs:
           npx postject agent NODE_SEA_BLOB agent.blob \
             --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
 
+          chmod +x agent
           mv agent bin/cli-linux-x64  
           npm run afterbuild
-          chmod +x bin/*
           ls -al bin
       
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
