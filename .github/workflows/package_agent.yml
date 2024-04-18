@@ -43,7 +43,7 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
           npm run buildLinux --if-present
-          chmod +x bin/cli-linux-x64 *.sh
+          chmod +x bin/*
           ls -l bin
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
@@ -51,13 +51,15 @@ jobs:
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
           npm run buildMacos --if-present
-          chmod +x bin/cli-macos-x64 *.sh
+          chmod +x bin/*
           ls -l bin
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
           CI: true
         if: ${{ matrix.os == 'windows-latest' }}
-        run: npm run buildWin --if-present
+        run: |
+          chmod +x bin/*
+          npm run buildWin --if-present
       - name: Set BUILD_VERSION environment variable
         run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
         shell: bash
