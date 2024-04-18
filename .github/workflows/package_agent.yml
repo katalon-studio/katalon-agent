@@ -94,7 +94,8 @@ jobs:
 
           # chmod +x agent
           md bin -ea 0
-          mv agent.exe bin/cli-win-x64.exe  
+          mv agent.exe bin/cli-win-x64.exe
+          mv agent.exe bin/cli-win-x86.exe  
           npm run afterbuild
           # ls -al
       
@@ -108,17 +109,19 @@ jobs:
         with:
           name: katalon-agent-win-x64-${{ env.BUILD_VERSION }}
           path: |
-            agent.exe
+            bin/cli-win-x64.exe
+            bin/nssm.exe
+            bin/*.bat
       
-      # - name: Upload Windows x86 artifact
-      #   uses: actions/upload-artifact@v2
-      #   if: ${{ matrix.os == 'windows-latest' }}
-      #   with:
-      #     name: katalon-agent-win-x86-${{ env.BUILD_VERSION }}
-      #     path: |
-      #       bin/cli-win-x86.exe
-      #       bin/nssm.exe
-      #       bin/*.bat
+      - name: Upload Windows x86 artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ matrix.os == 'windows-latest' }}
+        with:
+          name: katalon-agent-win-x86-${{ env.BUILD_VERSION }}
+          path: |
+            bin/cli-win-x86.exe
+            bin/nssm.exe
+            bin/*.bat
       
       - name: Upload Linux x64 artifact
         uses: actions/upload-artifact@v2
