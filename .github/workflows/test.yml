@@ -25,11 +25,11 @@ jobs:
     steps:
 
       - name: Checkout Katalon Agent
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Cache
         id: cache-packages
-        uses: actions/cache@v2.1.4
+        uses: actions/cache@v4
         with:
           path: node_modules
           key: ${{ runner.os }}-node${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
@@ -55,7 +55,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Run ESLint check
-        uses: sibiraj-s/action-eslint@v2
+        uses: sibiraj-s/action-eslint@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           eslint-args: '-c .eslintrc.yml'
