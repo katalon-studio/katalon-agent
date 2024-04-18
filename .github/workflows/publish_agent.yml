@@ -45,10 +45,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2.1.2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
 
@@ -118,7 +118,7 @@ jobs:
 
 
       - name: Upload Windows x64 artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: ${{ matrix.os == 'windows-latest' }}
         with:
           name: katalon-agent-win-x64-${{ env.AGENT_VERSION }}
@@ -128,7 +128,7 @@ jobs:
             bin/*.bat
 
       - name: Upload Windows x86 artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: ${{ matrix.os == 'windows-latest' }}
         with:
           name: katalon-agent-win-x86-${{ env.AGENT_VERSION }}
@@ -138,7 +138,7 @@ jobs:
             bin/*.bat
 
       - name: Upload Linux x64 artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: ${{ matrix.os == 'ubuntu-latest' }}
         with:
           name: katalon-agent-linux-x64-${{ env.AGENT_VERSION }}
@@ -147,7 +147,7 @@ jobs:
             bin/*.sh
 
       - name: Upload MacOS x64 artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: ${{ matrix.os == 'macos-latest' }}
         with:
           name: katalon-agent-macos-x64-${{ env.AGENT_VERSION }}
@@ -172,10 +172,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2.1.2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
 
@@ -183,7 +183,7 @@ jobs:
         run: npm ci
 
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           path: .
 
@@ -227,10 +227,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2.1.2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
 
@@ -238,7 +238,7 @@ jobs:
         run: npm install --only dev
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/katalon-github-oidc-federation
           role-session-name: github-actions
@@ -246,7 +246,7 @@ jobs:
           mask-aws-account-id: 'no'
 
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           path: .
 
@@ -268,7 +268,7 @@ jobs:
       AGENT_VERSION: ${{ inputs.agent_version }}    
     environment: ${{ needs.set_env.outputs.ENV }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
             token: ${{ secrets.GH_TOKEN }}
 
@@ -280,7 +280,7 @@ jobs:
         
         ### Commit code
       - name: Deploy to GitOps 
-        uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: Update version to ${{ env.AGENT_VERSION }}
           # Optional commit user and author settings
