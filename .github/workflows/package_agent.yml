@@ -81,7 +81,7 @@ jobs:
           npx postject hello.exe NODE_SEA_BLOB sea-prep.blob `
             --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2   
           # $signtool sign /fd SHA256 agent.exe 
-          ls -al
+          # ls -al
       
       - name: Set BUILD_VERSION environment variable
         run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
