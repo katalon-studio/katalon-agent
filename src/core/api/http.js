@@ -1,4 +1,5 @@
 const axios = require('axios').default;
+import { registerInterceptor } from 'axios-cached-dns-resolve'
 const fs = require('fs');
 const path = require('path');
 const ProgressBar = require('progress');
@@ -8,12 +9,34 @@ const { getProxy, getDefaultHttpsAgent } = require('./proxy');
 
 const PROGRESS_RENDER_THROTTLE = 5000;
 
-axios.interceptors.request.use((config) => {
+const config = {
+  disabled: process.env.AXIOS_DNS_DISABLE === 'true',
+  dnsTtlMs: process.env.AXIOS_DNS_CACHE_TTL_MS || 5000, // when to refresh actively used dns entries (5 sec)
+  cacheGraceExpireMultiplier: process.env.AXIOS_DNS_CACHE_EXPIRE_MULTIPLIER || 2, // maximum grace to use entry beyond TTL
+  dnsIdleTtlMs: process.env.AXIOS_DNS_CACHE_IDLE_TTL_MS || 1000 * 60 * 60, // when to remove entry entirely if not being used (1 hour)
+  backgroundScanMs: process.env.AXIOS_DNS_BACKGROUND_SCAN_MS || 2400, // how frequently to scan for expired TTL and refresh (2.4 sec)
+  dnsCacheSize: process.env.AXIOS_DNS_CACHE_SIZE || 100, // maximum number of entries to keep in cache
+  // pino logging options
+  logging: {
+    name: 'axios-cache-dns-resolve',
+    enabled: true,
+    level: process.env.AXIOS_DNS_LOG_LEVEL || 'info', // default 'info' others trace, debug, info, warn, error, and fatal
+    timestamp: true,
+    prettyPrint: process.env.NODE_ENV === 'DEBUG' || false,
+    useLevelLabels: true,
+  },
+}
+
+const axiosClient = axios.create(config)
+
+registerInterceptor(axios);
+
+axiosClient.interceptors.request.use((config) => {
   logger.trace('REQUEST:', config);
   return config;
 });
 
-axios.interceptors.response.use(
+axiosClient.interceptors.response.use(
   (response) => {
     const { data: body, status, statusText, config, headers } = response;
     logger.info(`${config.method} ${config.url} ${status}.`);
@@ -120,7 +143,7 @@ module.exports = {
   },
 
   request(method, urlParam, data = {}, headers = {}, overrideOpts = {}) {
-    return axios({
+    return axiosClient({
       method,
       url: urlParam.url,
       timeout: 60000,
