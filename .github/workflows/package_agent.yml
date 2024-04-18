@@ -76,11 +76,11 @@ jobs:
           npm run build
           node --experimental-sea-config sea-config.json 
           node -e "require('fs').copyFileSync(process.execPath, 'agent.exe')"  
-          $signtool = "C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe"
-          $signtool remove /s agent.exe  
+          # $signtool = "C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe"
+          # $signtool remove /s agent.exe  
           npx postject hello.exe NODE_SEA_BLOB sea-prep.blob `
             --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2   
-          $signtool sign /fd SHA256 agent.exe 
+          # $signtool sign /fd SHA256 agent.exe 
           ls -al
       
       - name: Set BUILD_VERSION environment variable
