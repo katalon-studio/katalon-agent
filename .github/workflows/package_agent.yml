@@ -24,19 +24,23 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2.1.0
+      
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2.1.2
         with:
           node-version: ${{ matrix.node-version }}
+      
       - name: Cache
         id: cache-packages
         uses: actions/cache@v2.1.4
         with:
           path: node_modules
           key: ${{ runner.os }}-node${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
+      
       - name: Install packages
         if: steps.cache-packages.outputs.cache-hit != 'true'
         run: npm ci
+      
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
           CI: true
@@ -48,6 +52,7 @@ jobs:
           npx postject agent NODE_SEA_BLOB agent.blob \
             --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 
           ls -al
+      
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
           CI: true
@@ -62,25 +67,33 @@ jobs:
             --macho-segment-name NODE_SEA 
           codesign --sign - agent 
           ls -al
-      # - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
-      #   env:
-      #     CI: true
-      #   if: ${{ matrix.os == 'windows-latest' }}
-      #   run: |
-      #     chmod +x bin/*
-      #     npm run buildWin --if-present
+      
+      - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
+        env:
+          CI: true
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          npm run build
+          node --experimental-sea-config sea-config.json 
+          node -e "require('fs').copyFileSync(process.execPath, 'agent.exe')"  
+          signtool remove /s agent.exe  
+          npx postject agent.exe NODE_SEA_BLOB agent.blob ^
+            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2  
+          signtool sign /fd SHA256 agent.exe 
+          ls -al
+      
       - name: Set BUILD_VERSION environment variable
         run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
         shell: bash
-      # - name: Upload Windows x64 artifact
-      #   uses: actions/upload-artifact@v2
-      #   if: ${{ matrix.os == 'windows-latest' }}
-      #   with:
-      #     name: katalon-agent-win-x64-${{ env.BUILD_VERSION }}
-      #     path: |
-      #       bin/cli-win-x64.exe
-      #       bin/nssm.exe
-      #       bin/*.bat
+      
+      - name: Upload Windows x64 artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ matrix.os == 'windows-latest' }}
+        with:
+          name: katalon-agent-win-x64-${{ env.BUILD_VERSION }}
+          path: |
+            agent.exe
+      
       # - name: Upload Windows x86 artifact
       #   uses: actions/upload-artifact@v2
       #   if: ${{ matrix.os == 'windows-latest' }}
@@ -90,6 +103,7 @@ jobs:
       #       bin/cli-win-x86.exe
       #       bin/nssm.exe
       #       bin/*.bat
+      
       - name: Upload Linux x64 artifact
         uses: actions/upload-artifact@v2
         if: ${{ matrix.os == 'ubuntu-latest' }}
@@ -97,6 +111,7 @@ jobs:
           name: katalon-agent-linux-x64-${{ env.BUILD_VERSION }}
           path: |
             agent
+      
       - name: Upload MacOS x64 artifact
         uses: actions/upload-artifact@v2
         if: ${{ matrix.os == 'macos-latest' }}
@@ -104,6 +119,7 @@ jobs:
           name: katalon-agent-macos-x64-${{ env.BUILD_VERSION }}
           path: |
             agent
+  
   # deploy:
   #   name: Deploy staging cloud agent
   #   environment: staging 
