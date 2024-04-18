@@ -229,8 +229,13 @@ async function executeJob(jobInfo, keepFiles) {
     // Remove temporary directory when `keepFiles` is false
     if (!keepFiles) {
       // tmpDir.removeCallback();
-      console.log('QQQQQQ tmpDirPath', tmpDirPath);
-      fs.rmSync(tmpDirPath, { recursive: true, force: true });
+      try {
+        console.log('QQQQQQ1 tmpDirPath', tmpDirPath);
+        fs.rmSync(tmpDirPath, { recursive: true, force: true });
+        console.log('QQQQQQ2 tmpDirPath', tmpDirPath);
+      } catch (err) {
+        logger.error('Error when removing tmp directory:', err);
+      }
     }
   }
 }
