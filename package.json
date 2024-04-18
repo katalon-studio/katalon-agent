@@ -4,7 +4,9 @@
   "description": "",
   "main": "cli.js",
   "scripts": {
-    "start": "npm run eslint && node cli.js start-agent",
+    "start": "node cli.js start-agent",
+    "eslint": "eslint -c .eslintrc.yml src --ext .js",
+    "eslint:json": "eslint -c .eslintrc.yml src --ext .js -f json -o reports/eslint-report.json",
     
     "build": "esbuild cli.js --bundle --platform=node --outfile=test.js",
     
@@ -26,9 +28,7 @@
     
     "test:coverage": "jest --passWithNoTests --coverage --forceExit",
     "test:debug": "jest --passWithNoTests --detectOpenHandles --coverage",
-    "test": "jest --passWithNoTests",
-    "eslint": "eslint -c .eslintrc.yml src --ext .js",
-    "eslint:json": "eslint -c .eslintrc.yml src --ext .js -f json -o reports/eslint-report.json"
+    "test": "jest --passWithNoTests"
   },
   "dependencies": {
     "esbuild": "0.20.0",
@@ -50,7 +50,7 @@
     "tmp": "^0.2.3",
     "tree-kill": "^1.2.2",
     "triple-beam": "^1.4.1",
-    "url-join": "^5.0.0",
+    "url-join": "^4.0.1",
     "uuid": "^9.0.1",
     "winston": "^3.13.0",
     "winston-transport": "^4.7.0"
