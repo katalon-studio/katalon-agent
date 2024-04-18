@@ -69,8 +69,12 @@ jobs:
           npx postject agent NODE_SEA_BLOB agent.blob \
             --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 \
             --macho-segment-name NODE_SEA 
-          codesign --sign - agent 
-          ls -al
+          codesign --sign - agent
+
+          chmod +x agent
+          mv agent bin/cli-macos-x64  
+          npm run afterbuild
+          ls -al bin 
       
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
@@ -124,7 +128,8 @@ jobs:
         with:
           name: katalon-agent-macos-x64-${{ env.BUILD_VERSION }}
           path: |
-            agent
+            bin/cli-macos-x64
+            bin/*.sh
   
   # deploy:
   #   name: Deploy staging cloud agent
