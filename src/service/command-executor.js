@@ -61,8 +61,10 @@ class BaseKatalonCommandExecutor {
     const projectPathPattern = path.resolve(execDirPath, PROJECT_FILE_PATTERN);
     const ksProjectPaths = glob.sync(projectPathPattern, { nodir: true });
 
-    console.log('QQQQQQQ projectPathPattern', projectPathPattern);
-    console.log('QQQQQQQ ksProjectPaths', ksProjectPaths);
+    logger.info(`Execution Directory Path: ${execDirPath}.`);
+    logger.info(`Project Path Pattern: ${projectPathPattern}.`);
+    logger.info(`Project Paths: ${ksProjectPaths}.`);
+
     if (ksProjectPaths.length <= 0) {
       logger.error('Unable to find a Katalon project.');
       return Promise.resolve(1);
