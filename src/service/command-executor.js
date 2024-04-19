@@ -59,7 +59,7 @@ class BaseKatalonCommandExecutor {
   async execute(logger, execDirPath, callback, apiKey) {
     // Find project file inside project directory
     const projectPathPattern = path.resolve(execDirPath, PROJECT_FILE_PATTERN);
-    const ksProjectPaths = glob.sync(projectPathPattern, { nodir: true });
+    const ksProjectPaths = glob.sync(projectPathPattern, { nodir: true, posix: true, dotRelative: true });
 
     logger.info(`Execution Directory Path: ${execDirPath}.`);
     logger.info(`Project Path Pattern: ${projectPathPattern}.`);
