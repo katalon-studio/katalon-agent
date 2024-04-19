@@ -231,22 +231,17 @@ async function executeJob(jobInfo, keepFiles) {
       try {
         tmpDir.removeCallback();
       } catch (err) {
-        logger.error('Error 1 when removing tmp directory:', err);
-        try {
-          tmpDir.removeCallback();
-        } catch (err1) {
-          logger.error('Error 2 when removing tmp directory:', err1);
-        }
+        // ignored
       }
 
-      try {
-        console.log('QQQQQQ1 tmpDirPath', tmpDirPath);
-        console.log('QQQQQQ1 fs', fs);
-        fs.rmSync(tmpDirPath, { recursive: true, force: true });
-        console.log('QQQQQQ2 tmpDirPath', tmpDirPath);
-      } catch (err1) {
-        logger.error('Error 2 when removing tmp directory:', err1);
-      }
+      // try {
+      //   console.log('QQQQQQ1 tmpDirPath', tmpDirPath);
+      //   console.log('QQQQQQ1 fs', fs);
+      //   fs.rmSync(tmpDirPath, { recursive: true, force: true });
+      //   console.log('QQQQQQ2 tmpDirPath', tmpDirPath);
+      // } catch (err1) {
+      //   logger.error('Error 2 when removing tmp directory:', err1);
+      // }
     }
   }
 }
