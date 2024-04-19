@@ -232,6 +232,7 @@ async function executeJob(jobInfo, keepFiles) {
         tmpDir.removeCallback();
       } catch (err) {
         // ignored
+        logger.debug('Error when removing tmp directory:', err);
       }
 
       // try {
