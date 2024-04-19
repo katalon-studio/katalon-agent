@@ -228,15 +228,28 @@ async function executeJob(jobInfo, keepFiles) {
     processController.killProcessFromJobId(jobId);
     // Remove temporary directory when `keepFiles` is false
     if (!keepFiles) {
-      tmpDir.removeCallback();
-      // try {
-      //   console.log('QQQQQQ1 tmpDirPath', tmpDirPath);
-      //   console.log('QQQQQQ1 fs', fs);
-      //   fs.rmSync(tmpDirPath, { recursive: true, force: true });
-      //   console.log('QQQQQQ2 tmpDirPath', tmpDirPath);
-      // } catch (err) {
-      //   logger.error('Error when removing tmp directory:', err);
-      // }
+      try {
+        tmpDir.removeCallback();
+      } catch (err) {
+        logger.error('Error 1 when removing tmp directory:', err);
+        try {
+          console.log('QQQQQQ1 tmpDirPath', tmpDirPath);
+          console.log('QQQQQQ1 fs', fs);
+          fs.rmSync(tmpDirPath, { recursive: true, force: true });
+          console.log('QQQQQQ2 tmpDirPath', tmpDirPath);
+        } catch (err1) {
+          logger.error('Error 2 when removing tmp directory:', err1);
+        }
+      }
+
+      try {
+        console.log('QQQQQQ1 tmpDirPath', tmpDirPath);
+        console.log('QQQQQQ1 fs', fs);
+        fs.rmSync(tmpDirPath, { recursive: true, force: true });
+        console.log('QQQQQQ2 tmpDirPath', tmpDirPath);
+      } catch (err1) {
+        logger.error('Error 2 when removing tmp directory:', err1);
+      }
     }
   }
 }
