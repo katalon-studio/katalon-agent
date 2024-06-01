@@ -114,7 +114,7 @@ module.exports = {
       }
 
       let ksCommand = utils.updateCommand(
-        // ksExecutable,
+        "",
         { flag: '-noSplash' },
         { flag: '-runMode', value: 'console' },
         { flag: '-projectPath', value: ksProjectPath },
