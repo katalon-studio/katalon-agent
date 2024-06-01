@@ -43,7 +43,7 @@ jobs:
     
       - name: Build and push Docker images
         uses: docker/build-push-action@v5
-        if: ${{ inputs.is-latest }}
+        # if: ${{ inputs.is-latest }}
         with:
           context: ./
           file: ./Dockerfile
