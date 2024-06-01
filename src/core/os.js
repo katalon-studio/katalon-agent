@@ -46,6 +46,7 @@ module.exports = {
   },
 
   runCommand(
+    executable,
     command,
     {
       x11Display,
@@ -63,6 +64,7 @@ module.exports = {
     if (type === 'Windows_NT') {
       cmd = 'cmd';
       args.push('/c');
+      args.push(`"${executable}"`);
       args.push(`"${command}"`);
       shell = true;
     } else {
@@ -74,6 +76,7 @@ module.exports = {
       }
       cmd = 'sh';
       args.push('-c');
+      args.push(`"${executable}"`);
       args.push(`${command}`);
       shell = false;
     }

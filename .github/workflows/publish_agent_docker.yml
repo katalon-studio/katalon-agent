@@ -10,6 +10,9 @@ on:
         type: boolean
         description: latest
         required: false
+  # push:
+  #   branches:
+  #     - asdasd
 jobs:
   docker:
     runs-on: ubuntu-latest
