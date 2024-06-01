@@ -114,7 +114,7 @@ module.exports = {
       }
 
       let ksCommand = utils.updateCommand(
-        ksExecutable,
+        // ksExecutable,
         { flag: '-noSplash' },
         { flag: '-runMode', value: 'console' },
         { flag: '-projectPath', value: ksProjectPath },
@@ -127,7 +127,7 @@ module.exports = {
         defaultLogger.debug(`Execute Katalon Studio command: ${ksCommand}`);
       }
 
-      return os.runCommand(ksCommand, {
+      return os.runCommand(ksExecutable, ksCommand, {
         x11Display,
         xvfbConfiguration,
         logger,
