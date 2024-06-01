@@ -20,7 +20,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: release
+          ref: asdasd
 
       - name: Login Docker Hub
         uses: docker/login-action@v3
