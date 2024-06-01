@@ -122,7 +122,7 @@ module.exports = {
 
       ksCommand = `${ksCommand} ${ksArgs}`;
       const loggingKsCommand = utils.maskLog(ksCommand);
-      logger.info(`Execute Katalon Studio: ${loggingKsCommand}`);
+      logger.info(`QQQQQ Execute Katalon Studio: ${loggingKsCommand}`);
       if (logger !== defaultLogger) {
         defaultLogger.debug(`Execute Katalon Studio command: ${ksCommand}`);
       }
