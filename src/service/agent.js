@@ -29,7 +29,7 @@ const syncJobInterval = NODE_ENV === 'debug' ? 15 * 1000 : 30 * 1000;
 const sendLogWaitInterval = 10 * 1000;
 const jobApiKeyEnv = 'TESTOPS_JOB_API_KEY';
 
-function updateJobStatus(jobId, jobStatus, processId = null, apiKey) {
+function updateJobStatus(jobId, jobStatus, processId = null, apiKey = null) {
   const body = buildUpdateJobBody(jobId, jobStatus, processId);
   return api.updateJob(body, apiKey);
 }
@@ -96,7 +96,7 @@ function pingAgent(body) {
     .catch((err) => logger.error('Cannot send agent info to server:', err));
 }
 
-function synchronizeJob(jobId, onJobSynchronization = () => {}, apiKey) {
+function synchronizeJob(jobId, onJobSynchronization = () => {}, apiKey = null) {
   // NOSONAR
   return setInterval(async () => {
     try {
@@ -228,7 +228,21 @@ async function executeJob(jobInfo, keepFiles) {
     processController.killProcessFromJobId(jobId);
     // Remove temporary directory when `keepFiles` is false
     if (!keepFiles) {
-      tmpDir.removeCallback();
+      try {
+        tmpDir.removeCallback();
+      } catch (err) {
+        // ignored
+        logger.debug('Error when removing tmp directory:', err);
+      }
+
+      // try {
+      //   console.log('QQQQQQ1 tmpDirPath', tmpDirPath);
+      //   console.log('QQQQQQ1 fs', fs);
+      //   fs.rmSync(tmpDirPath, { recursive: true, force: true });
+      //   console.log('QQQQQQ2 tmpDirPath', tmpDirPath);
+      // } catch (err1) {
+      //   logger.error('Error 2 when removing tmp directory:', err1);
+      // }
     }
   }
 }

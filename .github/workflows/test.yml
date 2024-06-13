@@ -14,26 +14,34 @@ concurrency:
 jobs:
 
   build:
-
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os:
+          - ubuntu-latest
+        node-version:
+          - 20.9.0
     steps:
 
       - name: Checkout Katalon Agent
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up Nodejs 14
-        uses: actions/setup-node@v3
+      - name: Cache
+        id: cache-packages
+        uses: actions/cache@v4
         with:
-          node-version: '14'
-          cache: 'npm'
-          cache-dependency-path: package-lock.json
+          path: node_modules
+          key: ${{ runner.os }}-node${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
+      
+      - name: Install packages
+        if: steps.cache-packages.outputs.cache-hit != 'true'
+        run: npm ci
 
       - name: Run test
         run: |
-          npm ci 
           npm run eslint
           npm run test:coverage || true
-          npm run buildLinux --if-present 
           sed -i 's@'$GITHUB_WORKSPACE'@/github/workspace/@g' coverage/lcov.info
 
       - name: Sonar Cloud Scan
@@ -47,7 +55,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Run ESLint check
-        uses: sibiraj-s/action-eslint@v2
+        uses: sibiraj-s/action-eslint@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           eslint-args: '-c .eslintrc.yml'

@@ -41,26 +41,18 @@ jobs:
           - macos-latest
           - windows-latest
         node-version:
-          - 14.x
+          - 20.9.0
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2.1.2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Cache
-        id: cache-packages
-        uses: actions/cache@v2.1.4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
-
       - name: Install packages
-        if: steps.cache-packages.outputs.cache-hit != 'true'
         run: npm ci
       
       - name: Set BUILD_VERSION environment variable
@@ -71,30 +63,62 @@ jobs:
           CI: true
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
-          npm run buildLinux --if-present
-          chmod +x bin/cli-linux-x64 *.sh
-          ls -l bin
-          sed -i "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
+          npm run build
+          node --experimental-sea-config sea-config.json 
+          cp $(command -v node) agent 
+          npx postject agent NODE_SEA_BLOB agent.blob \
+            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
 
+          chmod +x agent
+          mkdir bin
+          mv agent bin/cli-linux-x64  
+          npm run afterbuild
+          ls -al bin
+      
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
           CI: true
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
-          npm run buildMacos --if-present
-          chmod +x bin/cli-macos-x64 *.sh
-          ls -l bin
-          sed -i '' "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
+          npm run build
+          node --experimental-sea-config sea-config.json 
+          cp $(command -v node) agent 
+          codesign --remove-signature agent 
+          npx postject agent NODE_SEA_BLOB agent.blob \
+            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 \
+            --macho-segment-name NODE_SEA 
+          # codesign --sign - agent
 
+          mkdir bin
+          chmod +x agent
+          mv agent bin/cli-macos-x64  
+          npm run afterbuild
+          ls -al bin 
+      
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
           CI: true
         if: ${{ matrix.os == 'windows-latest' }}
-        run: npm run buildWin --if-present
+        run: |
+          npm run build
+          node --experimental-sea-config sea-config.json 
+          node -e "require('fs').copyFileSync(process.execPath, 'agent.exe')"  
+          # $signtool = "C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe"
+          # $signtool remove /s agent.exe  
+          npx postject agent.exe NODE_SEA_BLOB agent.blob `
+            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2   
+          # $signtool sign /fd SHA256 agent.exe 
+
+          # chmod +x agent
+          md bin -ea 0
+          cp agent.exe bin/cli-win-x64.exe
+          cp agent.exe bin/cli-win-x86.exe  
+          npm run afterbuild
+          # ls -al
 
 
       - name: Upload Windows x64 artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: ${{ matrix.os == 'windows-latest' }}
         with:
           name: katalon-agent-win-x64-${{ env.AGENT_VERSION }}
@@ -104,7 +128,7 @@ jobs:
             bin/*.bat
 
       - name: Upload Windows x86 artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: ${{ matrix.os == 'windows-latest' }}
         with:
           name: katalon-agent-win-x86-${{ env.AGENT_VERSION }}
@@ -114,7 +138,7 @@ jobs:
             bin/*.bat
 
       - name: Upload Linux x64 artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: ${{ matrix.os == 'ubuntu-latest' }}
         with:
           name: katalon-agent-linux-x64-${{ env.AGENT_VERSION }}
@@ -123,7 +147,7 @@ jobs:
             bin/*.sh
 
       - name: Upload MacOS x64 artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: ${{ matrix.os == 'macos-latest' }}
         with:
           name: katalon-agent-macos-x64-${{ env.AGENT_VERSION }}
@@ -144,30 +168,22 @@ jobs:
     strategy:
       matrix:
         node-version:
-          - 10.x
+          - 20.9.0
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2.1.2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Cache
-        id: cache-packages
-        uses: actions/cache@v2.1.4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
-
       - name: Install packages
-        if: steps.cache-packages.outputs.cache-hit != 'true'
         run: npm ci
 
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           path: .
 
@@ -200,71 +216,74 @@ jobs:
         run: npm run release
 
   ### DEPLOY ###
-  deploy:
-    name: Deploy cloud agent
-    environment: ${{ needs.set_env.outputs.ENV }}
-    env:
-      AGENT_VERSION: ${{ inputs.agent_version }}
-    needs: [set_env, build]
+  # deploy:
+  #   name: Deploy cloud agent
+  #   environment: ${{ needs.set_env.outputs.ENV }}
+  #   env:
+  #     AGENT_VERSION: ${{ inputs.agent_version }}
+  #   needs: [set_env, build]
 
-    runs-on: ubuntu-latest
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2.1.2
-        with:
-          node-version: ${{ matrix.node-version }}
+  #     - name: Setup Node.js ${{ matrix.node-version }}
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: ${{ matrix.node-version }}
 
-      - name: Install packages
-        run: npm install --only dev
+  #     - name: Install packages
+  #       run: npm install --only dev
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/katalon-github-oidc-federation
-          role-session-name: github-actions
-          aws-region: ${{ vars.AWS_REGION }}
-          mask-aws-account-id: 'no'
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/katalon-github-oidc-federation
+  #         role-session-name: github-actions
+  #         aws-region: ${{ vars.AWS_REGION }}
+  #         mask-aws-account-id: 'no'
 
-      - name: Download artifacts
-        uses: actions/download-artifact@v2
-        with:
-          path: .
+  #     - name: Download artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         path: .
 
-      - name: Add execute permission to downloaded artifacts
-        run: chmod +x katalon-agent-linux-*/* katalon-agent-macos-*/*
+  #     - name: Add execute permission to downloaded artifacts
+  #       run: chmod +x katalon-agent-linux-*/* katalon-agent-macos-*/*
 
 
-      - name: Deploy to s3 prod
-        if: ${{  needs.set_env.outputs.ENV == 'prod' }}      
-        run: |
-          ls -laR
-          aws s3 cp katalon-agent-linux-x64-*/cli-linux-x64 s3://${{ secrets.AWS_S3_BUCKET }}/katalon-agent/$AGENT_VERSION/cli-linux-x64
+  #     - name: Deploy to s3 prod
+  #       if: ${{  needs.set_env.outputs.ENV == 'prod' }}      
+  #       run: |
+  #         ls -laR
+  #         aws s3 cp katalon-agent-linux-x64-*/cli-linux-x64 s3://${{ secrets.AWS_S3_BUCKET }}/katalon-agent/$AGENT_VERSION/cli-linux-x64
 
-  commit:
-    runs-on: ubuntu-latest
-    needs: [set_env, build, deploy, release]
-    name: Commit Code
-    env:
-      AGENT_VERSION: ${{ inputs.agent_version }}    
-    environment: ${{ needs.set_env.outputs.ENV }}
-    steps:
-      - uses: actions/checkout@v3
-        with:
-            token: ${{ secrets.GH_TOKEN }}
-      - name: Set BUILD_VERSION environment variable
-        run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
-      - name: Change Package.json version for release
-        run:  sed -i "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
-        ### Commit code
-      - name: Deploy to GitOps 
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: Update version to ${{ env.AGENT_VERSION }}
-          # Optional commit user and author settings
-          commit_user_name: github-cloudops-bot # defaults to "github-actions[bot]"
-          commit_user_email: github-cloudops-bot@katalon.com # defaults to "41898282+github-actions[bot]@users.noreply.github.com"
-          commit_author: Author <github-cloudops-bot@katalon.com> # defaults to author of the commit that triggered the run
+  # commit:
+  #   runs-on: ubuntu-latest
+  #   needs: [set_env, build, deploy, release]
+  #   name: Commit Code
+  #   env:
+  #     AGENT_VERSION: ${{ inputs.agent_version }}    
+  #   environment: ${{ needs.set_env.outputs.ENV }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #           token: ${{ secrets.GH_TOKEN }}
+
+  #     - name: Set BUILD_VERSION environment variable
+  #       run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
+
+  #     - name: Change Package.json version for release
+  #       run:  sed -i "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
+        
+  #       ### Commit code
+  #     - name: Deploy to GitOps 
+  #       uses: stefanzweifel/git-auto-commit-action@v5
+  #       with:
+  #         commit_message: Update version to ${{ env.AGENT_VERSION }}
+  #         # Optional commit user and author settings
+  #         commit_user_name: github-cloudops-bot # defaults to "github-actions[bot]"
+  #         commit_user_email: github-cloudops-bot@katalon.com # defaults to "41898282+github-actions[bot]@users.noreply.github.com"
+  #         commit_author: Author <github-cloudops-bot@katalon.com> # defaults to author of the commit that triggered the run

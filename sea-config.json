@@ -1,0 +1,4 @@
+{
+    "main": "agent-bundle.js",
+    "output": "agent.blob"
+}
