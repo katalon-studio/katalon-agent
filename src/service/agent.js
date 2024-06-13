@@ -22,7 +22,7 @@ const utils = require('../core/utils');
 const { NODE_ENV } = process.env;
 
 const defaultConfigFile = utils.getPath('agentconfig');
-const requestInterval = NODE_ENV === 'debug' ? 5 * 1000 : 5 * 1000;
+const requestInterval = NODE_ENV === 'debug' ? 5 * 1000 : 30 * 1000;
 const pingInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 1000;
 const checkProcessInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 5 * 1000;
 const syncJobInterval = NODE_ENV === 'debug' ? 15 * 1000 : 30 * 1000;
