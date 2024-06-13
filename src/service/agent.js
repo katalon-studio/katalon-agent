@@ -302,11 +302,9 @@ class Agent {
           !requestJobResponse.body.parameter ||
           !requestJobResponse.body.testProject
         ) {
-          console.log('There is no job to execute');
           return;
         }
 
-        console.log('Executing job', requestJobResponse);
         const jobBody = requestJobResponse.body;
         const jobApiKey = requestJobResponse.body.parameter.environmentVariables
           .find((item) => item.name === jobApiKeyEnv);
