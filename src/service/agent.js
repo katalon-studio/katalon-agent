@@ -22,7 +22,7 @@ const utils = require('../core/utils');
 const { NODE_ENV } = process.env;
 
 const defaultConfigFile = utils.getPath('agentconfig');
-const requestInterval = NODE_ENV === 'debug' ? 5 * 1000 : 60 * 1000;
+const requestInterval = NODE_ENV === 'debug' ? 5 * 1000 : 5 * 1000;
 const pingInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 1000;
 const checkProcessInterval = NODE_ENV === 'debug' ? 30 * 1000 : 60 * 5 * 1000;
 const syncJobInterval = NODE_ENV === 'debug' ? 15 * 1000 : 30 * 1000;
@@ -218,7 +218,7 @@ async function executeJob(jobInfo, keepFiles) {
     const jobStatus = JOB_STATUS.FAILED;
     await uploadLog(jobInfo, logFilePath, apiKey);
     logger.debug(`Error caught during job execution! Update job with status '${jobStatus}'`);
-    await updateJobStatus(jobId, jobStatus, apiKey);
+    await updateJobStatus(jobId, jobStatus, null, apiKey);
   } finally {
     jLogger.close();
 
@@ -302,9 +302,11 @@ class Agent {
           !requestJobResponse.body.parameter ||
           !requestJobResponse.body.testProject
         ) {
-          // There is no job to execute
+          console.log('There is no job to execute');
           return;
         }
+
+        console.log('Executing job', requestJobResponse);
         const jobBody = requestJobResponse.body;
         const jobApiKey = requestJobResponse.body.parameter.environmentVariables
           .find((item) => item.name === jobApiKeyEnv);
