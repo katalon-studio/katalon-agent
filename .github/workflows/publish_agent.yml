@@ -156,64 +156,64 @@ jobs:
             bin/start.sh
 
   ### RELEASE ###
-  release:
-    name: Release
-    environment: ${{ needs.set_env.outputs.ENV }}    
-    env:
-      AGENT_VERSION: ${{ inputs.agent_version }}
-    needs: [set_env, build]
+  # release:
+  #   name: Release
+  #   environment: ${{ needs.set_env.outputs.ENV }}    
+  #   env:
+  #     AGENT_VERSION: ${{ inputs.agent_version }}
+  #   needs: [set_env, build]
 
-    if: ${{  needs.set_env.outputs.ENV == 'prod' }}      
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version:
-          - 20.9.0
+  #   if: ${{  needs.set_env.outputs.ENV == 'prod' }}      
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       node-version:
+  #         - 20.9.0
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
+  #     - name: Setup Node.js ${{ matrix.node-version }}
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: ${{ matrix.node-version }}
 
-      - name: Install packages
-        run: npm ci
+  #     - name: Install packages
+  #       run: npm ci
 
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: .
+  #     - name: Download artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         path: .
 
-      - name: Add execute permission to downloaded artifacts
-        run: chmod +x katalon-agent-linux-*/* katalon-agent-macos-*/*
+  #     - name: Add execute permission to downloaded artifacts
+  #       run: chmod +x katalon-agent-linux-*/* katalon-agent-macos-*/*
         
-      - name: Set BUILD_VERSION environment variable
-        run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
+  #     - name: Set BUILD_VERSION environment variable
+  #       run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
 
-      - name: Change Package.json version for release
-        run:  sed -i "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
+  #     - name: Change Package.json version for release
+  #       run:  sed -i "s/$BUILD_VERSION/$AGENT_VERSION/g" package.json
         
-      - name: Package artifacts for release
-        env:
-          GZIP: -9
-        run: |
-          set -x
-          mkdir -p packages
-          ls -la
-          zip -9 -j packages/katalon-agent-win-x64-$AGENT_VERSION.zip katalon-agent-win-x64-$AGENT_VERSION/*
-          zip -9 -j packages/katalon-agent-win-x86-$AGENT_VERSION.zip katalon-agent-win-x86-$AGENT_VERSION/*
-          zip -9 -j packages/katalon-agent-linux-x64-$AGENT_VERSION.zip katalon-agent-linux-x64-$AGENT_VERSION/*
-          zip -9 -j packages/katalon-agent-macos-x64-$AGENT_VERSION.zip katalon-agent-macos-x64-$AGENT_VERSION/*
-          cd katalon-agent-linux-x64-$AGENT_VERSION
-          tar cvzf ../packages/katalon-agent-linux-x64-$AGENT_VERSION.tar.gz *
+  #     - name: Package artifacts for release
+  #       env:
+  #         GZIP: -9
+  #       run: |
+  #         set -x
+  #         mkdir -p packages
+  #         ls -la
+  #         zip -9 -j packages/katalon-agent-win-x64-$AGENT_VERSION.zip katalon-agent-win-x64-$AGENT_VERSION/*
+  #         zip -9 -j packages/katalon-agent-win-x86-$AGENT_VERSION.zip katalon-agent-win-x86-$AGENT_VERSION/*
+  #         zip -9 -j packages/katalon-agent-linux-x64-$AGENT_VERSION.zip katalon-agent-linux-x64-$AGENT_VERSION/*
+  #         zip -9 -j packages/katalon-agent-macos-x64-$AGENT_VERSION.zip katalon-agent-macos-x64-$AGENT_VERSION/*
+  #         cd katalon-agent-linux-x64-$AGENT_VERSION
+  #         tar cvzf ../packages/katalon-agent-linux-x64-$AGENT_VERSION.tar.gz *
 
-      - name: Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run release
+  #     - name: Release
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       run: npm run release
 
   ### DEPLOY ###
   deploy:
