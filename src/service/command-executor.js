@@ -147,7 +147,7 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     logger.debug('Finish downloading extra files.');
 
     if (this.preExecuteCommand) {
-      logger.debug('Start pre-execute command.');
+      logger.debug('Starting pre-execute command.');
       await os.runCommand(this.preExecuteCommand, {
         x11Display: this.x11Display,
         xvfbConfiguration: this.xvfbConfiguration,
