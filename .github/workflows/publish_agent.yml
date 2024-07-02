@@ -260,6 +260,13 @@ jobs:
           ls -laR
           aws s3 cp katalon-agent-linux-x64-*/cli-linux-x64 s3://${{ secrets.AWS_S3_BUCKET }}/katalon-agent/$AGENT_VERSION/cli-linux-x64
 
+      - name: Invalidate Cache
+        uses: katalon-studio/katalon-base-actions/actions/invalidate-cloudfront-cache@v1
+        with:
+          cloudfront_object_paths: "/katalon-agent/${AGENT_VERSION}/*"
+          aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
+          cloudfront_id: ${{ vars.CLOUDFRONT_ID }}
+
   commit:
     runs-on: ubuntu-latest
     needs: [set_env, build, deploy, release]
