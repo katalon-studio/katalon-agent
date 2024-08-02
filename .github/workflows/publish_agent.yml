@@ -38,7 +38,7 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - macos-latest
+          - macos-13
           - windows-latest
         node-version:
           - 20.9.0
@@ -78,7 +78,7 @@ jobs:
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
           CI: true
-        if: ${{ matrix.os == 'macos-latest' }}
+        if: ${{ matrix.os == 'macos-13' }}
         run: |
           npm run build
           node --experimental-sea-config sea-config.json 
@@ -148,7 +148,7 @@ jobs:
 
       - name: Upload MacOS x64 artifact
         uses: actions/upload-artifact@v4
-        if: ${{ matrix.os == 'macos-latest' }}
+        if: ${{ matrix.os == 'macos-13' }}
         with:
           name: katalon-agent-macos-x64-${{ env.AGENT_VERSION }}
           path: |
