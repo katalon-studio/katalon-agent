@@ -168,7 +168,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ matrix.os == 'macos-14' }}
         with:
-          name: katalon-agent-macos-arm64-${{ env.AGENT_VERSION }}
+          name: katalon-agent-macos-arm64-${{ env.BUILD_VERSION }}
           path: |
             bin/cli-macos-arm64
             bin/start.sh
