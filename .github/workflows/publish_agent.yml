@@ -62,7 +62,7 @@ jobs:
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
           CI: true
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ matrix.os == 'ubuntu-22.04' }}
         run: |
           npm run build
           node --experimental-sea-config sea-config.json 
@@ -119,7 +119,7 @@ jobs:
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
           CI: true
-        if: ${{ matrix.os == 'windows-latest' }}
+        if: ${{ matrix.os == 'windows-2022' }}
         run: |
           npm run build
           node --experimental-sea-config sea-config.json 
@@ -140,7 +140,7 @@ jobs:
 
       - name: Upload Windows x64 artifact
         uses: actions/upload-artifact@v4
-        if: ${{ matrix.os == 'windows-latest' }}
+        if: ${{ matrix.os == 'windows-2022' }}
         with:
           name: katalon-agent-win-x64-${{ env.AGENT_VERSION }}
           path: |
@@ -150,7 +150,7 @@ jobs:
 
       - name: Upload Windows x86 artifact
         uses: actions/upload-artifact@v4
-        if: ${{ matrix.os == 'windows-latest' }}
+        if: ${{ matrix.os == 'windows-2022' }}
         with:
           name: katalon-agent-win-x86-${{ env.AGENT_VERSION }}
           path: |
@@ -160,7 +160,7 @@ jobs:
 
       - name: Upload Linux x64 artifact
         uses: actions/upload-artifact@v4
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ matrix.os == 'ubuntu-22.04' }}
         with:
           name: katalon-agent-linux-x64-${{ env.AGENT_VERSION }}
           path: |
