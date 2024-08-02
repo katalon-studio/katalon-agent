@@ -237,6 +237,7 @@ jobs:
           zip -9 -j packages/katalon-agent-win-x86-$AGENT_VERSION.zip katalon-agent-win-x86-$AGENT_VERSION/*
           zip -9 -j packages/katalon-agent-linux-x64-$AGENT_VERSION.zip katalon-agent-linux-x64-$AGENT_VERSION/*
           zip -9 -j packages/katalon-agent-macos-x64-$AGENT_VERSION.zip katalon-agent-macos-x64-$AGENT_VERSION/*
+          zip -9 -j packages/katalon-agent-macos-arm64-$AGENT_VERSION.zip katalon-agent-macos-arm64-$AGENT_VERSION/*
           cd katalon-agent-linux-x64-$AGENT_VERSION
           tar cvzf ../packages/katalon-agent-linux-x64-$AGENT_VERSION.tar.gz *
 
