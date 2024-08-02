@@ -4,7 +4,7 @@ name: Package Agent
     branches:
       - master
       - release
-      - asdasd
+      - fix-mac
 
 permissions:
   id-token: write # This is required for requesting the JWT
@@ -18,7 +18,7 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - macos-latest
+          - macos-13
           - windows-latest
         node-version:
           - 20.9.0
