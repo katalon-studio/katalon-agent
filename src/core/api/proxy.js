@@ -10,11 +10,11 @@ const agent = new https.Agent({
 function getProxy(url) {
   const { proxy, excludedUrls } = config;
   if (!proxy) {
-    return null;
+    return false;
   }
   const isExcluded = excludedUrls.some((excludedUrl) => url.startsWith(excludedUrl));
   if (isExcluded) {
-    return null;
+    return false;
   }
   try {
     const { protocol, hostname: host, port, username, password } = new URL(proxy);
@@ -34,7 +34,7 @@ function getProxy(url) {
     return proxyInfo;
   } catch (e) {
     logger.error('Unable to setup proxy:', e);
-    return null;
+    return false;
   }
 }
 
