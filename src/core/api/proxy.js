@@ -13,7 +13,7 @@ function getProxy(url) {
   if (!proxy) {
     return false;
   }
-  if (proxyExcludedUrls) {
+  if (proxyExcludeList) {
     const excludedUrls = proxyExcludeList.split(',');
     const isExcluded = excludedUrls.some((excludedUrl) => matchUrl(url, excludedUrl));
     if (isExcluded) {
