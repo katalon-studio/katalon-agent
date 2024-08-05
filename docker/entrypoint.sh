@@ -4,9 +4,16 @@ set -xe
 
 echo "Entrypoint"
 
-if [ "$AUTO_UPGRADE_ENVIRONMENT" = true ]; then
+if [[ "$AUTO_UPGRADE_ENVIRONMENT" = true ]]; then
     /katalon/scripts/upgrade_environment.sh || true
 fi
+
+echo "Setup proxy"
+#[ -f /etc/machine-id ] || echo $RANDOM | md5sum | fold -w 32 | head -n 1 > /etc/machine-id
+if [[ -n "${PROXY}" ]]; then
+    git config --global http.proxy ${PROXY}
+fi
+
 if [ -z "$KATALON_USER_ID" ]; then
     exec "$@"
 else
