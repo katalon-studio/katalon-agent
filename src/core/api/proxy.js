@@ -9,12 +9,12 @@ const agent = new https.Agent({
 });
 
 function getProxy(url) {
-  const { proxy, proxyExcludedUrls } = config;
+  const { proxy, proxyExcludeList } = config;
   if (!proxy) {
     return false;
   }
   if (proxyExcludedUrls) {
-    const excludedUrls = proxyExcludedUrls.split(',');
+    const excludedUrls = proxyExcludeList.split(',');
     const isExcluded = excludedUrls.some((excludedUrl) => matchUrl(url, excludedUrl));
     if (isExcluded) {
       return false;
