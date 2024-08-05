@@ -38,6 +38,7 @@ organizationId=<organization_id>
 | xvfbRun    | Xvfb-run supported options. Linux only. E.g. `xvfbRun=-a -n 0 -s "-screen 0 1024x768x24"` |
 | x11Display | x11 DISPLAY environment variable. Linux only. E.g. `x11Display=:0.0` |
 | proxy      | The proxy server. E.g. `proxy=http://localhost:3000` |
+| proxyExcludedUrls | E.g. `proxyExcludedUrls=testops.katalon.io` |
 | logLevel   | The logging level (ALL < TRACE < DEBUG < INFO < WARN < ERROR < FATAL < MARK < OFF). Default: `INFO`. |
 | keepFiles  | Whether to keep the test project's temporary files. Default: `false`. |
 
