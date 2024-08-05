@@ -1,7 +1,7 @@
 const https = require('https');
+const wildcard = require('wildcard');
 const config = require('../config');
 const logger = require('../../config/logger');
-const wildcard = require('wildcard');
 
 const agent = new https.Agent({
   rejectUnauthorized: false,

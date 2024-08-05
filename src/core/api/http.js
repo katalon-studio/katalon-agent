@@ -2,11 +2,11 @@ const axios = require('axios').default;
 const fs = require('fs');
 const path = require('path');
 const ProgressBar = require('progress');
+// const wildcard = require('wildcard');
 const { FILTERED_ERROR_CODE } = require('./constants');
 const logger = require('../../config/logger');
 const { getProxy, getDefaultHttpsAgent } = require('./proxy');
 // const config = require('../config');
-// const wildcard = require('wildcard');
 
 const PROGRESS_RENDER_THROTTLE = 5000;
 
@@ -45,12 +45,11 @@ axios.interceptors.response.use(
   },
 );
 
-
 // const { proxy, excludedUrls } = config;
 // if (proxy) {
 //   const httpAgent = new HttpProxyAgent(proxy, { rejectUnauthorized: false, keepAlive: true });
 //   const httpsAgent = new HttpsProxyAgent(proxy, { rejectUnauthorized: false, keepAlive: true });
-//   axios.interceptors.request.use((config) => {  
+//   axios.interceptors.request.use((config) => {
 //     const url = config.url;
 //     const isExcluded = excludedUrls.some((excludedUrl) => wildcard(excludedUrl, url));
 //     if (!isExcluded) {
@@ -64,7 +63,6 @@ axios.interceptors.response.use(
 //     return config;
 //   });
 // }
-
 
 module.exports = {
   get(urlParam, headers) {
