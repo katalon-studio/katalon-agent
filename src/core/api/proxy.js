@@ -10,14 +10,15 @@ const agent = new https.Agent({
 
 function getProxy(url) {
   const { proxy, proxyExcludedUrls } = config;
-  console.log('QQQQQ proxy:', proxy, proxyExcludedUrls);
   if (!proxy) {
     return false;
   }
-  const isExcluded = proxyExcludedUrls.some((excludedUrl) => wildcard(excludedUrl, url));
-  if (isExcluded) {
-    logger.debug('QQQQQ proxy excluded:', proxyExcludedUrls, url);
-    return false;
+  if (proxyExcludedUrls) {
+    const excludedUrls = proxyExcludedUrls.split(',');
+    const isExcluded = excludedUrls.some((excludedUrl) => wildcard(excludedUrl, url));
+    if (isExcluded) {
+      return false;
+    }
   }
   try {
     const { protocol, hostname: host, port, username, password } = new URL(proxy);
