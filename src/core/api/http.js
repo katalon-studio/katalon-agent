@@ -6,6 +6,7 @@ const { FILTERED_ERROR_CODE } = require('./constants');
 const logger = require('../../config/logger');
 const { getProxy, getDefaultHttpsAgent } = require('./proxy');
 // const config = require('../config');
+// const wildcard = require('wildcard');
 
 const PROGRESS_RENDER_THROTTLE = 5000;
 
@@ -51,7 +52,7 @@ axios.interceptors.response.use(
 //   const httpsAgent = new HttpsProxyAgent(proxy, { rejectUnauthorized: false, keepAlive: true });
 //   axios.interceptors.request.use((config) => {  
 //     const url = config.url;
-//     const isExcluded = excludedUrls.some((excludedUrl) => url.startsWith(excludedUrl));
+//     const isExcluded = excludedUrls.some((excludedUrl) => wildcard(excludedUrl, url));
 //     if (!isExcluded) {
 //       // Set the proxy agents for non-excluded URLs
 //       if (url.startsWith('http://')) {

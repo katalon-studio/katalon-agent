@@ -1,6 +1,7 @@
 const https = require('https');
 const config = require('../config');
 const logger = require('../../config/logger');
+const wildcard = require('wildcard');
 
 const agent = new https.Agent({
   rejectUnauthorized: false,
@@ -12,7 +13,7 @@ function getProxy(url) {
   if (!proxy) {
     return false;
   }
-  const isExcluded = excludedUrls.some((excludedUrl) => url.startsWith(excludedUrl));
+  const isExcluded = excludedUrls.some((excludedUrl) => wildcard(excludedUrl, url));
   if (isExcluded) {
     return false;
   }
