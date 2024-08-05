@@ -5,6 +5,7 @@ const ProgressBar = require('progress');
 const { FILTERED_ERROR_CODE } = require('./constants');
 const logger = require('../../config/logger');
 const { getProxy, getDefaultHttpsAgent } = require('./proxy');
+// const config = require('../config');
 
 const PROGRESS_RENDER_THROTTLE = 5000;
 
@@ -42,6 +43,28 @@ axios.interceptors.response.use(
     return Promise.reject(err);
   },
 );
+
+// const proxyUrl = 'http://your-proxy-url:port';
+// const httpAgent = new HttpProxyAgent(proxyUrl);
+// const httpsAgent = new HttpsProxyAgent(proxyUrl);
+// axios.interceptors.request.use((config) => {
+//   const { proxy, excludedUrls } = config;
+//   if (!proxy) {
+//     return config;
+//   }
+//   const url = config.url;
+//   const isExcluded = excludedUrls.some((excludedUrl) => url.startsWith(excludedUrl));
+//   if (!isExcluded) {
+//     // Set the proxy agents for non-excluded URLs
+//     if (url.startsWith('http://')) {
+//       config.httpAgent = httpAgent;
+//     } else if (url.startsWith('https://')) {
+//       config.httpsAgent = httpsAgent;
+//     }
+//   }
+//   return config;
+// });
+
 
 module.exports = {
   get(urlParam, headers) {
@@ -127,7 +150,7 @@ module.exports = {
       params: urlParam.params,
       data,
       headers,
-      proxy: getProxy(),
+      proxy: getProxy(urlParam.url),
       ...overrideOpts,
       httpsAgent: getDefaultHttpsAgent(),
     });

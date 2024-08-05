@@ -2,9 +2,18 @@ const https = require('https');
 const config = require('../config');
 const logger = require('../../config/logger');
 
-function getProxy() {
-  const { proxy } = config;
+const agent = new https.Agent({
+  rejectUnauthorized: false,
+  keepAlive: true,
+});
+
+function getProxy(url) {
+  const { proxy, excludedUrls } = config;
   if (!proxy) {
+    return null;
+  }
+  const isExcluded = excludedUrls.some((excludedUrl) => url.startsWith(excludedUrl));
+  if (isExcluded) {
     return null;
   }
   try {
@@ -37,10 +46,6 @@ function getIgnoreSsl() {
 }
 
 function getDefaultHttpsAgent() {
-  const agent = new https.Agent({
-    rejectUnauthorized: false,
-    keepAlive: true,
-  });
   return agent;
 }
 
