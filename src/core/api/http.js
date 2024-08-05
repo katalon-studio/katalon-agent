@@ -45,24 +45,26 @@ axios.interceptors.response.use(
   },
 );
 
-// const { proxy, proxyExcludedUrls } = config;
-// if (proxy) {
+// axios.interceptors.request.use((config1) => {
+//   const { proxy, proxyExcludedUrls } = config;
 //   const httpAgent = new HttpProxyAgent(proxy, { rejectUnauthorized: false, keepAlive: true });
 //   const httpsAgent = new HttpsProxyAgent(proxy, { rejectUnauthorized: false, keepAlive: true });
-//   axios.interceptors.request.use((config) => {
-//     const url = config.url;
-//     const isExcluded = proxyExcludedUrls.some((excludedUrl) => wildcard(excludedUrl, url));
-//     if (!isExcluded) {
-//       // Set the proxy agents for non-excluded URLs
-//       if (url.startsWith('http://')) {
-//         config.httpAgent = httpAgent;
-//       } else if (url.startsWith('https://')) {
-//         config.httpsAgent = httpsAgent;
-//       }
+//   const { url } = config1;
+//   if (proxyExcludedUrls) {
+//     const excludedUrls = proxyExcludedUrls.split(',');
+//     const isExcluded = excludedUrls.some((excludedUrl) => wildcard(excludedUrl, url));
+//     if (isExcluded) {
+//       return config1;
 //     }
-//     return config;
-//   });
-// }
+//   }
+//   // Set the proxy agents for non-excluded URLs
+//   if (url.startsWith('http://')) {
+//     config1.httpAgent = httpAgent;
+//   } else if (url.startsWith('https://')) {
+//     config1.httpsAgent = httpsAgent;
+//   }
+//   return config1;
+// });
 
 module.exports = {
   get(urlParam, headers) {
