@@ -1,5 +1,5 @@
 const https = require('https');
-const wildcard = require('wildcard');
+const matchUrl = require('match-url-wildcard');
 const config = require('../config');
 const logger = require('../../config/logger');
 
@@ -15,7 +15,7 @@ function getProxy(url) {
   }
   if (proxyExcludedUrls) {
     const excludedUrls = proxyExcludedUrls.split(',');
-    const isExcluded = excludedUrls.some((excludedUrl) => wildcard(excludedUrl, url));
+    const isExcluded = excludedUrls.some((excludedUrl) => matchUrl(url, excludedUrl));
     if (isExcluded) {
       return false;
     }
