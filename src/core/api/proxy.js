@@ -9,11 +9,11 @@ const agent = new https.Agent({
 });
 
 function getProxy(url) {
-  const { proxy, excludedUrls } = config;
+  const { proxy, proxyExcludedUrls } = config;
   if (!proxy) {
     return false;
   }
-  const isExcluded = excludedUrls.some((excludedUrl) => wildcard(excludedUrl, url));
+  const isExcluded = proxyExcludedUrls.some((excludedUrl) => wildcard(excludedUrl, url));
   if (isExcluded) {
     return false;
   }

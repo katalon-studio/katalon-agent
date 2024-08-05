@@ -45,13 +45,13 @@ axios.interceptors.response.use(
   },
 );
 
-// const { proxy, excludedUrls } = config;
+// const { proxy, proxyExcludedUrls } = config;
 // if (proxy) {
 //   const httpAgent = new HttpProxyAgent(proxy, { rejectUnauthorized: false, keepAlive: true });
 //   const httpsAgent = new HttpsProxyAgent(proxy, { rejectUnauthorized: false, keepAlive: true });
 //   axios.interceptors.request.use((config) => {
 //     const url = config.url;
-//     const isExcluded = excludedUrls.some((excludedUrl) => wildcard(excludedUrl, url));
+//     const isExcluded = proxyExcludedUrls.some((excludedUrl) => wildcard(excludedUrl, url));
 //     if (!isExcluded) {
 //       // Set the proxy agents for non-excluded URLs
 //       if (url.startsWith('http://')) {
