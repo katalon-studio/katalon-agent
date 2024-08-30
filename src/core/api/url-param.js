@@ -61,6 +61,10 @@ module.exports = {
     return buildUrl({ params }, PATHS.JOB, 'get-job');
   },
 
+  getJob(jobId) {
+    return buildUrl({}, PATHS.JOB, jobId);
+  },
+
   updateJob() {
     return buildUrl({}, PATHS.JOB, 'update-job');
   },
