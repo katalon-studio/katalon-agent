@@ -422,7 +422,7 @@ class Agent {
 
       const jobApiKey = parameter.environmentVariables
         .find((item) => item.name === jobApiKeyEnv);
-      const apiKey = jobApiKey ? jobApiKey.value : this.apikey; 
+      const apiKey = jobApiKey ? jobApiKey.value : this.apikey;
 
       let ksArgs;
       if (config.isOnPremise) {
