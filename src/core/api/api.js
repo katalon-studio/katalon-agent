@@ -79,17 +79,16 @@ module.exports = {
     return httpInternal.patch(urlParam.pingJob(jobId), null, withAuthorization(apiKey));
   },
 
-<<<<<<< Updated upstream
   requestJob(uuid, organizationId) {
     return httpInternal.get(urlParam.requestJob(uuid, organizationId));
-=======
+  },
+  
   getJob(jobId) {
     return httpInternal.get(urlParam.requestJob(jobId));
   },
 
   requestJob(uuid, teamId) {
     return httpInternal.get(urlParam.requestJob(uuid, teamId));
->>>>>>> Stashed changes
   },
 
   updateJob(body, apiKey) {

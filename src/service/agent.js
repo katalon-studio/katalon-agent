@@ -404,9 +404,6 @@ class Agent {
         parameter,
         testProject: { projectId },
       } = jobBody;
-      const jobApiKey = parameter.environmentVariables
-        .find((item) => item.name === jobApiKeyEnv);
-      const apiKey = jobApiKey ? jobApiKey.value : this.apikey;
 
       if (!parameter) {
         const requestJobResponse = await api.getJob(jobId);
@@ -422,6 +419,10 @@ class Agent {
         parameter = requestJobResponse.body.parameter;
         testProject = requestJobResponse.body.testProject;
       }
+
+      const jobApiKey = parameter.environmentVariables
+        .find((item) => item.name === jobApiKeyEnv);
+      const apiKey = jobApiKey ? jobApiKey.value : this.apikey; 
 
       let ksArgs;
       if (config.isOnPremise) {
