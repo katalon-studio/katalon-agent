@@ -399,14 +399,30 @@ class Agent {
 
       // Read job configuration from file
       const jobBody = fs.readJsonSync('job.json', { encoding: 'utf-8' });
-      const {
+      let {
         id: jobId,
         parameter,
         testProject: { projectId },
       } = jobBody;
+
+      if (!parameter) {
+        const requestJobResponse = await api.getJob(jobId);
+        if (
+          !requestJobResponse ||
+          !requestJobResponse.body ||
+          !requestJobResponse.body.parameter ||
+          !requestJobResponse.body.testProject
+        ) {
+          // There is no job to execute
+          return;
+        }
+        parameter = requestJobResponse.body.parameter;
+        testProject = requestJobResponse.body.testProject;
+      }
+
       const jobApiKey = parameter.environmentVariables
         .find((item) => item.name === jobApiKeyEnv);
-      const apiKey = jobApiKey ? jobApiKey.value : this.apikey;
+      const apiKey = jobApiKey ? jobApiKey.value : this.apikey; 
 
       let ksArgs;
       if (config.isOnPremise) {
