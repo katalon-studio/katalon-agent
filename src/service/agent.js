@@ -399,8 +399,8 @@ class Agent {
 
       // Read job configuration from file
       const jobBody = fs.readJsonSync('job.json', { encoding: 'utf-8' });
+      const { id: jobId } = jobBody;
       let {
-        id: jobId,
         parameter,
         testProject: { projectId },
       } = jobBody;
@@ -417,7 +417,7 @@ class Agent {
           return;
         }
         parameter = requestJobResponse.body.parameter;
-        testProject = requestJobResponse.body.testProject;
+        projectId = requestJobResponse.body.testProject.projectId;
       }
 
       const jobApiKey = parameter.environmentVariables
