@@ -392,7 +392,6 @@ class Agent {
       }
 
       const configs = config.read(this.configFile);
-
       const { keepFiles, logLevel, x11Display, xvfbRun } = configs;
 
       setLogLevel(logLevel);
@@ -403,13 +402,17 @@ class Agent {
       let parameter = jobBody.parameter;
       let projectId = jobBody.testProject?.projectId;
 
-      if (!parameter) {
+      if (!parameter || !projectId) {
         const requestJobResponse = await api.getJob(jobId);
         if (!(requestJobResponse?.body?.parameter && requestJobResponse?.body?.testProject)) {
           // There is no job to execute
           return;
         }
-        parameter = requestJobResponse.body.parameter;
+        if (parameter) {
+          parameter = { ...requestJobResponse.body.parameter, ...parameter } 
+        } else {
+          parameter = requestJobResponse.body.parameter
+        }
         projectId = requestJobResponse.body.testProject.projectId;
       }
 
