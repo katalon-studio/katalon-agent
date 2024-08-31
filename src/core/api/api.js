@@ -83,6 +83,10 @@ module.exports = {
     return httpInternal.get(urlParam.requestJob(uuid, organizationId));
   },
 
+  getJob(jobId) {
+    return httpInternal.get(urlParam.getJob(jobId));
+  },
+
   updateJob(body, apiKey) {
     return httpInternal.post(urlParam.updateJob(), body, withAuthorization(apiKey));
   },
