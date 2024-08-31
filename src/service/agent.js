@@ -400,19 +400,12 @@ class Agent {
       // Read job configuration from file
       const jobBody = fs.readJsonSync('job.json', { encoding: 'utf-8' });
       const { id: jobId } = jobBody;
-      let {
-        parameter,
-        testProject: { projectId },
-      } = jobBody;
+      let parameter = jobBody.parameter;
+      let projectId = jobBody.testProject?.projectId;
 
       if (!parameter) {
         const requestJobResponse = await api.getJob(jobId);
-        if (
-          !requestJobResponse ||
-          !requestJobResponse.body ||
-          !requestJobResponse.body.parameter ||
-          !requestJobResponse.body.testProject
-        ) {
+        if (!(requestJobResponse?.body?.parameter && requestJobResponse?.body?.testProject)) {
           // There is no job to execute
           return;
         }
