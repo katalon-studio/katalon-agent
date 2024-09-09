@@ -400,9 +400,7 @@ class Agent {
           // There is no job to execute
           return;
         }
-
-        logger.info(`QQQQQQ0: ${JSON.stringify(parameter)}`);
-        logger.info(`QQQQQQ1: ${JSON.stringify(requestJobResponse.body.parameter.gitRepositoryResource)}`);
+        
         if (parameter) {
           parameter = { ...requestJobResponse.body.parameter, ...parameter };
         } else {
@@ -410,7 +408,6 @@ class Agent {
         }
         projectId = requestJobResponse.body.testProject.projectId;
       }
-      logger.info(`QQQQQQ2: ${JSON.stringify(parameter.gitRepositoryResource)}`);
 
       const jobApiKey = parameter.environmentVariables
         .find((item) => item.name === jobApiKeyEnv);
