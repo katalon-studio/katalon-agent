@@ -419,18 +419,8 @@ class Agent {
           ${requestJobResponse.body.parameter.gitRepositoryResource.password}`);
         if (parameter) {
           parameter = { ...requestJobResponse.body.parameter, ...parameter };
-          logger.info(`QQQQQQ2:           
-            ${requestJobResponse.body.parameter.gitRepositoryResource.repository} 
-            ${requestJobResponse.body.parameter.gitRepositoryResource.branch}
-            ${requestJobResponse.body.parameter.gitRepositoryResource.username} 
-            ${requestJobResponse.body.parameter.gitRepositoryResource.password}`);
         } else {
           parameter = requestJobResponse.body.parameter
-          logger.info(`QQQQQQ3: 
-            ${requestJobResponse.body.parameter.gitRepositoryResource.repository} 
-            ${requestJobResponse.body.parameter.gitRepositoryResource.branch}
-            ${requestJobResponse.body.parameter.gitRepositoryResource.username} 
-            ${requestJobResponse.body.parameter.gitRepositoryResource.password}`);
         }
         projectId = requestJobResponse.body.testProject.projectId;
       }
