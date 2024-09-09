@@ -120,7 +120,6 @@ module.exports = {
   },
 
   request(method, urlParam, data = {}, headers = {}, overrideOpts = {}) {
-    console.log('QQQQQ8 urlParam:', urlParam.url, 'urlParam:', urlParam.params);
     return axios({
       method,
       url: urlParam.url,
