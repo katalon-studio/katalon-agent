@@ -234,15 +234,6 @@ async function executeJob(jobInfo, keepFiles) {
         // ignored
         logger.debug('Error when removing tmp directory:', err);
       }
-
-      // try {
-      //   console.log('QQQQQQ1 tmpDirPath', tmpDirPath);
-      //   console.log('QQQQQQ1 fs', fs);
-      //   fs.rmSync(tmpDirPath, { recursive: true, force: true });
-      //   console.log('QQQQQQ2 tmpDirPath', tmpDirPath);
-      // } catch (err1) {
-      //   logger.error('Error 2 when removing tmp directory:', err1);
-      // }
     }
   }
 }
@@ -411,12 +402,7 @@ class Agent {
         }
 
         logger.info(`QQQQQQ0: ${JSON.stringify(parameter)}`);
-        logger.info(`QQQQQQ01: ${JSON.stringify(requestJobResponse.body.parameter)}`);
-        logger.info(`QQQQQQ1: 
-          ${requestJobResponse.body.parameter.gitRepositoryResource.repository} 
-          ${requestJobResponse.body.parameter.gitRepositoryResource.branch}
-          ${requestJobResponse.body.parameter.gitRepositoryResource.username} 
-          ${requestJobResponse.body.parameter.gitRepositoryResource.password}`);
+        logger.info(`QQQQQQ1: ${JSON.stringify(requestJobResponse.body.parameter.gitRepositoryResource)}`);
         if (parameter) {
           parameter = { ...requestJobResponse.body.parameter, ...parameter };
         } else {
@@ -424,11 +410,7 @@ class Agent {
         }
         projectId = requestJobResponse.body.testProject.projectId;
       }
-      logger.info(`QQQQQQ4: 
-        ${requestJobResponse.body.parameter.gitRepositoryResource.repository} 
-        ${requestJobResponse.body.parameter.gitRepositoryResource.branch}
-        ${requestJobResponse.body.parameter.gitRepositoryResource.username} 
-        ${requestJobResponse.body.parameter.gitRepositoryResource.password}`);
+      logger.info(`QQQQQQ2: ${JSON.stringify(parameter.gitRepositoryResource)}`);
 
       const jobApiKey = parameter.environmentVariables
         .find((item) => item.name === jobApiKeyEnv);
