@@ -411,29 +411,33 @@ class Agent {
         }
 
         logger.info(`QQQQQQ0: ${parameter}`);
-        logger.info(`QQQQQQ1: ${requestJobResponse.body.parameter.repository} 
-          ${requestJobResponse.body.parameter.branch}
-          ${requestJobResponse.body.parameter.username} 
-          ${requestJobResponse.body.parameter.password}`);
+        logger.info(`QQQQQQ1: 
+          ${requestJobResponse.body.parameter.gitRepositoryResource.repository} 
+          ${requestJobResponse.body.parameter.gitRepositoryResource.branch}
+          ${requestJobResponse.body.parameter.gitRepositoryResource.username} 
+          ${requestJobResponse.body.parameter.gitRepositoryResource.password}`);
         if (parameter) {
           parameter = { ...requestJobResponse.body.parameter, ...parameter };
-          logger.info(`QQQQQQ2: ${parameter.repository} 
-            ${parameter.branch}
-            ${parameter.username} 
-            ${parameter.password}`);
+          logger.info(`QQQQQQ2:           
+            ${requestJobResponse.body.parameter.gitRepositoryResource.repository} 
+            ${requestJobResponse.body.parameter.gitRepositoryResource.branch}
+            ${requestJobResponse.body.parameter.gitRepositoryResource.username} 
+            ${requestJobResponse.body.parameter.gitRepositoryResource.password}`);
         } else {
           parameter = requestJobResponse.body.parameter
-          logger.info(`QQQQQQ3: ${parameter.repository} 
-            ${parameter.branch}
-            ${parameter.username} 
-            ${parameter.password}`);
+          logger.info(`QQQQQQ3: 
+            ${requestJobResponse.body.parameter.gitRepositoryResource.repository} 
+            ${requestJobResponse.body.parameter.gitRepositoryResource.branch}
+            ${requestJobResponse.body.parameter.gitRepositoryResource.username} 
+            ${requestJobResponse.body.parameter.gitRepositoryResource.password}`);
         }
         projectId = requestJobResponse.body.testProject.projectId;
       }
-      logger.info(`QQQQQQ4: ${parameter.repository} 
-        ${parameter.branch}
-        ${parameter.username} 
-        ${parameter.password}`);
+      logger.info(`QQQQQQ4: 
+        ${requestJobResponse.body.parameter.gitRepositoryResource.repository} 
+        ${requestJobResponse.body.parameter.gitRepositoryResource.branch}
+        ${requestJobResponse.body.parameter.gitRepositoryResource.username} 
+        ${requestJobResponse.body.parameter.gitRepositoryResource.password}`);
 
       const jobApiKey = parameter.environmentVariables
         .find((item) => item.name === jobApiKeyEnv);
