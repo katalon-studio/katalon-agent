@@ -62,7 +62,7 @@ module.exports = {
   },
 
   getJob(jobId) {
-    return buildUrl({ fields: ['sensitiveData'] }, PATHS.JOB, jobId);
+    return buildUrl({ fields: 'sensitiveData' }, PATHS.JOB, jobId);
   },
 
   updateJob() {
