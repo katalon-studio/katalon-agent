@@ -400,21 +400,28 @@ class Agent {
       const jobBody = fs.readJsonSync('job.json', { encoding: 'utf-8' });
       const { id: jobId } = jobBody;
       let parameter = jobBody.parameter;
-      let projectId = jobBody.testProject?.projectId;
+      let projectId = jobBody.testProject ? jobBody.testProject.projectId : undefined;
 
       if (!parameter || !projectId) {
         const requestJobResponse = await api.getJob(jobId);
-        if (!(requestJobResponse?.body?.parameter && requestJobResponse?.body?.testProject)) {
+        if (!(requestJobResponse && requestJobResponse.body && requestJobResponse.body.parameter && requestJobResponse.body.testProject)) {
           // There is no job to execute
           return;
         }
+
+        logger.info(`QQQQQQ0: ${parameter}`);
+        logger.info(`QQQQQQ1: ${requestJobResponse.body.parameter}`);
         if (parameter) {
           parameter = { ...requestJobResponse.body.parameter, ...parameter } 
+          logger.info(`QQQQQQ2: ${parameter}`);
         } else {
           parameter = requestJobResponse.body.parameter
+          logger.info(`QQQQQQ3: ${parameter}`);
         }
         projectId = requestJobResponse.body.testProject.projectId;
+        logger.info(`QQQQQQ4: ${projectId}`);
       }
+      logger.info(`QQQQQQ5: ${parameter}`);
 
       const jobApiKey = parameter.environmentVariables
         .find((item) => item.name === jobApiKeyEnv);
