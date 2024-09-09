@@ -62,7 +62,10 @@ module.exports = {
   },
 
   getJob(jobId) {
-    return buildUrl({ fields: 'sensitiveData' }, PATHS.JOB, jobId);
+    const params = {
+      fields: 'sensitiveData',
+    };
+    return buildUrl(params, PATHS.JOB, jobId);
   },
 
   updateJob() {
