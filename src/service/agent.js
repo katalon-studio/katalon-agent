@@ -411,6 +411,7 @@ class Agent {
         }
 
         logger.info(`QQQQQQ0: ${JSON.stringify(parameter)}`);
+        logger.info(`QQQQQQ01: ${JSON.stringify(requestJobResponse.body.parameter)}`);
         logger.info(`QQQQQQ1: 
           ${requestJobResponse.body.parameter.gitRepositoryResource.repository} 
           ${requestJobResponse.body.parameter.gitRepositoryResource.branch}
