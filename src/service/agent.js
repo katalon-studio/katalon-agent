@@ -409,19 +409,19 @@ class Agent {
           return;
         }
 
-        console.log('QQQQQQ', parameter);
-        console.log('QQQQQQ0', requestJobResponse.body.parameter);
+        logger.info(`QQQQQQ0: ${parameter}`);
+        logger.info(`QQQQQQ1: ${requestJobResponse.body.parameter}`);
         if (parameter) {
           parameter = { ...requestJobResponse.body.parameter, ...parameter } 
-          console.log('QQQQQQ1', parameter);
+          logger.info(`QQQQQQ2: ${parameter}`);
         } else {
           parameter = requestJobResponse.body.parameter
-          console.log('QQQQQQ2', parameter);
+          logger.info(`QQQQQQ3: ${parameter}`);
         }
         projectId = requestJobResponse.body.testProject.projectId;
-        console.log('QQQQQQ3', projectId);
+        logger.info(`QQQQQQ4: ${projectId}`);
       }
-      console.log('QQQQQQ4', parameter);
+      logger.info(`QQQQQQ5: ${parameter}`);
 
       const jobApiKey = parameter.environmentVariables
         .find((item) => item.name === jobApiKeyEnv);
