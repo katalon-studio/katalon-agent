@@ -411,18 +411,29 @@ class Agent {
         }
 
         logger.info(`QQQQQQ0: ${parameter}`);
-        logger.info(`QQQQQQ1: ${requestJobResponse.body.parameter}`);
+        logger.info(`QQQQQQ1: ${requestJobResponse.body.parameter.repository} 
+          ${requestJobResponse.body.parameter.branch}
+          ${requestJobResponse.body.parameter.username} 
+          ${requestJobResponse.body.parameter.password}`);
         if (parameter) {
           parameter = { ...requestJobResponse.body.parameter, ...parameter };
-          logger.info(`QQQQQQ2: ${parameter}`);
+          logger.info(`QQQQQQ2: ${parameter.repository} 
+            ${parameter.branch}
+            ${parameter.username} 
+            ${parameter.password}`);
         } else {
           parameter = requestJobResponse.body.parameter
-          logger.info(`QQQQQQ3: ${parameter}`);
+          logger.info(`QQQQQQ3: ${parameter.repository} 
+            ${parameter.branch}
+            ${parameter.username} 
+            ${parameter.password}`);
         }
         projectId = requestJobResponse.body.testProject.projectId;
-        logger.info(`QQQQQQ4: ${projectId}`);
       }
-      logger.info(`QQQQQQ5: ${parameter}`);
+      logger.info(`QQQQQQ4: ${parameter.repository} 
+        ${parameter.branch}
+        ${parameter.username} 
+        ${parameter.password}`);
 
       const jobApiKey = parameter.environmentVariables
         .find((item) => item.name === jobApiKeyEnv);
