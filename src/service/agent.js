@@ -399,12 +399,13 @@ class Agent {
       // Read job configuration from file
       const jobBody = fs.readJsonSync('job.json', { encoding: 'utf-8' });
       const { id: jobId } = jobBody;
-      let parameter = jobBody.parameter;
-      let projectId = jobBody.testProject ? jobBody.testProject.projectId : undefined;
+      let { parameter, testProject } = jobBody;
+      let projectId = testProject ? testProject.projectId : undefined;
 
       if (!parameter || !projectId) {
         const requestJobResponse = await api.getJob(jobId);
-        if (!(requestJobResponse && requestJobResponse.body && requestJobResponse.body.parameter && requestJobResponse.body.testProject)) {
+        if (!(requestJobResponse && requestJobResponse.body 
+          && requestJobResponse.body.parameter && requestJobResponse.body.testProject)) {
           // There is no job to execute
           return;
         }
@@ -412,7 +413,7 @@ class Agent {
         logger.info(`QQQQQQ0: ${parameter}`);
         logger.info(`QQQQQQ1: ${requestJobResponse.body.parameter}`);
         if (parameter) {
-          parameter = { ...requestJobResponse.body.parameter, ...parameter } 
+          parameter = { ...requestJobResponse.body.parameter, ...parameter };
           logger.info(`QQQQQQ2: ${parameter}`);
         } else {
           parameter = requestJobResponse.body.parameter
