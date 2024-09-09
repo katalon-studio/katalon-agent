@@ -408,13 +408,20 @@ class Agent {
           // There is no job to execute
           return;
         }
+
+        console.log('QQQQQQ', parameter);
+        console.log('QQQQQQ0', requestJobResponse.body.parameter);
         if (parameter) {
           parameter = { ...requestJobResponse.body.parameter, ...parameter } 
+          console.log('QQQQQQ1', parameter);
         } else {
           parameter = requestJobResponse.body.parameter
+          console.log('QQQQQQ2', parameter);
         }
         projectId = requestJobResponse.body.testProject.projectId;
+        console.log('QQQQQQ3', projectId);
       }
+      console.log('QQQQQQ4', parameter);
 
       const jobApiKey = parameter.environmentVariables
         .find((item) => item.name === jobApiKeyEnv);
