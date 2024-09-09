@@ -410,7 +410,7 @@ class Agent {
           return;
         }
 
-        logger.info(`QQQQQQ0: ${parameter}`);
+        logger.info(`QQQQQQ0: ${JSON.stringify(parameter)}`);
         logger.info(`QQQQQQ1: 
           ${requestJobResponse.body.parameter.gitRepositoryResource.repository} 
           ${requestJobResponse.body.parameter.gitRepositoryResource.branch}
