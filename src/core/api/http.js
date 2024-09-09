@@ -120,7 +120,6 @@ module.exports = {
   },
 
   request(method, urlParam, data = {}, headers = {}, overrideOpts = {}) {
-    console.log('Katalon URL:', urlParam.url, 'Params:', urlParam.params);
     return axios({
       method,
       url: urlParam.url,
