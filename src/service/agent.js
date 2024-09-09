@@ -234,15 +234,6 @@ async function executeJob(jobInfo, keepFiles) {
         // ignored
         logger.debug('Error when removing tmp directory:', err);
       }
-
-      // try {
-      //   console.log('QQQQQQ1 tmpDirPath', tmpDirPath);
-      //   console.log('QQQQQQ1 fs', fs);
-      //   fs.rmSync(tmpDirPath, { recursive: true, force: true });
-      //   console.log('QQQQQQ2 tmpDirPath', tmpDirPath);
-      // } catch (err1) {
-      //   logger.error('Error 2 when removing tmp directory:', err1);
-      // }
     }
   }
 }
@@ -398,20 +389,22 @@ class Agent {
 
       // Read job configuration from file
       const jobBody = fs.readJsonSync('job.json', { encoding: 'utf-8' });
-      const { id: jobId } = jobBody;
-      let parameter = jobBody.parameter;
-      let projectId = jobBody.testProject?.projectId;
+      const { id: jobId, testProject } = jobBody;
+      let { parameter } = jobBody;
+      let projectId = testProject ? testProject.projectId : undefined;
 
       if (!parameter || !projectId) {
         const requestJobResponse = await api.getJob(jobId);
-        if (!(requestJobResponse?.body?.parameter && requestJobResponse?.body?.testProject)) {
+        if (!(requestJobResponse && requestJobResponse.body &&
+          requestJobResponse.body.parameter && requestJobResponse.body.testProject)) {
           // There is no job to execute
           return;
         }
+
         if (parameter) {
-          parameter = { ...requestJobResponse.body.parameter, ...parameter } 
+          parameter = { ...requestJobResponse.body.parameter, ...parameter };
         } else {
-          parameter = requestJobResponse.body.parameter
+          parameter = requestJobResponse.body.parameter;
         }
         projectId = requestJobResponse.body.testProject.projectId;
       }
