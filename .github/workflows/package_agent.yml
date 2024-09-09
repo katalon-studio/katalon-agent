@@ -4,7 +4,6 @@ name: Package Agent
     branches:
       - master
       - release
-      - fix-agent
 
 permissions:
   id-token: write # This is required for requesting the JWT
