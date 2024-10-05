@@ -1,11 +1,24 @@
 const https = require('https');
+const matchUrl = require('match-url-wildcard');
 const config = require('../config');
 const logger = require('../../config/logger');
 
-function getProxy() {
-  const { proxy } = config;
+const agent = new https.Agent({
+  rejectUnauthorized: false,
+  keepAlive: true,
+});
+
+function getProxy(url) {
+  const { proxy, proxyExcludeList } = config;
   if (!proxy) {
-    return null;
+    return false;
+  }
+  if (proxyExcludeList) {
+    const excludedUrls = proxyExcludeList.split(',');
+    const isExcluded = excludedUrls.some((excludedUrl) => matchUrl(url, excludedUrl));
+    if (isExcluded) {
+      return false;
+    }
   }
   try {
     const { protocol, hostname: host, port, username, password } = new URL(proxy);
@@ -25,7 +38,7 @@ function getProxy() {
     return proxyInfo;
   } catch (e) {
     logger.error('Unable to setup proxy:', e);
-    return null;
+    return false;
   }
 }
 
@@ -37,10 +50,6 @@ function getIgnoreSsl() {
 }
 
 function getDefaultHttpsAgent() {
-  const agent = new https.Agent({
-    rejectUnauthorized: false,
-    keepAlive: true,
-  });
   return agent;
 }
 
