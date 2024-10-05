@@ -30,6 +30,7 @@ program
   .option('-a, --agent-name <value>', 'Agent name')
   .option('-c, --config <value>', 'Configuration file path')
   .option('-x, --proxy <value>', 'HTTTP/HTTPS Proxy')
+  .option('--proxy-exclude-list <value>', 'Proxy excluded URLs')
   .option('--log-level <value>', 'Log level (ALL < TRACE < DEBUG < INFO < WARN < ERROR < FATAL < MARK < OFF)')
   .option('--xvfb-run <value>', 'xvfb-run options')
   .option('--x11-display <value>', 'x11 DISPLAY environment variable')
@@ -44,6 +45,7 @@ program
       agentName: command.agentName,
       configPath: command.config,
       proxy: command.proxy,
+      proxyExcludeList: command.proxyExcludeList,
       logLevel: command.logLevel,
       xvfbRun: command.xvfbRun,
       x11Display: command.x11Display,
@@ -62,6 +64,7 @@ program
   .option('-a, --agent-name <value>', 'Agent name')
   .option('-c, --config <value>', 'Configuration file path')
   .option('-x, --proxy <value>', 'HTTTP/HTTPS Proxy')
+  .option('--proxy-exclude-list <value>', 'Proxy excluded URLs')
   .option('--ci', 'CI mode')
   .action((command) => {
     const options = {
@@ -72,6 +75,7 @@ program
       agentName: command.agentName,
       configPath: command.config,
       proxy: command.proxy,
+      proxyExcludeList: command.proxyExcludeList,
     };
     if (process.platform === 'win32') {
       readline

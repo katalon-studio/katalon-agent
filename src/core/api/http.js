@@ -2,9 +2,11 @@ const axios = require('axios').default;
 const fs = require('fs');
 const path = require('path');
 const ProgressBar = require('progress');
+// const wildcard = require('wildcard');
 const { FILTERED_ERROR_CODE } = require('./constants');
 const logger = require('../../config/logger');
 const { getProxy, getDefaultHttpsAgent } = require('./proxy');
+// const config = require('../config');
 
 const PROGRESS_RENDER_THROTTLE = 5000;
 
@@ -42,6 +44,27 @@ axios.interceptors.response.use(
     return Promise.reject(err);
   },
 );
+
+// axios.interceptors.request.use((config1) => {
+//   const { proxy, proxyExcludedUrls } = config;
+//   const httpAgent = new HttpProxyAgent(proxy, { rejectUnauthorized: false, keepAlive: true });
+//   const httpsAgent = new HttpsProxyAgent(proxy, { rejectUnauthorized: false, keepAlive: true });
+//   const { url } = config1;
+//   if (proxyExcludedUrls) {
+//     const excludedUrls = proxyExcludedUrls.split(',');
+//     const isExcluded = excludedUrls.some((excludedUrl) => wildcard(excludedUrl, url));
+//     if (isExcluded) {
+//       return config1;
+//     }
+//   }
+//   // Set the proxy agents for non-excluded URLs
+//   if (url.startsWith('http://')) {
+//     config1.httpAgent = httpAgent;
+//   } else if (url.startsWith('https://')) {
+//     config1.httpsAgent = httpsAgent;
+//   }
+//   return config1;
+// });
 
 module.exports = {
   get(urlParam, headers) {
@@ -127,7 +150,7 @@ module.exports = {
       params: urlParam.params,
       data,
       headers,
-      proxy: getProxy(),
+      proxy: getProxy(urlParam.url),
       ...overrideOpts,
       httpsAgent: getDefaultHttpsAgent(),
     });
