@@ -15,6 +15,7 @@ cd $KATALON_AGENT_DIR
     --organizationid "$ORGANIZATION_ID" \
     --agent-name "$AGENT_NAME" \
     --proxy "$PROXY" \
+    --proxy-exclude-list "$PROXY_EXCLUDE_LIST" \
     --log-level "$LOG_LEVEL" \
     --xvfb-run "$XVFB_RUN" \
     --x11-display "$X11_DISPLAY" \
