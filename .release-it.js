@@ -11,7 +11,7 @@ module.exports = {
     pushRepo: "https://github.com/katalon-studio/katalon-agent.git",
     changelog:
       'git log -1 --pretty=format:"%s%n%n>**Commit:** %h%d%n>**Author:** %an%n>**Date:** %ai%n"',
-    tagName: `v${version}`,
+    tagName: `${version}`,
     requireCleanWorkingDir: false,
     tag: false,
     commit: false,
