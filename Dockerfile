@@ -11,7 +11,7 @@ RUN ./docker/scripts/build_agent.sh
 
 # Build docker image
 # Install and inherit java version 17 from katalonstudio/katalon:9.2.0
-FROM katalonstudio/katalon:9.7.2
+FROM katalonstudio/katalon:9.7.5
 
 # Install java version 8
 RUN apt-get update && \
@@ -68,6 +68,7 @@ COPY --from=build /katalon/bin/cli-linux-x64 *.sh ./
 # Copy script files and setup
 WORKDIR $KATALON_SCRIPT_DIR
 COPY ./docker/scripts/wrap_chrome_binary.sh wrap_chrome_binary.sh
+COPY ./docker/scripts/wrap_edge_chromium_binary.sh wrap_edge_chromium_binary.sh
 COPY ./docker/scripts/setup_environment.sh setup_environment.sh
 COPY ./docker/scripts/upgrade_environment.sh upgrade_environment.sh
 COPY ./docker/scripts/setup_agent.sh setup_agent.sh
