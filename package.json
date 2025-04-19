@@ -44,7 +44,7 @@
     "moment": "^2.30.1",
     "progress": "^2.0.3",
     "properties": "^1.2.1",
-    "simple-git": "^3.24.0",
+    "simple-git": "^3.27.0",
     "tmp": "^0.2.3",
     "tree-kill": "^1.2.2",
     "triple-beam": "^1.4.1",
