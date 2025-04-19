@@ -51,7 +51,7 @@
     "url-join": "^4.0.1",
     "uuid": "^9.0.1",
     "winston": "^3.13.0",
-    "winston-transport": "^4.7.0"
+    "winston-transport": "^4.9.0"
   },
   "author": "katalon",
   "license": "ISC",
