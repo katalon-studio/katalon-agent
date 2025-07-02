@@ -10,7 +10,7 @@ Run the following command with the version to build the image
 
 ### Prerequisites
 - Node.js >= 10.x
-- Run the `npm install` command in the Katalon Agent's root directory to install the dependencies
+- Run the `npm install` command in the Katalon Agent's root directory to install the dependencies.
 
 ### Configuration
 - Create the `agentconfig` file in the Katalon Agent's root directory and configure it:
