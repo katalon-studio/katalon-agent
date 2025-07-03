@@ -30,19 +30,21 @@ function buildTestOpsIntegrationProperties(teamId, projectId, organizationId, gi
     'analytics.testresult.attach.capturedvideos': false,
   };
   const onPremiseProperties = {
-    'analytics.onpremise.enable': config.isOnPremise,
+    // 'onpremise.email': config.email,
+    // 'onpremise.password': apiKey,
     'analytics.onpremise.server': config.serverUrl,
+    'analytics.onpremise.organization': JSON.stringify({ id: `${organizationId}` }),
+    // 'analytics.onpremise.enable': config.isOnPremise,
   };
-  const git = _.pick(gitRepository, ['repository', 'branch']);
   return {
     ...deprecatedProperties,
+    ...onPremiseProperties,
     'analytics.integration.enable': true,
     'analytics.team': JSON.stringify({ id: teamId.toString() }),
     'analytics.project': JSON.stringify(
       { id: projectId.toString(), organizationId: `${organizationId}` },
     ),
-    ...(git && { 'analytics.git': JSON.stringify(git) }),
-    ...onPremiseProperties,
+    'analytics.testreport.autoupload.enable': true,
   };
 }
 
