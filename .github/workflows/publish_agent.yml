@@ -112,7 +112,7 @@ jobs:
 
           mkdir bin
           chmod +x agent
-          mv agent bin/cli-macos-x64  
+          mv agent bin/cli-macos-arm64  
           npm run afterbuild
           ls -al bin 
       
