@@ -57,7 +57,6 @@ jobs:
           CI: true
         if: ${{ matrix.os == 'macos-13' }}
         run: |
-          ls -al
           npm run build
           node --experimental-sea-config sea-config.json 
           cp $(command -v node) agent
@@ -78,7 +77,6 @@ jobs:
           CI: true
         if: ${{ matrix.os == 'macos-14' }}
         run: |
-
           npm run build
           node --experimental-sea-config sea-config.json 
           cp $(command -v node) agent
