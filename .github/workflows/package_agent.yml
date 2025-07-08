@@ -31,13 +31,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       
-      # - name: Cache
-      #   id: cache-packages
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: node_modules
-      #     key: new-${{ runner.os }}-node${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
-      
       - name: Install packages
         if: steps.cache-packages.outputs.cache-hit != 'true'
         run: npm ci
