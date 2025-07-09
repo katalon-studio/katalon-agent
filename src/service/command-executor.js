@@ -3,10 +3,11 @@ const glob = require('glob');
 const path = require('path');
 
 const _ = require('lodash');
+const propertiesReader = require('properties-reader');
 const config = require('../core/config');
 const genericCommand = require('./generic-command');
 const ks = require('./katalon-studio');
-const properties = require('../core/properties');
+// const properties = require('../core/properties');
 const reportUploader = require('./report-uploader');
 const file = require('../core/file');
 const utils = require('../core/utils');
@@ -18,35 +19,65 @@ const GENERIC_COMMAND_OUTPUT_DIR = 'katalon-agent-output';
 const GENERIC_COMMAND_REPORT_DIR_ENV = 'KATALON_AGENT_REPORT_FOLDER';
 const JUNIT_FILE_PATTERN = '**/*.xml';
 
-function buildTestOpsIntegrationProperties(teamId, projectId, organizationId, gitRepository, apiKey) {
-  const deprecatedProperties = {
-    'analytics.server.endpoint': config.serverUrl,
-    'analytics.authentication.email': config.email,
-    'analytics.authentication.password': apiKey,
-    'analytics.authentication.encryptionEnabled': false,
-    'analytics.testresult.autosubmit': true,
-    'analytics.testresult.attach.screenshot': true,
-    'analytics.testresult.attach.log': true,
-    'analytics.testresult.attach.capturedvideos': false,
-  };
-  const onPremiseProperties = {
-    // 'onpremise.email': config.email,
-    // 'onpremise.password': apiKey,
-    'analytics.onpremise.server': config.serverUrl,
-    'analytics.onpremise.organization': JSON.stringify({ id: `${organizationId}` }),
-    // 'analytics.onpremise.enable': config.isOnPremise,
-  };
-  return {
-    ...deprecatedProperties,
-    ...onPremiseProperties,
-    'analytics.integration.enable': true,
-    'analytics.team': JSON.stringify({ id: teamId.toString() }),
-    'analytics.project': JSON.stringify(
-      { id: projectId.toString(), organizationId: `${organizationId}` },
-    ),
-    'analytics.testreport.autoupload.enable': true,
-  };
+async function configTestOpsIntegration(ksProjectDir, teamId, projectId, organizationId, apiKey) {
+  const testOpsPropertiesPath = path.resolve(
+    ksProjectDir,
+    'settings',
+    'internal',
+    TESTOPS_PROPERTIES_FILE,
+  );
+  const properties = propertiesReader(testOpsPropertiesPath, 'utf-8', { writer: { saveSections: false } });
+  properties.set('analytics.server.endpoint', config.serverUrl);
+  properties.set('analytics.authentication.email', config.email);
+  properties.set('analytics.authentication.password', apiKey);
+  properties.set('analytics.authentication.encryptionEnabled', false);
+  properties.set('analytics.testresult.autosubmit', true);
+  properties.set('analytics.testresult.attach.screenshot', true);
+  properties.set('analytics.testresult.attach.log', true);
+  properties.set('analytics.testresult.attach.capturedvideos', false);
+
+  properties.set('analytics.onpremise.server', config.serverUrl);
+  properties.set('analytics.onpremise.organization', JSON.stringify({ id: `${organizationId}` }));
+
+  properties.set('analytics.integration.enable', true);
+  properties.set('analytics.team', JSON.stringify({ id: teamId.toString() }));
+  properties.set('analytics.project', JSON.stringify(
+    { id: projectId.toString(), organizationId: `${organizationId}` },
+  ));
+  properties.set('analytics.testreport.autoupload.enable', true);
+
+  await properties.save(testOpsPropertiesPath);
 }
+
+// function buildTestOpsIntegrationProperties(teamId, projectId, organizationId, apiKey) {
+//   const deprecatedProperties = {
+//     'analytics.server.endpoint': config.serverUrl,
+//     'analytics.authentication.email': config.email,
+//     'analytics.authentication.password': apiKey,
+//     'analytics.authentication.encryptionEnabled': false,
+//     'analytics.testresult.autosubmit': true,
+//     'analytics.testresult.attach.screenshot': true,
+//     'analytics.testresult.attach.log': true,
+//     'analytics.testresult.attach.capturedvideos': false,
+//   };
+//   const onPremiseProperties = {
+//     // 'onpremise.email': config.email,
+//     // 'onpremise.password': apiKey,
+//     'analytics.onpremise.server': config.serverUrl,
+//     'analytics.onpremise.organization': JSON.stringify({ id: `${organizationId}` }),
+//     // 'analytics.onpremise.enable': config.isOnPremise,
+//   };
+//   return {
+//     ...deprecatedProperties,
+//     ...onPremiseProperties,
+//     'analytics.integration.enable': true,
+//     'analytics.team': JSON.stringify({ id: teamId.toString() }),
+//     'analytics.project': JSON.stringify(
+//       { id: projectId.toString(), organizationId: `${organizationId}` },
+//     ),
+//     'analytics.testreport.autoupload.enable': true,
+//   };
+// }
 
 class BaseKatalonCommandExecutor {
   constructor(info) {
@@ -128,17 +159,19 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     // Manually configure integration settings for KS to upload execution report
     logger.debug('Configure Katalon TestOps integration.');
     const ksProjectDir = path.dirname(ksProjectPath);
-    const testOpsPropertiesPath = path.resolve(
-      ksProjectDir,
-      'settings',
-      'internal',
-      TESTOPS_PROPERTIES_FILE,
-    );
-    properties.writeProperties(
-      testOpsPropertiesPath,
-      buildTestOpsIntegrationProperties(this.teamId, this.projectId, this.organizationId, this.gitRepository, apiKey),
-    );
-    logger.debug('Finish configuring Katalon TestOps integration.');
+    // const testOpsPropertiesPath = path.resolve(
+    //   ksProjectDir,
+    //   'settings',
+    //   'internal',
+    //   TESTOPS_PROPERTIES_FILE,
+    // );
+    // properties.writeProperties(
+    //   testOpsPropertiesPath,
+    //   buildTestOpsIntegrationProperties(this.teamId, this.projectId, this.organizationId, apiKey),
+    // );
+    logger.debug('Start config Katalon TestOps integration.');
+    await configTestOpsIntegration(ksProjectDir, this.teamId, this.projectId, this.organizationId, apiKey);
+    logger.debug('Finish config Katalon TestOps integration.');
 
     logger.debug('Start downloading extra files.');
     // The logic download extra file will run after we manually configure integration settings
