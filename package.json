@@ -45,6 +45,7 @@
     "progress": "^2.0.3",
     "properties": "^1.2.1",
     "properties-reader": "^2.3.0",
+    "semver": "^7.7.2",
     "simple-git": "^3.24.0",
     "tmp": "^0.2.3",
     "tree-kill": "^1.2.2",
