@@ -31,7 +31,7 @@ async function configTestOpsIntegration(ksProjectDir, teamId, projectId, organiz
   if (config.email) {
     properties.set('analytics.authentication.email', config.email);
   } else {
-    properties.set('analytics.authentication.email', "");
+    properties.set('analytics.authentication.email', '');
   }
   properties.set('analytics.authentication.password', apiKey);
   properties.set('analytics.authentication.encryptionEnabled', false);
