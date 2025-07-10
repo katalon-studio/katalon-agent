@@ -51,9 +51,10 @@ function getKsLocation(ksVersionNumber, ksLocation) {
 
     if (ksVersionNumber === KRE_LATEST_OPTION_VALUE) {
       const kreOsVersions = filter(body, ({ os }) => os === osVersion);
-      const versions = map(kreOsVersions, 'version');
-      ksVersionNumber = semver.maxSatisfying(versions, '*');
-      ksVersion = kreOsVersions.find((item) => item.version === ksVersionNumber);
+      const versionNumbers = map(kreOsVersions, 'version')
+        .filter(v => !semver.prerelease(v));
+      ksVersionNumber = semver.maxSatisfying(versionNumbers, '*');
+      ksVersion = kreOsVersions.find(item => item.version === ksVersionNumber);
     } else {
       ksVersion = body.find((item) => item.version === ksVersionNumber && item.os === osVersion);
     }
