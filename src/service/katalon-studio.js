@@ -2,7 +2,7 @@
 const _ = require('lodash');
 const fs = require('fs');
 const path = require('path');
-const { filter, maxBy } = require('lodash');
+const { filter } = require('lodash');
 const semver = require('semver')
 
 const api = require('../core/api');
