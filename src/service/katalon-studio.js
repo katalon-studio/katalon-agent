@@ -2,8 +2,8 @@
 const _ = require('lodash');
 const fs = require('fs');
 const path = require('path');
-const { filter } = require('lodash');
-const semver = require('semver')
+const { filter, map } = require('lodash');
+const semver = require('semver');
 
 const api = require('../core/api');
 const defaultLogger = require('../config/logger');
@@ -53,7 +53,7 @@ function getKsLocation(ksVersionNumber, ksLocation) {
       const kreOsVersions = filter(body, ({ os }) => os === osVersion);
       const versions = map(kreOsVersions, 'version');
       ksVersionNumber = semver.maxSatisfying(versions, '*');
-      ksVersion = kreOsVersions.find(item => item.version === ksVersionNumber);
+      ksVersion = kreOsVersions.find((item) => item.version === ksVersionNumber);
     } else {
       ksVersion = body.find((item) => item.version === ksVersionNumber && item.os === osVersion);
     }
