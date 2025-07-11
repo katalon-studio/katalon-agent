@@ -66,7 +66,7 @@ module.exports = {
       args.push('/c');
       // args.push(`"${executable}"`);
       args.push(`"${command}"`);
-      shell = false;
+      shell = true;
     } else {
       if (x11Display) {
         command = `DISPLAY=${x11Display} ${command}`;
