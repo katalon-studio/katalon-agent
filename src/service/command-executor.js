@@ -28,7 +28,7 @@ async function configTestOpsIntegration(ksProjectDir, teamId, projectId, organiz
     TESTOPS_PROPERTIES_FILE,
   );
 
-  // Ensures that the file exists. 
+  // Ensures that the file exists.
   // If the file in directories that do not exist, these directories are created.
   fse.ensureFileSync(testOpsPropertiesPath);
 
