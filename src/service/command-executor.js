@@ -180,7 +180,7 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     //   buildTestOpsIntegrationProperties(this.teamId, this.projectId, this.organizationId, apiKey),
     // );
     logger.debug('Start config Katalon TestOps integration.');
-    await configTestOpsIntegration(ksProjectDir, this.teamId, this.projectId, this.organizationId, apiKey, logger);
+    await configTestOpsIntegration(ksProjectDir, this.teamId, this.projectId, this.organizationId, apiKey);
     logger.debug('Finish config Katalon TestOps integration.');
 
     logger.debug('Start downloading extra files.');
