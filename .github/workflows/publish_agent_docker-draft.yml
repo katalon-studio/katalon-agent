@@ -32,3 +32,4 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           tags: htuan/testagent:6.1
+
