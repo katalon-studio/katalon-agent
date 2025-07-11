@@ -20,7 +20,7 @@ const GENERIC_COMMAND_OUTPUT_DIR = 'katalon-agent-output';
 const GENERIC_COMMAND_REPORT_DIR_ENV = 'KATALON_AGENT_REPORT_FOLDER';
 const JUNIT_FILE_PATTERN = '**/*.xml';
 
-async function configTestOpsIntegration(ksProjectDir, teamId, projectId, organizationId, apiKey, logger) {
+async function configTestOpsIntegration(ksProjectDir, teamId, projectId, organizationId, apiKey) {
   const testOpsPropertiesPath = path.resolve(
     ksProjectDir,
     'settings',
@@ -28,10 +28,9 @@ async function configTestOpsIntegration(ksProjectDir, teamId, projectId, organiz
     TESTOPS_PROPERTIES_FILE,
   );
 
-  if (!fs.existsSync(testOpsPropertiesPath)) {
-    logger.debug('There is no TestOps properties file. Start building TestOps properties file');
-    fse.ensureFileSync(testOpsPropertiesPath);
-  }
+  // Ensures that the file exists. 
+  // If the file in directories that do not exist, these directories are created.
+  fse.ensureFileSync(testOpsPropertiesPath);
 
   const properties = propertiesReader(testOpsPropertiesPath, 'utf-8', { writer: { saveSections: false } });
   properties.set('analytics.server.endpoint', config.serverUrl);
