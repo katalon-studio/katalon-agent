@@ -12,7 +12,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: test
+          ref: test-1
 
       - name: Login Docker Hub
         uses: docker/login-action@v3
