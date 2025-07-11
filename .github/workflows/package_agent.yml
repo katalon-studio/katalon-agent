@@ -26,19 +26,12 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2.1.0
+      uses: actions/checkout@v4
 
     - name: Setup Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v2.1.2
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-
-    - name: Cache
-      id: cache-packages
-      uses: actions/cache@v2.1.4
-      with:
-        path: node_modules
-        key: ${{ runner.os }}-node${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
 
     - name: Install packages
       if: steps.cache-packages.outputs.cache-hit != 'true'
