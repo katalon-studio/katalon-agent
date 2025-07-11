@@ -2,6 +2,9 @@ name: Publish Agent
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - v1.7.9
 
 jobs:
   ### BUILD ###
