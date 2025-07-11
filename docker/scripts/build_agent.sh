@@ -2,7 +2,7 @@
 
 set -xe
 
-npm ci
+npm i
 npm run build
 node --experimental-sea-config sea-config.json 
 cp $(command -v node) agent 
