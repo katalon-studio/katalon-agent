@@ -38,13 +38,13 @@ jobs:
           push: true
           tags: katalonstudio/agent:${{ inputs.version }}
     
-      - name: Build and push Docker images
-        uses: docker/build-push-action@v2
-        if: ${{ inputs.is-latest }}
-        with:
-          context: ./
-          file: ./Dockerfile
-          build-args: AGENT_VERSION=${{ inputs.version }}
-          builder: ${{ steps.buildx.outputs.name }}
-          push: true
-          tags: katalonstudio/agent:latest
+      # - name: Build and push Docker images
+      #   uses: docker/build-push-action@v2
+      #   if: ${{ inputs.is-latest }}
+      #   with:
+      #     context: ./
+      #     file: ./Dockerfile
+      #     build-args: AGENT_VERSION=${{ inputs.version }}
+      #     builder: ${{ steps.buildx.outputs.name }}
+      #     push: true
+      #     tags: katalonstudio/agent:latest
