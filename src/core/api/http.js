@@ -41,6 +41,13 @@ axios.interceptors.response.use(
   (error) => {
     const err = error.toJSON ? error.toJSON() : error;
     logger.error(err);
+    if (error.response) {
+      logger.error('Response data:', error.response.data);
+    } else if (error.request) {
+      logger.error('No response received:', error.request);
+    } else {
+      logger.error('Error setting up request:', error.message, error.stack, error.config);
+    }
     return Promise.reject(err);
   },
 );
