@@ -3,10 +3,7 @@ const matchUrl = require('match-url-wildcard');
 const config = require('../config');
 const logger = require('../../config/logger');
 
-const agent = new https.Agent({
-  rejectUnauthorized: false,
-  keepAlive: true,
-});
+let agent = null;
 
 function getProxy(url) {
   const { proxy, proxyExcludeList } = config;
@@ -42,19 +39,28 @@ function getProxy(url) {
   }
 }
 
-function getIgnoreSsl() {
-  const agent = new https.Agent({
-    rejectUnauthorized: false,
-  });
-  return agent;
-}
+// function getIgnoreSsl() {
+//   const agent = new https.Agent({
+//     rejectUnauthorized: false,
+//   });
+//   return agent;
+// }
 
 function getDefaultHttpsAgent() {
+  if (!agent) {
+    const agentConfig = {
+      rejectUnauthorized: false,
+      keepAlive: true,
+      ...(config.https ? { ...config.https } : {}),
+    };
+    logger.info('Default HTTPS agent config:', agentConfig);
+    agent = new https.Agent(agentConfig);
+  }
   return agent;
 }
 
 module.exports = {
   getProxy,
-  getIgnoreSsl,
+  // getIgnoreSsl,
   getDefaultHttpsAgent,
 };
