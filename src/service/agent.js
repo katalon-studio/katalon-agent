@@ -86,7 +86,16 @@ function isOnPremiseProfile(profiles) {
 function notifyJob(jobId, projectId, apiKey) {
   return api
     .notifyJob(jobId, projectId, apiKey)
-    .catch((error) => logger.warn('Unable to send job notification:', error));
+    .catch((error) => {
+      logger.warn('Unable to send job notification:', error);
+      if (error.response) {
+        logger.warn('Response data:', error.response.data);
+      } else if (error.request) {
+        logger.warn('No response received:', error.request);
+      } else {
+        logger.warn('Error setting up request:', error.message, error.stack, error.config);
+      }
+    });
 }
 
 function pingAgent(body) {
