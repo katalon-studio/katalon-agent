@@ -65,7 +65,8 @@ module.exports = {
       cmd = 'cmd';
       args.push('/c');
       // args.push(`"${executable}"`);
-      args.push(`"${command}"`);
+      // args.push(`"${command}"`);
+      args.push(`"${command.replace(/&/g, '^&')}"`);
       shell = true;
     } else {
       if (x11Display) {
