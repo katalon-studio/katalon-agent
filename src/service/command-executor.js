@@ -49,8 +49,7 @@ async function configTestOpsIntegration(ksProjectDir, teamId, projectId, organiz
   // Config on premise properties
   properties.set('analytics.onpremise.server', config.serverUrl);
   properties.set('analytics.onpremise.organization', JSON.stringify({ id: `${organizationId}` }));
-  properties.set('onpremise.email', config.email);
-  properties.set('onpremise.password', apiKey);
+  properties.set('analytics.onpremise.enable', false);
 
   properties.set('analytics.integration.enable', true);
   properties.set('analytics.team', JSON.stringify({ id: teamId.toString() }));
