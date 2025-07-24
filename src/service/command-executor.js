@@ -20,7 +20,7 @@ const GENERIC_COMMAND_OUTPUT_DIR = 'katalon-agent-output';
 const GENERIC_COMMAND_REPORT_DIR_ENV = 'KATALON_AGENT_REPORT_FOLDER';
 const JUNIT_FILE_PATTERN = '**/*.xml';
 
-async function configTestOpsIntegration(ksProjectDir, teamId, projectId, organizationId, apiKey) {
+async function configTestOpsIntegration(ksProjectDir, teamId, projectId, organizationId, apiKey, logger) {
   const testOpsPropertiesPath = path.resolve(
     ksProjectDir,
     'settings',
@@ -59,6 +59,9 @@ async function configTestOpsIntegration(ksProjectDir, teamId, projectId, organiz
   properties.set('analytics.testreport.autoupload.enable', true);
 
   await properties.save(testOpsPropertiesPath);
+  const properties1 = propertiesReader(testOpsPropertiesPath, 'utf-8', { writer: { saveSections: false } });
+  logger.debug('properties1', properties1);
+
 }
 
 // function buildTestOpsIntegrationProperties(teamId, projectId, organizationId, apiKey) {
@@ -182,7 +185,7 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     //   buildTestOpsIntegrationProperties(this.teamId, this.projectId, this.organizationId, apiKey),
     // );
     logger.debug('Start config Katalon TestOps integration.');
-    await configTestOpsIntegration(ksProjectDir, this.teamId, this.projectId, this.organizationId, apiKey);
+    await configTestOpsIntegration(ksProjectDir, this.teamId, this.projectId, this.organizationId, apiKey, logger);
     logger.debug('Finish config Katalon TestOps integration.');
 
     logger.debug('Start downloading extra files.');
