@@ -3,7 +3,7 @@ name: Publish Docker Agent Draft
 on:
   push:
     branches:
-      - deploy
+      - deploy1
 
 jobs:
   docker:
