@@ -61,7 +61,6 @@ async function configTestOpsIntegration(ksProjectDir, teamId, projectId, organiz
   await properties.save(testOpsPropertiesPath);
   const properties1 = propertiesReader(testOpsPropertiesPath, 'utf-8', { writer: { saveSections: false } });
   logger.debug('properties1', properties1);
-
 }
 
 // function buildTestOpsIntegrationProperties(teamId, projectId, organizationId, apiKey) {
