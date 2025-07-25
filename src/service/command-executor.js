@@ -187,6 +187,16 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     await configTestOpsIntegration(ksProjectDir, this.teamId, this.projectId, this.organizationId, apiKey, logger);
     logger.debug('Finish config Katalon TestOps integration.');
 
+    const testOpsPropertiesPath = path.resolve(
+      ksProjectDir,
+      'settings',
+      'internal',
+      TESTOPS_PROPERTIES_FILE,
+    );
+
+    const properties1 = propertiesReader(testOpsPropertiesPath, 'utf-8', { writer: { saveSections: false } });
+    logger.debug('properties2', properties1);
+
     logger.debug('Start downloading extra files.');
     // The logic download extra file will run after we manually configure integration settings
     // if the extraFiles is not provided, the agent will work as normal flow
