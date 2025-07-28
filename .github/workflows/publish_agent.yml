@@ -54,7 +54,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install packages
-        run: npm ci
+        run: npm i
       
       - name: Set BUILD_VERSION environment variable
         run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
@@ -210,7 +210,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install packages
-        run: npm ci
+        run: npm i
 
       - name: Download artifacts
         uses: actions/download-artifact@v4

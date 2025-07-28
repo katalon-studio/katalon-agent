@@ -115,7 +115,7 @@ module.exports = {
     const java17Path = '/usr/lib/jvm/java-17-openjdk-amd64/bin/java';
     const java8Path = '/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java';
 
-    if (ksVersionNumber === KRE_LATEST_OPTION_VALUE || compare(ksVersionNumber, '9.0.0', '>=')) {
+    if (!ksVersionNumber || ksVersionNumber === KRE_LATEST_OPTION_VALUE || compare(ksVersionNumber, '9.0.0', '>=')) {
       javaPath = java17Path;
     } else {
       javaPath = java8Path;
