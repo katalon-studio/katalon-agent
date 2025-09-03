@@ -1,21 +1,31 @@
-const axios = require('axios').default;
+const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const ProgressBar = require('progress');
 // const wildcard = require('wildcard');
 const { FILTERED_ERROR_CODE } = require('./constants');
 const logger = require('../../config/logger');
-const { getProxy, getDefaultHttpsAgent } = require('./proxy');
+const { getProxy, createHttpsAgent } = require('./proxy');
 // const config = require('../config');
 
 const PROGRESS_RENDER_THROTTLE = 5000;
 
-axios.interceptors.request.use((config) => {
+const streamAxiosInstance = axios.create({
+  timeout: 120000,
+  httpsAgent: createHttpsAgent(),
+});
+
+const regularAxiosInstance = axios.create({
+  timeout: 120000,
+  httpsAgent: createHttpsAgent(),
+});
+
+regularAxiosInstance.interceptors.request.use((config) => {
   logger.trace('REQUEST:', config);
   return config;
 });
 
-axios.interceptors.response.use(
+regularAxiosInstance.interceptors.response.use(
   (response) => {
     const { data: body, status, statusText, config, headers } = response;
     logger.info(`${config.method} ${config.url} ${status}.`);
@@ -52,26 +62,47 @@ axios.interceptors.response.use(
   },
 );
 
-// axios.interceptors.request.use((config1) => {
-//   const { proxy, proxyExcludedUrls } = config;
-//   const httpAgent = new HttpProxyAgent(proxy, { rejectUnauthorized: false, keepAlive: true });
-//   const httpsAgent = new HttpsProxyAgent(proxy, { rejectUnauthorized: false, keepAlive: true });
-//   const { url } = config1;
-//   if (proxyExcludedUrls) {
-//     const excludedUrls = proxyExcludedUrls.split(',');
-//     const isExcluded = excludedUrls.some((excludedUrl) => wildcard(excludedUrl, url));
-//     if (isExcluded) {
-//       return config1;
-//     }
-//   }
-//   // Set the proxy agents for non-excluded URLs
-//   if (url.startsWith('http://')) {
-//     config1.httpAgent = httpAgent;
-//   } else if (url.startsWith('https://')) {
-//     config1.httpsAgent = httpsAgent;
-//   }
-//   return config1;
-// });
+streamAxiosInstance.interceptors.request.use((config) => {
+  logger.trace('REQUEST:', config);
+  return config;
+});
+
+streamAxiosInstance.interceptors.response.use(
+  (response) => {
+    const { data: body, status, statusText, config, headers } = response;
+    logger.info(`${config.method} ${config.url} ${status}.`);
+
+    logger.trace('RESPONSE:', {
+      body,
+      status,
+      statusText,
+      config,
+    });
+
+    const res = {
+      status,
+      body,
+      headers,
+    };
+    if (FILTERED_ERROR_CODE.has(res.status)) {
+      logger.error(res);
+      return Promise.reject(res);
+    }
+    return res;
+  },
+  (error) => {
+    const err = error.toJSON ? error.toJSON() : error;
+    logger.error(err);
+    if (error.response) {
+      logger.error('Response data:', error.response.data);
+    } else if (error.request) {
+      logger.error('No response received:', error.request);
+    } else {
+      logger.error('Error setting up request:', error.message, error.stack, error.config);
+    }
+    return Promise.reject(err);
+  },
+);
 
 module.exports = {
   get(urlParam, headers) {
@@ -98,7 +129,7 @@ module.exports = {
       'Content-Length': stats.size,
     };
     const data = fs.createReadStream(filePath);
-    return this.request('put', urlParam, data, headers);
+    return this.streamingRequest('put', urlParam, data, headers);
   },
 
   stream(urlParam, filePath, headers) {
@@ -113,8 +144,9 @@ module.exports = {
       renderThrottle: PROGRESS_RENDER_THROTTLE,
     };
 
-    return this.request('get', urlParam, null, headers, {
+    return this.streamingRequest('get', urlParam, null, headers, {
       responseType: 'stream',
+      timeout: 3600000,
     }).then(({ status, body, headers }) => {
       if (body) {
         const readableStream = body;
@@ -150,16 +182,26 @@ module.exports = {
   },
 
   request(method, urlParam, data = {}, headers = {}, overrideOpts = {}) {
-    return axios({
+    return regularAxiosInstance({
       method,
       url: urlParam.url,
-      timeout: 60000,
       params: urlParam.params,
       data,
       headers,
       proxy: getProxy(urlParam.url),
       ...overrideOpts,
-      httpsAgent: getDefaultHttpsAgent(),
+    });
+  },
+
+  streamingRequest(method, urlParam, data = {}, headers = {}, overrideOpts = {}) {
+    return streamAxiosInstance({
+      method,
+      url: urlParam.url,
+      params: urlParam.params,
+      data,
+      headers,
+      proxy: getProxy(urlParam.url),
+      ...overrideOpts,
     });
   },
 };
