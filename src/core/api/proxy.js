@@ -59,8 +59,18 @@ function getDefaultHttpsAgent() {
   return agent;
 }
 
+function createHttpsAgent() {
+  const agentConfig = {
+    rejectUnauthorized: false,
+    keepAlive: true,
+    ...(config.https ? { ...config.https } : {}),
+  };
+  return new https.Agent(agentConfig);
+}
+
 module.exports = {
   getProxy,
   // getIgnoreSsl,
   getDefaultHttpsAgent,
+  createHttpsAgent,
 };
