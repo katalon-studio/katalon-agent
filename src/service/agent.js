@@ -262,6 +262,7 @@ class Agent {
     this.configFile = configFile;
     this.organizationId = config.organizationId;
     this.apikey = config.apikey;
+    this.intervals = [];
   }
 
   start() {
@@ -367,9 +368,9 @@ class Agent {
 
     requestAndExecuteJob();
     // NOSONAR
-    setInterval(requestAndExecuteJob, requestInterval);
-    setInterval(syncInfo, pingInterval);
-    setInterval(processController.removeInactiveControllers, checkProcessInterval);
+    this.intervals.push(setInterval(requestAndExecuteJob, requestInterval));
+    this.intervals.push(setInterval(syncInfo, pingInterval));
+    this.intervals.push(setInterval(processController.removeInactiveControllers, checkProcessInterval));
   }
 
   async startCI() {
@@ -452,6 +453,14 @@ class Agent {
   }
 
   stop() {
+    logger.info(`Katalon Agent ${config.version} stopping @ ${new Date()}`);
+
+    // Clear all intervals to prevent memory leaks
+    this.intervals.forEach((intervalId) => {
+      clearInterval(intervalId);
+    });
+    this.intervals = [];
+
     logger.info(`Katalon Agent ${config.version} stopped @ ${new Date()}`);
   }
 }
