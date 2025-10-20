@@ -193,7 +193,9 @@ async function executeJob(jobInfo, keepFiles) {
     const status = await executor.execute(jLogger, tmpDirPath, (pid) => {
       processId = pid;
       processController.createController(pid, jobId);
-      updateJobStatus(jobId, JOB_STATUS.RUNNING, processId, apiKey).catch(() => { /* ignore */ });
+      updateJobStatus(jobId, JOB_STATUS.RUNNING, processId, apiKey).catch((err) => {
+        logger.warn(`Failed to update job status for job ${jobId}:`, err.message);
+      });
     }, apiKey);
 
     if (isCanceled) {
@@ -233,8 +235,7 @@ async function executeJob(jobInfo, keepFiles) {
       try {
         tmpDir.removeCallback();
       } catch (err) {
-        // ignored
-        logger.debug('Error when removing tmp directory:', err);
+        logger.warn('Failed to remove tmp directory:', tmpDirPath, err.message);
       }
     }
   }
@@ -362,7 +363,9 @@ class Agent {
         ip: ip.address(),
         os: os.getVersion(),
         agentVersion: utils.getVersion(),
-      }).catch(() => { /* ignore */ });
+      }).catch((err) => {
+        logger.warn('Failed to ping agent health to server:', err.message);
+      });
     };
 
     requestAndExecuteJob();
