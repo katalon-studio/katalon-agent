@@ -1,7 +1,6 @@
 const fs = require('fs-extra');
 const glob = require('glob');
 const path = require('path');
-const fse = require('fs-extra');
 
 const _ = require('lodash');
 const propertiesReader = require('properties-reader');
@@ -30,7 +29,7 @@ async function configTestOpsIntegration(ksProjectDir, teamId, projectId, organiz
 
   // Ensures that the file exists.
   // If the file in directories that do not exist, these directories are created.
-  fse.ensureFileSync(testOpsPropertiesPath);
+  fs.ensureFileSync(testOpsPropertiesPath);
 
   const properties = propertiesReader(testOpsPropertiesPath, 'utf-8', { writer: { saveSections: false } });
   properties.set('analytics.server.endpoint', config.serverUrl);
