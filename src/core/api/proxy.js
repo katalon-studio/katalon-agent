@@ -49,7 +49,7 @@ function getProxy(url) {
 function getDefaultHttpsAgent() {
   if (!agent) {
     const agentConfig = {
-      rejectUnauthorized: false,
+      rejectUnauthorized: true,
       keepAlive: true,
       ...(config.https ? { ...config.https } : {}),
     };
