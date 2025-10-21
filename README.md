@@ -73,13 +73,6 @@ Note: On Linux and MacOS, you might need to add execute permission (`chmode u+x 
 - If an `agentconfig` has been created, the existing configuration will be overridden with the new value.
 - Show the usage of the `config` command with `-h` option. E.g. `node cli.js config -h`.
 
-### Additional CLI Options
-Both `config` and `start-agent` commands support the following additional options:
-
-- `--vmargs <value>`: Specify JVM arguments for Katalon Studio execution.
-  - Example: `node cli.js config --vmargs "-Xms1024m -Xmx3072m"`
-  - Example: `node cli.js start-agent --vmargs "-Xms2048m -Xmx4096m -XX:+UseG1GC"`
-
 ## Run the Katalon Agent as a service
 - Download the suitable package from the Katalon Agent [Releases](https://github.com/katalon-studio/katalon-agent/releases).
 - Extract the downloaded package.
