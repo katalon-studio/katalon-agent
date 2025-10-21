@@ -283,7 +283,7 @@ class Agent {
           config.write(this.configFile, configs);
         }
 
-        const { uuid, keepFiles, logLevel, x11Display, xvfbRun } = configs;
+        const { uuid, keepFiles, logLevel, x11Display, xvfbRun, vmargs } = configs;
 
         setLogLevel(logLevel);
 
@@ -327,6 +327,7 @@ class Agent {
           ksArgs,
           x11Display,
           xvfbRun,
+          vmargs,
           parameter,
         );
 
@@ -385,7 +386,7 @@ class Agent {
       }
 
       const configs = config.read(this.configFile);
-      const { keepFiles, logLevel, x11Display, xvfbRun } = configs;
+      const { keepFiles, logLevel, x11Display, xvfbRun, vmargs } = configs;
 
       setLogLevel(logLevel);
 
@@ -434,6 +435,7 @@ class Agent {
         ksArgs,
         x11Display,
         xvfbRun,
+        vmargs,
         parameter,
       );
 

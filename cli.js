@@ -34,6 +34,7 @@ program
   .option('--log-level <value>', 'Log level (ALL < TRACE < DEBUG < INFO < WARN < ERROR < FATAL < MARK < OFF)')
   .option('--xvfb-run <value>', 'xvfb-run options')
   .option('--x11-display <value>', 'x11 DISPLAY environment variable')
+  .option('--vmargs <value>', 'JVM arguments for Katalon Studio (e.g., "-Xms1024m -Xmx3072m")')
   .option('--keep-files', 'Keep test project temporary files')
   .option('--no-keep-files', 'Remove test project temporary files (default behavior)')
   .action((command) => {
@@ -49,6 +50,7 @@ program
       logLevel: command.logLevel,
       xvfbRun: command.xvfbRun,
       x11Display: command.x11Display,
+      vmargs: command.vmargs,
       keepFiles: command.keepFiles,
     };
     updateConfigs(options);
@@ -65,6 +67,7 @@ program
   .option('-c, --config <value>', 'Configuration file path')
   .option('-x, --proxy <value>', 'HTTTP/HTTPS Proxy')
   .option('--proxy-exclude-list <value>', 'Proxy excluded URLs')
+  .option('--vmargs <value>', 'JVM arguments for Katalon Studio (e.g., "-Xms1024m -Xmx3072m")')
   .option('--ci', 'CI mode')
   .action((command) => {
     const options = {
@@ -76,6 +79,7 @@ program
       configPath: command.config,
       proxy: command.proxy,
       proxyExcludeList: command.proxyExcludeList,
+      vmargs: command.vmargs,
     };
     if (process.platform === 'win32') {
       readline

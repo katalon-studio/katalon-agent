@@ -41,6 +41,7 @@ organizationId=<organization_id>
 | proxyExcludedUrls | E.g. `proxyExcludedUrls=testops.katalon.io` |
 | logLevel   | The logging level (ALL < TRACE < DEBUG < INFO < WARN < ERROR < FATAL < MARK < OFF). Default: `INFO`. |
 | keepFiles  | Whether to keep the test project's temporary files. Default: `false`. |
+| vmargs     | JVM arguments for Katalon Studio execution. E.g. `vmargs=-Xms1024m -Xmx3072m -XX:+UseG1GC` |
 
 ### Start the Katalon Agent with Node from CLI
 - Navigate to the Katalon Agent directory
@@ -71,6 +72,13 @@ Note: On Linux and MacOS, you might need to add execute permission (`chmode u+x 
 - E.g. `node cli.js config --server-url https://analytics.katalon.com --username <email> --apikey <api_key> --organizationid <organization_id> --agent-name my-agent`
 - If an `agentconfig` has been created, the existing configuration will be overridden with the new value.
 - Show the usage of the `config` command with `-h` option. E.g. `node cli.js config -h`.
+
+### Additional CLI Options
+Both `config` and `start-agent` commands support the following additional options:
+
+- `--vmargs <value>`: Specify JVM arguments for Katalon Studio execution.
+  - Example: `node cli.js config --vmargs "-Xms1024m -Xmx3072m"`
+  - Example: `node cli.js start-agent --vmargs "-Xms2048m -Xmx4096m -XX:+UseG1GC"`
 
 ## Run the Katalon Agent as a service
 - Download the suitable package from the Katalon Agent [Releases](https://github.com/katalon-studio/katalon-agent/releases).

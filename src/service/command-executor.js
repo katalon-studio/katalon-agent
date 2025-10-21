@@ -98,6 +98,7 @@ class BaseKatalonCommandExecutor {
     this.ksArgs = info.ksArgs;
     this.x11Display = info.x11Display;
     this.xvfbConfiguration = info.xvfbConfiguration;
+    this.vmargs = info.vmargs;
     this.env = info.env;
   }
 
@@ -133,6 +134,7 @@ class BaseKatalonCommandExecutor {
       this.ksArgs,
       this.x11Display,
       this.xvfbConfiguration,
+      this.vmargs,
       logger,
       callback,
       this.env,

@@ -87,6 +87,7 @@ module.exports = {
     ksArgs,
     x11Display,
     xvfbConfiguration,
+    vmargs,
     logger = defaultLogger,
     callback = () => { },
     env = {},
@@ -122,6 +123,10 @@ module.exports = {
         { flag: '-runMode', value: 'console' },
         { flag: '-projectPath', value: ksProjectPath },
       );
+
+      if (vmargs) {
+        ksCommand = utils.updateCommand(ksCommand, { flag: `-vmargs ${vmargs}` });
+      }
 
       ksCommand = `${ksCommand} ${ksArgs}`;
       const loggingKsCommand = utils.maskLog(ksCommand);

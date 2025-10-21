@@ -27,6 +27,7 @@ function createCommandExecutor(
   ksArgs,
   x11Display,
   xvfbConfiguration,
+  vmargs,
   parameter,
 ) {
   const env = mergeEnvs(parameter.environmentVariables);
@@ -51,6 +52,7 @@ function createCommandExecutor(
     ksArgs,
     x11Display,
     xvfbConfiguration,
+    vmargs,
     env,
     extraFiles: parameter.extraFiles,
     gitRepository: parameter.gitRepositoryResource,
