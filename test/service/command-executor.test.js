@@ -93,6 +93,101 @@ describe('KatalonCommandExecutor test', () => {
     expect(callArgs[6]).toBe(info.vmargs);
   });
 
+  it('Test KatalonCommandExecutor execute - vmargs order is correct', async () => {
+    // Mock ks.execute to capture the actual command arguments passed
+    const mockKsExecute = jest.fn().mockResolvedValue(0);
+    ks.execute.mockImplementation(mockKsExecute);
+
+    // given
+    const info = {
+      teamId: 123,
+      projectId: 123,
+      organizationId: 456,
+      vmargs: '-Xms2048m -Xmx4096m -XX:+UseG1GC',
+      ksArgs: '-retry=0 -testSuitePath="Test Suites/TS1" -browserType="Chrome"',
+    };
+    const mockCallback = jest.fn();
+    glob.sync.mockReturnValueOnce([ksProjectPath]);
+
+    // when
+    const executor = new KatalonCommandExecutor(info);
+    await executor.execute(logger, ksProjectDir, mockCallback);
+
+    // then
+    expect(ks.execute).toHaveBeenCalledTimes(1);
+    const callArgs = ks.execute.mock.calls[0];
+    
+    // Verify vmargs is passed as the 7th parameter (index 6)
+    expect(callArgs[6]).toBe(info.vmargs);
+    
+    // Verify ksArgs is passed as the 4th parameter (index 3) 
+    expect(callArgs[3]).toContain(info.ksArgs);
+    
+    // Verify that the vmargs parameter is correctly positioned for Java command line execution
+    expect(callArgs[6]).toBe('-Xms2048m -Xmx4096m -XX:+UseG1GC');
+  });
+
+  it('Test KatalonCommandExecutor execute - vmargs and ksArgs together', async () => {
+    // Mock ks.execute to capture all parameters
+    const mockKsExecute = jest.fn().mockResolvedValue(0);
+    ks.execute.mockImplementation(mockKsExecute);
+
+    // given
+    const info = {
+      teamId: 123,
+      projectId: 123,
+      organizationId: 456,
+      vmargs: '-Xms1024m -Xmx2048m',
+      ksArgs: '-retry=1 -testSuitePath="Test Suites/RegressionTest"',
+    };
+    const mockCallback = jest.fn();
+    glob.sync.mockReturnValueOnce([ksProjectPath]);
+
+    // when
+    const executor = new KatalonCommandExecutor(info);
+    await executor.execute(logger, ksProjectDir, mockCallback);
+
+    // then
+    expect(ks.execute).toHaveBeenCalledTimes(1);
+    const callArgs = ks.execute.mock.calls[0];
+    
+    // Verify all expected parameters are present and in correct positions
+    expect(callArgs).toHaveLength(10); // Ensure we have the expected number of parameters
+    expect(callArgs[3]).toContain(info.ksArgs); // ksArgs should be in position 3
+    expect(callArgs[6]).toBe(info.vmargs); // vmargs should be in position 6
+  });
+
+  it('Test KatalonCommandExecutor execute - without vmargs', async () => {
+    // Mock ks.execute to verify behavior when vmargs is not provided
+    const mockKsExecute = jest.fn().mockResolvedValue(0);
+    ks.execute.mockImplementation(mockKsExecute);
+
+    // given
+    const info = {
+      teamId: 123,
+      projectId: 123,
+      organizationId: 456,
+      ksArgs: '-retry=0 -testSuitePath="Test Suites/SimpleTest"',
+      // vmargs intentionally omitted
+    };
+    const mockCallback = jest.fn();
+    glob.sync.mockReturnValueOnce([ksProjectPath]);
+
+    // when
+    const executor = new KatalonCommandExecutor(info);
+    await executor.execute(logger, ksProjectDir, mockCallback);
+
+    // then
+    expect(ks.execute).toHaveBeenCalledTimes(1);
+    const callArgs = ks.execute.mock.calls[0];
+    
+    // Verify ksArgs is still passed correctly
+    expect(callArgs[3]).toContain(info.ksArgs);
+    
+    // Verify vmargs is undefined/null when not provided
+    expect(callArgs[6]).toBeUndefined();
+  });
+
   it('Test KatalonCommandExecutor execute - Cannot find KS project', async () => {
     // given
     const info = {
