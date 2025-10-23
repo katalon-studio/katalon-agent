@@ -124,11 +124,12 @@ module.exports = {
         { flag: '-projectPath', value: ksProjectPath },
       );
 
+      ksCommand = `${ksCommand} ${ksArgs}`;
+
       if (vmargs) {
         ksCommand = utils.updateCommand(ksCommand, { flag: `-vmargs ${vmargs}` });
       }
 
-      ksCommand = `${ksCommand} ${ksArgs}`;
       const loggingKsCommand = utils.maskLog(ksCommand);
       logger.info(`Execute Katalon Studio: ${loggingKsCommand}`);
       if (logger !== defaultLogger) {
