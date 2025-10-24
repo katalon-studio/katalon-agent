@@ -47,7 +47,7 @@
     "properties-reader": "^2.3.0",
     "semver": "^7.7.2",
     "simple-git": "^3.24.0",
-    "tmp": "^0.2.3",
+    "tmp": "^0.2.4",
     "tree-kill": "^1.2.2",
     "triple-beam": "^1.4.1",
     "url-join": "^4.0.1",
