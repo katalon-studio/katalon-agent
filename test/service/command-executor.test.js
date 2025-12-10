@@ -1,10 +1,10 @@
 const glob = require('glob');
+const fse = require('fs-extra');
+const propertiesReader = require('properties-reader');
 const { KatalonCommandExecutor, GenericCommandExecutor } = require('../../src/service/command-executor');
 const properties = require('../../src/core/properties');
 const reportUploader = require('../../src/service/report-uploader');
 const ks = require('../../src/service/katalon-studio');
-const fse = require('fs-extra');
-const propertiesReader = require('properties-reader');
 
 jest.mock('../../src/core/properties');
 jest.mock('../../src/service/report-uploader');
@@ -116,13 +116,13 @@ describe('KatalonCommandExecutor test', () => {
     // then
     expect(ks.execute).toHaveBeenCalledTimes(1);
     const callArgs = ks.execute.mock.calls[0];
-    
+
     // Verify vmargs is passed as the 7th parameter (index 6)
     expect(callArgs[6]).toBe(info.vmargs);
-    
-    // Verify ksArgs is passed as the 4th parameter (index 3) 
+
+    // Verify ksArgs is passed as the 4th parameter (index 3)
     expect(callArgs[3]).toContain(info.ksArgs);
-    
+
     // Verify that the vmargs parameter is correctly positioned for Java command line execution
     expect(callArgs[6]).toBe('-Xms2048m -Xmx4096m -XX:+UseG1GC');
   });
@@ -150,7 +150,7 @@ describe('KatalonCommandExecutor test', () => {
     // then
     expect(ks.execute).toHaveBeenCalledTimes(1);
     const callArgs = ks.execute.mock.calls[0];
-    
+
     // Verify all expected parameters are present and in correct positions
     expect(callArgs).toHaveLength(10); // Ensure we have the expected number of parameters
     expect(callArgs[3]).toContain(info.ksArgs); // ksArgs should be in position 3
@@ -180,10 +180,10 @@ describe('KatalonCommandExecutor test', () => {
     // then
     expect(ks.execute).toHaveBeenCalledTimes(1);
     const callArgs = ks.execute.mock.calls[0];
-    
+
     // Verify ksArgs is still passed correctly
     expect(callArgs[3]).toContain(info.ksArgs);
-    
+
     // Verify vmargs is undefined/null when not provided
     expect(callArgs[6]).toBeUndefined();
   });
