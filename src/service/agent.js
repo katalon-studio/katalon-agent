@@ -308,12 +308,16 @@ class Agent {
           testProject: { projectId, targetDirectory },
         } = jobBody;
 
-        let ksArgs;
+        let ksArgs = utils.overrideCommand(
+          parameter.command,
+          { flag: '-serverUrl', value: config.serverUrl },
+          { flag: '-testOps.serverUrl', value: config.serverUrl }
+        );
         if (config.isOnPremise) {
-          ksArgs = utils.overrideCommand(parameter.command, {
-            flag: '-apiKeyOnPremise',
-            value: apiKey,
-          });
+          ksArgs = utils.overrideCommand(
+            parameter.command,
+            { flag: '-apiKeyOnPremise', value: apiKey }
+          );
         } else {
           ksArgs = utils.overrideCommand(
             parameter.command,
