@@ -325,8 +325,6 @@ class Agent {
           );
         }
 
-        console.log('QQQQQQ', ksArgs);
-
         const downloader = createDownloader(parameter, targetDirectory);
         const executor = createCommandExecutor(
           projectId,
