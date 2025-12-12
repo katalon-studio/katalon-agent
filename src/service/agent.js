@@ -311,12 +311,12 @@ class Agent {
         let ksArgs = utils.overrideCommand(
           parameter.command,
           { flag: '-serverUrl', value: config.serverUrl },
-          { flag: '-testOps.serverUrl', value: config.serverUrl }
+          { flag: '-testOps.serverUrl', value: config.serverUrl },
         );
         if (config.isOnPremise) {
           ksArgs = utils.overrideCommand(
             parameter.command,
-            { flag: '-apiKeyOnPremise', value: apiKey }
+            { flag: '-apiKeyOnPremise', value: apiKey },
           );
         } else {
           ksArgs = utils.overrideCommand(
