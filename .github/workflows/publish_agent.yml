@@ -246,49 +246,49 @@ jobs:
         run: npm run release
 
   ### DEPLOY ###
-  deploy:
-    name: Deploy cloud agent
-    environment: ${{ needs.set_env.outputs.ENV }}
-    env:
-      AGENT_VERSION: ${{ inputs.agent_version }}
-    needs: [set_env, build]
+  # deploy:
+  #   name: Deploy cloud agent
+  #   environment: ${{ needs.set_env.outputs.ENV }}
+  #   env:
+  #     AGENT_VERSION: ${{ inputs.agent_version }}
+  #   needs: [set_env, build]
 
-    runs-on: ubuntu-latest
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
+  #     - name: Setup Node.js ${{ matrix.node-version }}
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: ${{ matrix.node-version }}
 
-      - name: Install packages
-        run: npm install --only dev
+  #     - name: Install packages
+  #       run: npm install --only dev
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/katalon-github-oidc-federation
-          role-session-name: github-actions
-          aws-region: ${{ vars.AWS_REGION }}
-          mask-aws-account-id: 'no'
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/katalon-github-oidc-federation
+  #         role-session-name: github-actions
+  #         aws-region: ${{ vars.AWS_REGION }}
+  #         mask-aws-account-id: 'no'
 
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: .
+  #     - name: Download artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         path: .
 
-      - name: Add execute permission to downloaded artifacts
-        run: chmod +x katalon-agent-linux-*/* katalon-agent-macos-*/*
+  #     - name: Add execute permission to downloaded artifacts
+  #       run: chmod +x katalon-agent-linux-*/* katalon-agent-macos-*/*
 
 
-      - name: Deploy to s3 prod
-        if: ${{  needs.set_env.outputs.ENV == 'prod' }}      
-        run: |
-          ls -laR
-          aws s3 cp katalon-agent-linux-x64-*/cli-linux-x64 s3://${{ secrets.AWS_S3_BUCKET }}/katalon-agent/$AGENT_VERSION/cli-linux-x64
+  #     - name: Deploy to s3 prod
+  #       if: ${{  needs.set_env.outputs.ENV == 'prod' }}      
+  #       run: |
+  #         ls -laR
+  #         aws s3 cp katalon-agent-linux-x64-*/cli-linux-x64 s3://${{ secrets.AWS_S3_BUCKET }}/katalon-agent/$AGENT_VERSION/cli-linux-x64
 
   commit:
     runs-on: ubuntu-latest
