@@ -315,15 +315,17 @@ class Agent {
         );
         if (config.isOnPremise) {
           ksArgs = utils.overrideCommand(
-            parameter.command,
+            ksArgs,
             { flag: '-apiKeyOnPremise', value: apiKey },
           );
         } else {
           ksArgs = utils.overrideCommand(
-            parameter.command,
+            ksArgs,
             { flag: '-apiKey', value: apiKey },
           );
         }
+
+        console.log('QQQQQQ', ksArgs);
 
         const downloader = createDownloader(parameter, targetDirectory);
         const executor = createCommandExecutor(
