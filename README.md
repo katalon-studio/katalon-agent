@@ -41,6 +41,7 @@ organizationId=<organization_id>
 | proxyExcludedUrls | E.g. `proxyExcludedUrls=testops.katalon.io` |
 | logLevel   | The logging level (ALL < TRACE < DEBUG < INFO < WARN < ERROR < FATAL < MARK < OFF). Default: `INFO`. |
 | keepFiles  | Whether to keep the test project's temporary files. Default: `false`. |
+| vmargs     | JVM arguments for Katalon Studio execution. E.g. `vmargs=-Xms1024m -Xmx3072m -XX:+UseG1GC` |
 
 ### Start the Katalon Agent with Node from CLI
 - Navigate to the Katalon Agent directory

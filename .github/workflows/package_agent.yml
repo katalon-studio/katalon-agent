@@ -17,7 +17,7 @@ jobs:
       matrix:
         os:
           - ubuntu-22.04
-          - macos-13
+          - macos-15-intel
           - macos-14
           - windows-2022
         node-version:
@@ -51,11 +51,11 @@ jobs:
           cp agent bin/cli-linux-x64  
           npm run afterbuild
           ls -al bin
-      
+
       - name: Build with Node.js ${{ matrix.node-version }} on ${{ runner.os }}
         env:
           CI: true
-        if: ${{ matrix.os == 'macos-13' }}
+        if: ${{ matrix.os == 'macos-15-intel' }}
         run: |
           npm run build
           node --experimental-sea-config sea-config.json 
@@ -65,7 +65,6 @@ jobs:
             --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 \
             --macho-segment-name NODE_SEA 
           # codesign --sign - agent
-
           mkdir bin
           chmod +x agent
           cp agent bin/cli-macos-x64  
@@ -145,10 +144,10 @@ jobs:
           path: |
             bin/cli-linux-x64
             bin/*.sh
-      
+
       - name: Upload MacOS x64 artifact
         uses: actions/upload-artifact@v4
-        if: ${{ matrix.os == 'macos-13' }}
+        if: ${{ matrix.os == 'macos-15-intel' }}
         with:
           name: katalon-agent-macos-x64-${{ env.BUILD_VERSION }}
           path: |
@@ -163,7 +162,7 @@ jobs:
           path: |
             bin/cli-macos-arm64
             bin/start.sh
-  
+
   deploy:
     name: Deploy staging cloud agent
     environment: staging 

@@ -87,6 +87,7 @@ module.exports = {
     ksArgs,
     x11Display,
     xvfbConfiguration,
+    vmargs,
     logger = defaultLogger,
     callback = () => { },
     env = {},
@@ -124,6 +125,11 @@ module.exports = {
       );
 
       ksCommand = `${ksCommand} ${ksArgs}`;
+
+      if (vmargs) {
+        ksCommand = utils.updateCommand(ksCommand, { flag: `-vmargs ${vmargs}` });
+      }
+
       const loggingKsCommand = utils.maskLog(ksCommand);
       logger.info(`Execute Katalon Studio: ${loggingKsCommand}`);
       if (logger !== defaultLogger) {

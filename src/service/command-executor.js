@@ -61,36 +61,6 @@ async function configTestOpsIntegration(ksProjectDir, teamId, projectId, organiz
   await properties.save(testOpsPropertiesPath);
 }
 
-// function buildTestOpsIntegrationProperties(teamId, projectId, organizationId, apiKey) {
-//   const deprecatedProperties = {
-//     'analytics.server.endpoint': config.serverUrl,
-//     'analytics.authentication.email': config.email,
-//     'analytics.authentication.password': apiKey,
-//     'analytics.authentication.encryptionEnabled': false,
-//     'analytics.testresult.autosubmit': true,
-//     'analytics.testresult.attach.screenshot': true,
-//     'analytics.testresult.attach.log': true,
-//     'analytics.testresult.attach.capturedvideos': false,
-//   };
-//   const onPremiseProperties = {
-//     // 'onpremise.email': config.email,
-//     // 'onpremise.password': apiKey,
-//     'analytics.onpremise.server': config.serverUrl,
-//     'analytics.onpremise.organization': JSON.stringify({ id: `${organizationId}` }),
-//     // 'analytics.onpremise.enable': config.isOnPremise,
-//   };
-//   return {
-//     ...deprecatedProperties,
-//     ...onPremiseProperties,
-//     'analytics.integration.enable': true,
-//     'analytics.team': JSON.stringify({ id: teamId.toString() }),
-//     'analytics.project': JSON.stringify(
-//       { id: projectId.toString(), organizationId: `${organizationId}` },
-//     ),
-//     'analytics.testreport.autoupload.enable': true,
-//   };
-// }
-
 class BaseKatalonCommandExecutor {
   constructor(info) {
     this.ksVersionNumber = info.ksVersionNumber;
@@ -98,6 +68,7 @@ class BaseKatalonCommandExecutor {
     this.ksArgs = info.ksArgs;
     this.x11Display = info.x11Display;
     this.xvfbConfiguration = info.xvfbConfiguration;
+    this.vmargs = info.vmargs;
     this.env = info.env;
   }
 
@@ -109,16 +80,6 @@ class BaseKatalonCommandExecutor {
     logger.debug(`Execution Directory Path: ${execDirPath}.`);
     logger.debug(`Project Path Pattern: ${projectPathPattern}.`);
     logger.info(`Project Paths: ${ksProjectPaths}.`);
-
-    if (ksProjectPaths.length <= 0) {
-      logger.error('Unable to find a Katalon project.');
-      return Promise.resolve(1);
-    }
-
-    if (ksProjectPaths.length > 1) {
-      logger.error(`Multiple Katalon projects are found: ${ksProjectPaths}.`);
-      return Promise.resolve(1);
-    }
 
     const [ksProjectPath] = ksProjectPaths;
 
@@ -133,6 +94,7 @@ class BaseKatalonCommandExecutor {
       this.ksArgs,
       this.x11Display,
       this.xvfbConfiguration,
+      this.vmargs,
       logger,
       callback,
       this.env,
@@ -171,23 +133,12 @@ class KatalonCommandExecutor extends BaseKatalonCommandExecutor {
     // Manually configure integration settings for KS to upload execution report
     logger.debug('Configure Katalon TestOps integration.');
     const ksProjectDir = path.dirname(ksProjectPath);
-    // const testOpsPropertiesPath = path.resolve(
-    //   ksProjectDir,
-    //   'settings',
-    //   'internal',
-    //   TESTOPS_PROPERTIES_FILE,
-    // );
-    // properties.writeProperties(
-    //   testOpsPropertiesPath,
-    //   buildTestOpsIntegrationProperties(this.teamId, this.projectId, this.organizationId, apiKey),
-    // );
+
     logger.debug('Start config Katalon TestOps integration.');
     await configTestOpsIntegration(ksProjectDir, this.teamId, this.projectId, this.organizationId, apiKey);
     logger.debug('Finish config Katalon TestOps integration.');
 
     logger.debug('Start downloading extra files.');
-    // The logic download extra file will run after we manually configure integration settings
-    // if the extraFiles is not provided, the agent will work as normal flow
     if (_.isArray(this.extraFiles)) {
       await this.downloadExtraFiles(this.extraFiles, ksProjectDir, logger, apiKey);
     }

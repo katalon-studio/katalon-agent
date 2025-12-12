@@ -283,7 +283,7 @@ class Agent {
           config.write(this.configFile, configs);
         }
 
-        const { uuid, keepFiles, logLevel, x11Display, xvfbRun } = configs;
+        const { uuid, keepFiles, logLevel, x11Display, xvfbRun, vmargs } = configs;
 
         setLogLevel(logLevel);
 
@@ -308,15 +308,19 @@ class Agent {
           testProject: { projectId, targetDirectory },
         } = jobBody;
 
-        let ksArgs;
+        let ksArgs = utils.overrideCommand(
+          parameter.command,
+          { flag: '-serverUrl', value: config.serverUrl },
+          { flag: '-testOps.serverUrl', value: config.serverUrl },
+        );
         if (config.isOnPremise) {
-          ksArgs = utils.overrideCommand(parameter.command, {
-            flag: '-apiKeyOnPremise',
-            value: apiKey,
-          });
+          ksArgs = utils.overrideCommand(
+            ksArgs,
+            { flag: '-apiKeyOnPremise', value: apiKey },
+          );
         } else {
           ksArgs = utils.overrideCommand(
-            parameter.command,
+            ksArgs,
             { flag: '-apiKey', value: apiKey },
           );
         }
@@ -327,6 +331,7 @@ class Agent {
           ksArgs,
           x11Display,
           xvfbRun,
+          vmargs,
           parameter,
         );
 
@@ -385,7 +390,7 @@ class Agent {
       }
 
       const configs = config.read(this.configFile);
-      const { keepFiles, logLevel, x11Display, xvfbRun } = configs;
+      const { keepFiles, logLevel, x11Display, xvfbRun, vmargs } = configs;
 
       setLogLevel(logLevel);
 
@@ -434,6 +439,7 @@ class Agent {
         ksArgs,
         x11Display,
         xvfbRun,
+        vmargs,
         parameter,
       );
 
