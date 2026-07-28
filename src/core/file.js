@@ -117,10 +117,15 @@ module.exports = {
         gitDownloadDir,
       ],
       {
-        stdio: 'inherit',
+        encoding: 'utf8',
       });
     if (result.status !== 0) {
-      logger.error(result);
+      const stderr = result.stderr
+        ? result.stderr.replace(/(https?:\/\/)[^/\s@]+@/gi, '$1').trim()
+        : 'no error output';
+      const message = `Git clone failed with status ${result.status}: ${stderr}`;
+      logger.error(message);
+      throw new Error(message);
     }
     childProcess.spawnSync('git', ['config', 'core.ignorecase', 'false'], {
       stdio: 'inherit',
