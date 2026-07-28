@@ -8,6 +8,49 @@ const fs = require('fs-extra');
 const api = require('./api');
 const defaultLogger = require('../config/logger');
 
+const gitStageSuccessMessages = {
+  clone: 'Git clone completed successfully.',
+  config: 'Git config completed successfully.',
+  'sparse-checkout set': 'Git sparse-checkout set completed successfully.',
+  checkout: 'Git checkout completed successfully.',
+};
+
+function sanitizeGitDiagnostic(diagnostic, username, password) {
+  let sanitized = String(diagnostic).replace(/(https?:\/\/)[^\s/:@]+(?::[^\s@]*)?@/gi, '$1');
+  const credentials = [username, password]
+    .filter((credential) => credential)
+    .reduce((values, credential) => values.concat(credential, encodeURIComponent(credential)), [])
+    .sort((a, b) => b.length - a.length);
+
+  credentials.forEach((credential) => {
+    sanitized = sanitized.split(credential).join('[REDACTED]');
+  });
+  return sanitized;
+}
+
+function runTargetDirectoryGitStage(stage, args, options, logger, username, password) {
+  const result = childProcess.spawnSync('git', args, {
+    ...options,
+    encoding: 'utf8',
+  });
+  if (result.error || result.status === null || result.status !== 0) {
+    const status = result.status === undefined ? 'unknown' : result.status;
+    const stderr = result.stderr && result.stderr.trim();
+    const detail = stderr ||
+      (result.error && result.error.message) ||
+      (result.signal && `terminated by signal ${result.signal}`) ||
+      'no stderr available';
+    const diagnostic = sanitizeGitDiagnostic(
+      `Git ${stage} failed (status ${status}): ${detail}`,
+      username,
+      password,
+    );
+    logger.error(diagnostic);
+    throw new Error(diagnostic);
+  }
+  logger.info(gitStageSuccessMessages[stage]);
+}
+
 function download(downloadMethod, url, logger = defaultLogger, apiKey = null) {
   logger.info(`Downloading from ${url}. It may take a few minutes.`);
   const file = tmp.fileSync();
@@ -102,7 +145,7 @@ module.exports = {
         ...overrideOpts,
       ]);
     }
-    const result = childProcess.spawnSync('git',
+    runTargetDirectoryGitStage('clone',
       [
         'clone',
         '--no-tags',
@@ -116,24 +159,35 @@ module.exports = {
         url,
         gitDownloadDir,
       ],
-      {
-        stdio: 'inherit',
-      });
-    if (result.status !== 0) {
-      logger.error(result);
-    }
-    childProcess.spawnSync('git', ['config', 'core.ignorecase', 'false'], {
-      stdio: 'inherit',
-      cwd: gitDownloadDir,
-    });
-    childProcess.spawnSync('git', ['sparse-checkout', 'set', targetDir], {
-      stdio: 'inherit',
-      cwd: gitDownloadDir,
-    });
-    childProcess.spawnSync('git', ['checkout', branch], {
-      stdio: 'inherit',
-      cwd: gitDownloadDir,
-    });
+      {},
+      logger,
+      username,
+      password,
+    );
+    runTargetDirectoryGitStage(
+      'config',
+      ['config', 'core.ignorecase', 'false'],
+      { cwd: gitDownloadDir },
+      logger,
+      username,
+      password,
+    );
+    runTargetDirectoryGitStage(
+      'sparse-checkout set',
+      ['sparse-checkout', 'set', targetDir],
+      { cwd: gitDownloadDir },
+      logger,
+      username,
+      password,
+    );
+    runTargetDirectoryGitStage(
+      'checkout',
+      ['checkout', branch],
+      { cwd: gitDownloadDir },
+      logger,
+      username,
+      password,
+    );
     logger.info('Repository cloned successfully with sparse-checkout.');
     return gitDownloadDir;
   },
