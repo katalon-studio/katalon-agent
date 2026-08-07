@@ -79,6 +79,10 @@ function getKsLocation(ksVersionNumber, ksLocation) {
   });
 }
 
+function getJavaSwitchVersion(ksVersionNumber, ksLocation) {
+  return ksLocation ? undefined : ksVersionNumber;
+}
+
 module.exports = {
   execute(
     ksVersionNumber,
@@ -96,8 +100,12 @@ module.exports = {
       logger.info(`Katalon Folder: ${ksLocationParentDir}`);
 
       if (process.env.IS_DOCKER_AGENT) {
-        logger.info(`Check and switch java version for Docker mode to compitable KRE version: ${ksVersionNumber}`);
-        utils.switchJavaVersion(ksVersionNumber);
+        const javaSwitchVersion = getJavaSwitchVersion(ksVersionNumber, ksLocation);
+        const kreVersionDescription = javaSwitchVersion || 'pre-installed';
+        logger.info(
+          `Check and switch java version for Docker mode to compatible KRE version: ${kreVersionDescription}`,
+        );
+        utils.switchJavaVersion(javaSwitchVersion);
       }
 
       let ksExecutable =
@@ -148,4 +156,5 @@ module.exports = {
   },
 
   getKsLocation,
+  getJavaSwitchVersion,
 };
