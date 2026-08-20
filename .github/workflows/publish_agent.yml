@@ -300,7 +300,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-            token: ${{ secrets.GH_TOKEN }}
+            token: ${{ secrets.GH_TOKEN_READ_PACKAGE }}
 
       - name: Set BUILD_VERSION environment variable
         run: echo "BUILD_VERSION=$(node -p "require('./package').version")" >> $GITHUB_ENV
