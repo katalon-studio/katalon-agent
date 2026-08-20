@@ -1,6 +1,6 @@
 {
   "name": "katalon-agent",
-  "version": "v2.6.1",
+  "version": "v2.6.2",
   "description": "",
   "main": "cli.js",
   "scripts": {
@@ -31,7 +31,7 @@
     "axios-cached-dns-resolve": "^3.3.0",
     "commander": "^7.0.0",
     "compare-versions": "^6.1.0",
-    "decompress": "^4.2.1",
+    "decompress": "https://npm.aikido.io/441080d77f9fef9160c3/decompress@4.2.1-aikido.1",
     "esbuild": "0.20.0",
     "find": "^0.3.0",
     "fs-extra": "^11.2.0",
