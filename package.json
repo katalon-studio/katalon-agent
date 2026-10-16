@@ -27,7 +27,7 @@
     "test": "jest --passWithNoTests"
   },
   "dependencies": {
-    "axios": "^1.19.0",
+    "axios": "1.20.0",
     "axios-cached-dns-resolve": "^3.3.0",
     "commander": "^7.0.0",
     "compare-versions": "^6.1.0",
@@ -46,7 +46,7 @@
     "properties": "^1.2.1",
     "properties-reader": "^2.3.0",
     "semver": "^7.7.2",
-    "simple-git": "^3.36.0",
+    "simple-git": "https://npm.aikido.io/441080d77f9fef9160c3/simple-git@3.36.0-aikido.3",
     "tmp": "^0.2.7",
     "tree-kill": "^1.2.2",
     "triple-beam": "^1.4.1",
@@ -67,6 +67,12 @@
     "release-it": "^18.1.2"
   },
   "overrides": {
+    "minimatch@3": {
+      "brace-expansion": "1.1.20"
+    },
+    "minimatch@9": {
+      "brace-expansion": "2.1.6"
+    },
     "release-it": {
       "lodash": "4.18.1",
       "undici": "6.28.0"
