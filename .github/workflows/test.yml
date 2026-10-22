@@ -42,10 +42,9 @@ jobs:
         run: |
           npm run eslint
           npm run test:coverage || true
-          sed -i 's@'$GITHUB_WORKSPACE'@/github/workspace/@g' coverage/lcov.info
 
       - name: Sonar Cloud Scan
-        uses: SonarSource/sonarcloud-github-action@v2.1.1
+        uses: SonarSource/sonarqube-scan-action@v8.3.0
         with:
           args: >
             -Dsonar.verbose=true
