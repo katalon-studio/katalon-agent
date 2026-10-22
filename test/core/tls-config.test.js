@@ -57,12 +57,20 @@ describe('TLS configuration', () => {
     expect(config.read(configPath).tlsVerify).toBe(false);
   });
 
+  it.each(['true', 'false', true, false])('normalizes tlsVerify=%j in the agent process', (value) => {
+    config.update({ tlsVerify: value }, configPath);
+
+    expect(config.tlsVerify).toBe(value === true || value === 'true');
+  });
+
   it('rejects invalid CLI values without changing an existing config', () => {
     fs.writeFileSync(configPath, 'tlsVerify=true\n');
     const result = runConfigCommand('--tls-verify', 'no');
 
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain('Invalid tlsVerify: expected true or false.');
+    expect(() => config.update({ tlsVerify: 'no' }, configPath))
+      .toThrow('Invalid tlsVerify: expected true or false.');
     expect(config.read(configPath).tlsVerify).toBe(true);
   });
 });

@@ -26,6 +26,8 @@ jobs:
 
       - name: Checkout Katalon Agent
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       
       - name: Cache
         id: cache-packages
