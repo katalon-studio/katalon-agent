@@ -15,10 +15,18 @@ module.exports = {
     const fileConfigs = this.read(filepath);
     // Merge both configs
     const configs = {
+      // Clear a previous config's TLS setting when loading a legacy config.
+      tlsVerify: undefined,
       ...fileConfigs,
       ...commandLineConfigs,
       pathPatterns: _.get(fileConfigs, 'paths.path', []),
     };
+
+    if (configs.tlsVerify === 'true' || configs.tlsVerify === 'false') {
+      configs.tlsVerify = configs.tlsVerify === 'true';
+    } else if (configs.tlsVerify !== undefined && typeof configs.tlsVerify !== 'boolean') {
+      throw new Error('Invalid tlsVerify: expected true or false.');
+    }
 
     // Add configs to global and export configs
     Object.keys(configs).forEach((p) => {
@@ -27,7 +35,10 @@ module.exports = {
   },
 
   read(filepath) {
-    fse.ensureFileSync(filepath);
+    if (!fse.existsSync(filepath)) {
+      // Persist the secure default so the next startup cannot treat this as a legacy config.
+      this.write(filepath, { tlsVerify: true });
+    }
     const fp = fse.readFileSync(filepath, 'utf-8');
     return ini.parse(fp);
   },
