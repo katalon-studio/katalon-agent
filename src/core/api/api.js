@@ -112,7 +112,7 @@ module.exports = {
   },
 
   getKSReleases() {
-    return http.get(urlParam.ksReleases()).catch(() => http.get(urlParam.ksReleasesOldLink()));
+    return http.get(urlParam.ksReleases());
   },
 
   download(url, filePath) {

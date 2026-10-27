@@ -4,6 +4,7 @@ const tmp = require('tmp');
 const fs = require('fs');
 const childProcess = require('child_process');
 const { compare } = require('compare-versions');
+const semver = require('semver');
 const { KRE_LATEST_OPTION_VALUE } = require('./api/constants');
 
 const packageJson = require('../../package.json');
@@ -112,10 +113,15 @@ module.exports = {
 
   switchJavaVersion(ksVersionNumber) {
     let javaPath;
+    const java21Path = '/usr/lib/jvm/java-21-openjdk-amd64/bin/java';
     const java17Path = '/usr/lib/jvm/java-17-openjdk-amd64/bin/java';
     const java8Path = '/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java';
 
-    if (!ksVersionNumber || ksVersionNumber === KRE_LATEST_OPTION_VALUE || compare(ksVersionNumber, '9.0.0', '>=')) {
+    // Wildcard selectors like '11-latest' are compared by their major part
+    const version = semver.valid(semver.coerce(ksVersionNumber));
+    if (!version || ksVersionNumber === KRE_LATEST_OPTION_VALUE || compare(version, '11.0.0', '>=')) {
+      javaPath = java21Path;
+    } else if (compare(version, '9.0.0', '>=')) {
       javaPath = java17Path;
     } else {
       javaPath = java8Path;

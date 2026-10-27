@@ -34,7 +34,7 @@ program
   .option('--log-level <value>', 'Log level (ALL < TRACE < DEBUG < INFO < WARN < ERROR < FATAL < MARK < OFF)')
   .option('--xvfb-run <value>', 'xvfb-run options')
   .option('--x11-display <value>', 'x11 DISPLAY environment variable')
-  .option('--vmargs <value>', 'JVM arguments for Katalon Studio (e.g., "-Xms1024m -Xmx3072m")')
+  .option('--vmargs <value>', 'JVM arguments for KRE (e.g., "-Xms1024m -Xmx3072m")')
   .option('--keep-files', 'Keep test project temporary files')
   .option('--no-keep-files', 'Remove test project temporary files (default behavior)')
   .action((command) => {
@@ -67,7 +67,7 @@ program
   .option('-c, --config <value>', 'Configuration file path')
   .option('-x, --proxy <value>', 'HTTTP/HTTPS Proxy')
   .option('--proxy-exclude-list <value>', 'Proxy excluded URLs')
-  .option('--vmargs <value>', 'JVM arguments for Katalon Studio (e.g., "-Xms1024m -Xmx3072m")')
+  .option('--vmargs <value>', 'JVM arguments for KRE (e.g., "-Xms1024m -Xmx3072m")')
   .option('--ci', 'CI mode')
   .action((command) => {
     const options = {

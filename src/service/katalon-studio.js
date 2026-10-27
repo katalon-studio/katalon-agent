@@ -2,15 +2,13 @@
 const _ = require('lodash');
 const fs = require('fs');
 const path = require('path');
-const { filter, map } = require('lodash');
-const semver = require('semver');
 
 const api = require('../core/api');
 const defaultLogger = require('../config/logger');
 const os = require('../core/os');
 const { KatalonStudioDownloader } = require('./remote-downloader');
 const utils = require('../core/utils');
-const { KRE_LATEST_OPTION_VALUE } = require('../core/api/constants');
+const { resolveRelease } = require('./kre-releases');
 
 function find(startPath, filter, callback) {
   if (!fs.existsSync(startPath)) {
@@ -46,35 +44,28 @@ function getKsLocation(ksVersionNumber, ksLocation) {
   }
 
   return api.getKSReleases().then(({ body }) => {
-    const osVersion = os.getVersion();
-    let ksVersion;
-
-    if (ksVersionNumber === KRE_LATEST_OPTION_VALUE) {
-      const kreOsVersions = filter(body, ({ os }) => os === osVersion);
-      const versionNumbers = map(kreOsVersions, 'version')
-        .filter((v) => !semver.prerelease(v));
-      ksVersionNumber = semver.maxSatisfying(versionNumbers, '*');
-      ksVersion = kreOsVersions.find((item) => item.version === ksVersionNumber);
-    } else {
-      ksVersion = body.find((item) => item.version === ksVersionNumber && item.os === osVersion);
+    const ksVersion = resolveRelease(body, ksVersionNumber);
+    if (ksVersion.version !== ksVersionNumber) {
+      defaultLogger.info(`Resolved KRE version ${ksVersionNumber} to ${ksVersion.version}.`);
     }
+    ksVersionNumber = ksVersion.version;
 
     const userhome = os.getUserHome();
     const ksLocationParentDir = path.join(userhome, '.katalon', ksVersionNumber);
     const katalonDoneFilePath = path.join(ksLocationParentDir, '.katalon.done');
 
     if (fs.existsSync(katalonDoneFilePath)) {
-      return { ksLocationParentDir };
+      return { ksLocationParentDir, ksVersionNumber };
     }
 
-    defaultLogger.info(`Download Katalon Studio ${ksVersionNumber} to ${ksLocationParentDir}.`);
+    defaultLogger.info(`Download KRE ${ksVersionNumber} to ${ksLocationParentDir}.`);
     const downloader = new KatalonStudioDownloader(defaultLogger, ksVersion.url);
     return downloader.download(ksLocationParentDir).then((extractedFiles) => {
       if (!extractedFiles || extractedFiles.length <= 0) {
-        throw new Error(`Unable to download Katalon Studio ${ksVersionNumber}`);
+        throw new Error(`Unable to download KRE ${ksVersionNumber}`);
       }
       fs.writeFileSync(katalonDoneFilePath, '');
-      return { ksLocationParentDir };
+      return { ksLocationParentDir, ksVersionNumber };
     });
   });
 }
@@ -92,22 +83,24 @@ module.exports = {
     callback = () => { },
     env = {},
   ) {
-    return getKsLocation(ksVersionNumber, ksLocation).then(({ ksLocationParentDir }) => {
+    return getKsLocation(ksVersionNumber, ksLocation).then((location) => {
+      const { ksLocationParentDir, ksVersionNumber: resolvedVersion } = location;
       logger.info(`Katalon Folder: ${ksLocationParentDir}`);
 
       if (process.env.IS_DOCKER_AGENT) {
-        logger.info(`Check and switch java version for Docker mode to compitable KRE version: ${ksVersionNumber}`);
-        utils.switchJavaVersion(ksVersionNumber);
+        const kreVersion = resolvedVersion || ksVersionNumber;
+        logger.info(`Check and switch java version for Docker mode to compatible KRE version: ${kreVersion}`);
+        utils.switchJavaVersion(kreVersion);
       }
 
       let ksExecutable =
         find(ksLocationParentDir, /katalonc$|katalonc\.exe$/) ||
         find(ksLocationParentDir, /katalon$|katalon\.exe$/);
       if (!ksExecutable) {
-        throw new Error(`Unable to find Katalon Studio executable in ${ksLocationParentDir}`);
+        throw new Error(`Unable to find KRE executable in ${ksLocationParentDir}`);
       }
 
-      logger.info(`Katalon Executable File: ${ksExecutable}`);
+      logger.info(`KRE executable file: ${ksExecutable}`);
 
       if (!os.getVersion().includes('Windows')) {
         fs.chmodSync(ksExecutable, '755');
@@ -131,9 +124,9 @@ module.exports = {
       }
 
       const loggingKsCommand = utils.maskLog(ksCommand);
-      logger.info(`Execute Katalon Studio: ${loggingKsCommand}`);
+      logger.info(`Execute KRE: ${loggingKsCommand}`);
       if (logger !== defaultLogger) {
-        defaultLogger.debug(`Execute Katalon Studio command: ${ksCommand}`);
+        defaultLogger.debug(`Execute KRE command: ${ksCommand}`);
       }
 
       return os.runCommand(ksCommand, {
