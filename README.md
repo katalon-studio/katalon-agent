@@ -20,6 +20,7 @@ email=<email>
 apikey=<api_key>
 serverUrl=https://analytics.katalon.com/
 organizationId=<organization_id>
+tlsVerify=true
 ```
 
 - Supported options:
@@ -42,6 +43,13 @@ organizationId=<organization_id>
 | logLevel   | The logging level (ALL < TRACE < DEBUG < INFO < WARN < ERROR < FATAL < MARK < OFF). Default: `INFO`. |
 | keepFiles  | Whether to keep the test project's temporary files. Default: `false`. |
 | vmargs     | JVM arguments for Katalon Studio execution. E.g. `vmargs=-Xms1024m -Xmx3072m -XX:+UseG1GC` |
+| tlsVerify  | Verify HTTPS server/proxy certificates. New configs default to `true`; existing configs without this field keep the legacy behavior (verification disabled unless overridden in `[https]`). Set `false` only as an insecure compatibility opt-out. |
+
+### TLS certificate verification
+- Newly generated configs and `agentconfig_template` include `tlsVerify=true`. Existing configs are not automatically migrated; add `tlsVerify=true` to enable verification. This setting takes precedence over `[https].rejectUnauthorized`.
+- Configure verification using `node cli.js config --tls-verify true`. Both `config` and `start-agent` accept `--tls-verify true|false`; omitted options preserve the config's setting.
+- For a private or TLS-inspecting proxy CA, prefer keeping verification enabled and setting Node's `NODE_EXTRA_CA_CERTS` environment variable to a PEM CA bundle **before starting the agent**, e.g. `NODE_EXTRA_CA_CERTS=/path/to/company-ca.pem node cli.js start-agent`. This extends Node's default trust store; it does not configure Katalon Studio's JVM trust store. An explicit `[https].ca` overrides Node's default/extra CA certificates.
+- If you cannot configure the trusted CA, `node cli.js config --tls-verify false` explicitly disables verification. This permits man-in-the-middle attacks and should only be used as a temporary compatibility measure. Restart a running agent after changing its config or CA environment.
 
 ### Start the Katalon Agent with Node from CLI
 - Navigate to the Katalon Agent directory

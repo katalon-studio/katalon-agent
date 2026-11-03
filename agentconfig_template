@@ -5,3 +5,4 @@ serverUrl=
 organizationId=
 keepFiles=false
 logLevel=INFO
+tlsVerify=true

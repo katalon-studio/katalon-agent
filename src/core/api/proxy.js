@@ -1,9 +1,11 @@
 const https = require('https');
+const _ = require('lodash');
 const matchUrl = require('match-url-wildcard');
 const config = require('../config');
 const logger = require('../../config/logger');
 
 let agent = null;
+let agentConfig;
 
 function getProxy(url) {
   const { proxy, proxyExcludeList } = config;
@@ -39,20 +41,19 @@ function getProxy(url) {
   }
 }
 
-// function getIgnoreSsl() {
-//   const agent = new https.Agent({
-//     rejectUnauthorized: false,
-//   });
-//   return agent;
-// }
-
+// TLS verification is opt-in for legacy configs and enabled in newly created configs.
 function getDefaultHttpsAgent() {
-  if (!agent) {
-    const agentConfig = {
-      rejectUnauthorized: false,
-      keepAlive: true,
-      ...(config.https ? { ...config.https } : {}),
-    };
+  const nextAgentConfig = {
+    rejectUnauthorized: false,
+    keepAlive: true,
+    ...(config.https ? { ...config.https } : {}),
+    ...(config.tlsVerify !== undefined ? { rejectUnauthorized: config.tlsVerify } : {}),
+  };
+  if (!agent || !_.isEqual(agentConfig, nextAgentConfig)) {
+    if (agent) {
+      agent.destroy();
+    }
+    agentConfig = nextAgentConfig;
     logger.info('Default HTTPS agent config:', agentConfig);
     agent = new https.Agent(agentConfig);
   }
@@ -61,6 +62,5 @@ function getDefaultHttpsAgent() {
 
 module.exports = {
   getProxy,
-  // getIgnoreSsl,
   getDefaultHttpsAgent,
 };

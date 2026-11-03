@@ -31,6 +31,7 @@ program
   .option('-c, --config <value>', 'Configuration file path')
   .option('-x, --proxy <value>', 'HTTTP/HTTPS Proxy')
   .option('--proxy-exclude-list <value>', 'Proxy excluded URLs')
+  .option('--tls-verify <value>', 'Verify TLS certificates (true or false; false is insecure)')
   .option('--log-level <value>', 'Log level (ALL < TRACE < DEBUG < INFO < WARN < ERROR < FATAL < MARK < OFF)')
   .option('--xvfb-run <value>', 'xvfb-run options')
   .option('--x11-display <value>', 'x11 DISPLAY environment variable')
@@ -47,6 +48,7 @@ program
       configPath: command.config,
       proxy: command.proxy,
       proxyExcludeList: command.proxyExcludeList,
+      tlsVerify: command.tlsVerify,
       logLevel: command.logLevel,
       xvfbRun: command.xvfbRun,
       x11Display: command.x11Display,
@@ -67,6 +69,7 @@ program
   .option('-c, --config <value>', 'Configuration file path')
   .option('-x, --proxy <value>', 'HTTTP/HTTPS Proxy')
   .option('--proxy-exclude-list <value>', 'Proxy excluded URLs')
+  .option('--tls-verify <value>', 'Verify TLS certificates (true or false; false is insecure)')
   .option('--vmargs <value>', 'JVM arguments for Katalon Studio (e.g., "-Xms1024m -Xmx3072m")')
   .option('--ci', 'CI mode')
   .action((command) => {
@@ -79,6 +82,7 @@ program
       configPath: command.config,
       proxy: command.proxy,
       proxyExcludeList: command.proxyExcludeList,
+      tlsVerify: command.tlsVerify,
       vmargs: command.vmargs,
     };
     if (process.platform === 'win32') {
